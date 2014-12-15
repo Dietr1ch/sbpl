@@ -271,7 +271,7 @@ typedef struct RSTARSEARCHSTATESPACE
 } RSTARSearchStateSpace_t;
 
 /**
- * \brief RSTAR* planner
+ * \brief R* planner
  */
 class RSTARPlanner : public SBPLPlanner
 {

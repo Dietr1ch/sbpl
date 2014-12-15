@@ -12,3 +12,7 @@ build/*
 
 .project
 .cproject
+
+# KDevelop
+.kdev4/
+*.kdev4

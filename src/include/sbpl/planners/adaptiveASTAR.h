@@ -125,7 +125,6 @@ typedef struct AASEARCHSTATESPACE {
     double eps_satisfied;
     CHeap *heap;
     CList *inconslist;
-    RList *removelist;                        //Xiaoxun added this (1)
 
     unsigned int searchiteration;             //Xiaoxun added this (2)
     unsigned long int totalsearchiteration;       //Xiaoxun added this (3)

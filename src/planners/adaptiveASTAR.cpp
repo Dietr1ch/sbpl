@@ -41,6 +41,20 @@ using namespace std;
 #include <sbpl/utils/key.h>
 
 
+// REMOVE: quick fix
+#define USE_XIAOXUN_STUFF 1
+#define RUNS 10
+#define SPEED 5
+#define TARGET_MOVE_STEPS 2
+
+
+
+
+
+// Create - Init - Destroy
+// =======================
+
+
 AAPlanner::AAPlanner(DiscreteSpaceInformation *environment, bool bSearchForward) {
     SBPL_DEBUG("call AAstar constructor_________________________\n");
 
@@ -143,8 +157,13 @@ CMDPSTATE *AAPlanner::GetState(int stateID, AASearchStateSpace_t *pSearchStateSp
 
 
 
-//-----------------------------------------------------------------------------------------------------
 
+
+
+
+
+// Search State handling
+// =====================
 
 int AAPlanner::ComputeHeuristic(CMDPSTATE *MDPstate, AASearchStateSpace_t *pSearchStateSpace) {
 
@@ -159,7 +178,6 @@ int AAPlanner::ComputeHeuristic(CMDPSTATE *MDPstate, AASearchStateSpace_t *pSear
         return retv;
     }
 }
-
 
 //initialization of a state
 void AAPlanner::InitializeSearchStateInfo(AAState *state, AASearchStateSpace_t *pSearchStateSpace) {
@@ -193,8 +211,6 @@ void AAPlanner::InitializeSearchStateInfo(AAState *state, AASearchStateSpace_t *
 
 }
 
-
-
 //Xiaoxun 0: re-initialization of a state
 void AAPlanner::ReInitializeSearchStateInfo(AAState *state, AASearchStateSpace_t *pSearchStateSpace) {
     state->g = INFINITECOST;
@@ -220,16 +236,14 @@ void AAPlanner::ReInitializeSearchStateInfo(AAState *state, AASearchStateSpace_t
     return;
 }
 
-
-
-
-
-
 void AAPlanner::DeleteSearchStateData(AAState *state) {
     //no memory was allocated
     MaxMemoryCounter = 0;
     return;
 }
+
+
+
 
 
 
@@ -240,8 +254,6 @@ int AAPlanner::GetGVal(int StateID, AASearchStateSpace_t *pSearchStateSpace) {
     AAState *state = (AAState *)cmdp_state->PlannerSpecificData;
     return state->g;
 }
-
-
 
 
 //Xiaoxun 0: function Improve Path()  ==  computeshortestpath() in grids.
@@ -452,6 +464,9 @@ int AAPlanner::ImprovePath(AASearchStateSpace_t *pSearchStateSpace, double MaxNu
 
 
 
+// Search Space handling
+// =====================
+
 
 //creates (allocates memory) search state space
 //does not initialize search statespace
@@ -464,7 +479,6 @@ int AAPlanner::CreateSearchStateSpace(AASearchStateSpace_t *pSearchStateSpace) {
     // Account memory
     MaxMemoryCounter += sizeof(CHeap);
     MaxMemoryCounter += sizeof(CList);
-    MaxMemoryCounter += sizeof(RList); //  Xiaoxun 1: added this
 
     // Reset start and goal
     pSearchStateSpace->searchgoalstate = NULL;
@@ -493,15 +507,6 @@ void AAPlanner::DeleteSearchStateSpace(AASearchStateSpace_t *pSearchStateSpace) 
         pSearchStateSpace->inconslist = NULL;
     }
 
-
-//Xiaoxun added this
-    if (pSearchStateSpace->removelist != NULL) {
-        pSearchStateSpace->removelist->makeemptylist();
-        delete pSearchStateSpace->removelist;
-        pSearchStateSpace->removelist = NULL;
-    }
-
-    /**/
 
 
 
@@ -547,9 +552,6 @@ void AAPlanner::ReInitializeSearchStateSpace(AASearchStateSpace_t *pSearchStateS
     pSearchStateSpace->bReinitializeSearchStateSpace = false;   // after R-initialize the search space, set it to (false)
     pSearchStateSpace->bReevaluatefvals = false;
 }
-
-
-
 
 
 //very first initialization
@@ -632,6 +634,16 @@ int AAPlanner::SetSearchStartState(int SearchStartStateID, AASearchStateSpace_t 
 
 }
 
+
+
+
+
+
+
+
+
+// Solution handling
+// =================
 
 //Xiaoxun 0: to search the pointer of -->trace
 int AAPlanner::ReconstructPath(AASearchStateSpace_t *pSearchStateSpace) {
@@ -939,6 +951,12 @@ vector<int> AAPlanner::GetSearchPath(AASearchStateSpace_t *pSearchStateSpace, in
 
 
 
+
+
+// Search
+// ======
+
+
 //Xiaoxun 0:     Search() == ComputeShortestPath()...... however, it contains function IMPROVE_PATH() inside.
 bool AAPlanner::Search(AASearchStateSpace_t *pSearchStateSpace, vector<int> &pathIds, int &PathCost, bool bFirstSolution, bool bOptimalSolution, double MaxNumofSecs) {
     CKey key;
@@ -1059,7 +1077,15 @@ bool AAPlanner::Search(AASearchStateSpace_t *pSearchStateSpace, vector<int> &pat
 }
 
 
-//-----------------------------Interface function-----------------------------------------------------
+
+
+
+
+
+
+// Interface Functions
+// ===================
+
 //returns 1 if found a solution, and 0 otherwise
 int AAPlanner::replan(double allocated_time_secs, vector<int> *solution_stateIDs_V) {
     int solcost;
@@ -1292,7 +1318,7 @@ int AAPlanner::replan(double allocated_time_secs, vector<int> *solution_stateIDs
     expansion_per_search = total_expansion / pSearchStateSpace_->totalsearchiteration;
 
 
-    for (j = 1; j <= pSearchStateSpace_->totalsearchiteration; j++)
+    for (int j = 1; j <= pSearchStateSpace_->totalsearchiteration; j++)
         variance_expa_persearch += pow((pSearchStateSpace_->expansion_of_the_search[j] - expansion_per_search), 2);
 
     variance_expa_persearch = pow((variance_expa_persearch /  pSearchStateSpace_->totalsearchiteration), 0.5);
@@ -1420,11 +1446,18 @@ void AAPlanner::print_searchpath(FILE *fOut) {
 }
 
 
-//---------------------------------------------------------------------------------------------------------
-//
-//
-// Xiaoxun's AA* functions:
 
+
+
+
+
+
+
+
+
+// Xiaoxun's AA* functions
+// =======================
+#if USE_XIAOXUN_STUFF
 
 //function 1:
 // state is the oldsearchgoalstate
@@ -1481,9 +1514,6 @@ AAState *AAPlanner::ChooseOneSuccs_for_TargetMove(AAState *state, AASearchStateS
 
     return succstate;
 }
-
-
-
 
 
 //function 2:
@@ -1605,12 +1635,6 @@ int AAPlanner::goal_moved(AASearchStateSpace_t *pSearchStateSpace) {
 }
 
 
-
-
-
-
-
-
 //function 5:
 int AAPlanner::ReSetSearchStartState(int SearchStartStateID, AASearchStateSpace_t *pSearchStateSpace) {
     CMDPSTATE *MDPstate = GetState(SearchStartStateID, pSearchStateSpace); //Xiaoxun 1:  see P13
@@ -1624,7 +1648,6 @@ int AAPlanner::ReSetSearchStartState(int SearchStartStateID, AASearchStateSpace_
     return 1;
 
 }
-
 
 
 //function 6:
@@ -1643,11 +1666,6 @@ int AAPlanner::reset_start(int start_stateID) {
 
     return 1;
 }
-
-
-
-
-
 
 
 //function 7:
@@ -1699,9 +1717,6 @@ int AAPlanner::start_moved(AASearchStateSpace_t *pSearchStateSpace) {
 
     return 1;  // if robot moved 1 step
 }
-
-
-
 
 
 //function 8:
@@ -1763,15 +1778,6 @@ void AAPlanner::UpdateSuccs(AAState *state, AASearchStateSpace_t *pSearchStateSp
 }
 
 
-
-
-
-
-
-
-
-
-
 //function 9
 //Xiaoxun optimize this function for AA*
 void AAPlanner::UpdatePreds(AAState *state, AASearchStateSpace_t *pSearchStateSpace) {
@@ -1830,19 +1836,6 @@ void AAPlanner::UpdatePreds(AAState *state, AASearchStateSpace_t *pSearchStateSp
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 //function 12:
 //Xiaoxun:  reset for the new test case
 void AAPlanner::Reset_New_Test_Case(AASearchStateSpace_t *pSearchStateSpace) {
@@ -1899,12 +1892,6 @@ void AAPlanner::Reset_New_Test_Case(AASearchStateSpace_t *pSearchStateSpace) {
     ReInitializeNewSearch(pSearchStateSpace);         // set start->g = 0    and do     insertheap(start);
     return;
 }
-
-
-
-
-
-
 
 
 //Xiaoxun: this function is to prepare for the new search iteration
@@ -1974,9 +1961,6 @@ void AAPlanner::ReInitializeNewSearch(AASearchStateSpace_t *pSearchStateSpace) {
 }
 
 
-
-
-
 void AAPlanner::AA_ReInitializeState(AAState *state, AASearchStateSpace_t *pSearchStateSpace) {
     int simple_h;
 
@@ -2011,8 +1995,6 @@ void AAPlanner::AA_ReInitializeState(AAState *state, AASearchStateSpace_t *pSear
 
     return;
 }
-
-
 
 
 //Xiaoxun 13: this is to get the action cost of the robot to move 1 step along the path
@@ -2066,4 +2048,4 @@ int AAPlanner::GetTargetMoveCost(AAState *state, AAState *state2, AASearchStateS
     return actioncost;
 }
 
-
+#endif

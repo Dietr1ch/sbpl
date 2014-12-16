@@ -28,6 +28,7 @@
  */
 #include <cmath>
 #include <cstring>
+#include <cstdio>
 #include <iostream>
 #include <string>
 
@@ -35,6 +36,24 @@ using namespace std;
 
 #include <sbpl/headers.h>
 
+
+
+// Planners
+// --------
+
+// Planner names
+#define PLANNER_STR_ADSTAR "adstar"
+#define PLANNER_STR_ARASTAR "arastar"
+#define PLANNER_STR_PPCP "ppcp"
+#define PLANNER_STR_RSTAR "rstar"
+#define PLANNER_STR_VI "vi"
+#define PLANNER_STR_ANASTAR "anastar"
+#define PLANNER_STR_AASTAR "adaptiveA*"
+
+#define PLANNER_STR_INVALID "invalid"
+
+
+// Planner enum
 enum PlannerType
 {
     INVALID_PLANNER_TYPE = -1,
@@ -44,62 +63,74 @@ enum PlannerType
     PLANNER_TYPE_RSTAR,
     PLANNER_TYPE_VI,
     PLANNER_TYPE_ANASTAR,
+    PLANNER_TYPE_AASTAR,
 
     NUM_PLANNER_TYPES
 };
 
+// Planner to string
 std::string PlannerTypeToStr(PlannerType plannerType)
 {
     switch (plannerType) {
     case PLANNER_TYPE_ADSTAR:
-        return std::string("adstar");
+        return std::string(PLANNER_STR_ADSTAR);
     case PLANNER_TYPE_ARASTAR:
-        return std::string("arastar");
+        return std::string(PLANNER_STR_ARASTAR);
     case PLANNER_TYPE_PPCP:
-        return std::string("ppcp");
+        return std::string(PLANNER_STR_PPCP);
     case PLANNER_TYPE_RSTAR:
-        return std::string("rstar");
+        return std::string(PLANNER_STR_RSTAR);
     case PLANNER_TYPE_VI:
-        return std::string("vi");
+        return std::string(PLANNER_STR_VI);
     case PLANNER_TYPE_ANASTAR:
-        return std::string("anastar");
+        return std::string(PLANNER_STR_ANASTAR);
+    case PLANNER_TYPE_AASTAR:
+        return std::string(PLANNER_STR_AASTAR);
+
     default:
-        return std::string("invalid");
+        return std::string(PLANNER_STR_INVALID);
     }
 }
 
+// String to planner
 PlannerType StrToPlannerType(const char* str)
 {
-    if (!strcmp(str, "adstar")) {
+    if (!strcmp(str, PLANNER_STR_ADSTAR))
         return PLANNER_TYPE_ADSTAR;
-    }
-    else if (!strcmp(str, "arastar")) {
+    if (!strcmp(str, PLANNER_STR_ARASTAR))
         return PLANNER_TYPE_ARASTAR;
-    }
-    else if (!strcmp(str, "ppcp")) {
+    if (!strcmp(str, PLANNER_STR_PPCP))
         return PLANNER_TYPE_PPCP;
-    }
-    else if (!strcmp(str, "rstar")) {
+    if (!strcmp(str, PLANNER_STR_RSTAR))
         return PLANNER_TYPE_RSTAR;
-    }
-    else if (!strcmp(str, "vi")) {
+    if (!strcmp(str, PLANNER_STR_VI))
         return PLANNER_TYPE_VI;
-    }
-    else if (!strcmp(str, "anastar")) {
+    if (!strcmp(str, PLANNER_STR_ANASTAR))
         return PLANNER_TYPE_ANASTAR;
-    }
-    else {
-        return INVALID_PLANNER_TYPE;
-    }
+    if (!strcmp(str, PLANNER_STR_AASTAR))
+        return PLANNER_TYPE_AASTAR;
+
+    return INVALID_PLANNER_TYPE;
 }
 
+
+// Environments
+// ------------
+
+// Environment enum
 enum EnvironmentType
 {
-    INVALID_ENV_TYPE = -1, ENV_TYPE_2D, ENV_TYPE_2DUU, ENV_TYPE_XYTHETA, ENV_TYPE_XYTHETAMLEV, ENV_TYPE_ROBARM,
+    INVALID_ENV_TYPE = -1,
+    ENV_TYPE_2D,
+    ENV_TYPE_2DUU,
+    ENV_TYPE_XYTHETA,
+    ENV_TYPE_XYTHETAMLEV,
+    ENV_TYPE_ROBARM,
 
     NUM_ENV_TYPES
 };
 
+// Environment to string
 std::string EnvironmentTypeToStr(EnvironmentType environmentType)
 {
     switch (environmentType) {
@@ -113,32 +144,31 @@ std::string EnvironmentTypeToStr(EnvironmentType environmentType)
         return std::string("xythetamlev");
     case ENV_TYPE_ROBARM:
         return std::string("robarm");
+
     default:
         return std::string("invalid");
     }
 }
 
+// String to Environment
 EnvironmentType StrToEnvironmentType(const char* str)
 {
-    if (!strcmp(str, "2d")) {
+    if (!strcmp(str, "2d"))
         return ENV_TYPE_2D;
-    }
-    else if (!strcmp(str, "2duu")) {
+    if (!strcmp(str, "2duu"))
         return ENV_TYPE_2DUU;
-    }
-    else if (!strcmp(str, "xytheta")) {
+    if (!strcmp(str, "xytheta"))
         return ENV_TYPE_XYTHETA;
-    }
-    else if (!strcmp(str, "xythetamlev")) {
+    if (!strcmp(str, "xythetamlev"))
         return ENV_TYPE_XYTHETAMLEV;
-    }
-    else if (!strcmp(str, "robarm")) {
+    if (!strcmp(str, "robarm"))
         return ENV_TYPE_ROBARM;
-    }
-    else {
-        return INVALID_ENV_TYPE;
-    }
+
+    return INVALID_ENV_TYPE;
 }
+
+
+
 
 enum MainResultType
 {
@@ -153,12 +183,17 @@ enum MainResultType
     NUM_MAIN_RESULTS
 };
 
-/*******************************************************************************
+
+
+// Command line help
+// =================
+
+/******************************************************************************
  * PrintUsage - Prints the proper usage of the sbpl test executable.
  *
  * @param argv The command-line arguments; used to determine the name of the
  *             test executable.
- *******************************************************************************/
+ ******************************************************************************/
 void PrintUsage(char *argv[])
 {
     printf("USAGE: %s [-s] [--env=<env_t>] [--planner=<planner_t>] [--search-dir=<search_t>] <cfg file> [mot prims]\n",
@@ -166,13 +201,13 @@ void PrintUsage(char *argv[])
     printf("See '%s -h' for help.\n", argv[0]);
 }
 
-/*******************************************************************************
+/******************************************************************************
  * PrintHelp - Prints a help prompt to the command line when the -h option is
  *             used.
  *
  * @param argv The command line arguments; used to determine the name of the
  *             test executable
- *******************************************************************************/
+ ******************************************************************************/
 void PrintHelp(char** argv)
 {
     printf("\n");
@@ -204,6 +239,14 @@ void PrintHelp(char** argv)
     printf("                              deprecated.\n");
     printf("\n");
 }
+
+
+
+
+
+// Command line arguments parsing (there are libraries for this)
+// ==============================
+
 
 /*******************************************************************************
  * CheckIsNavigating
@@ -284,6 +327,11 @@ std::string CheckPlannerType(int numOptions, char** argv)
     return std::string("arastar");
 }
 
+
+
+// Planning environment handlers
+// =============================
+
 /*******************************************************************************
  * plan2d
  * @brief An example of planning in two-dimensional space without motion primitives.
@@ -336,6 +384,7 @@ int plan2d(PlannerType plannerType, char* envCfgFilename, bool forwardSearch)
         printf("Initializing anaPlanner...\n");
         planner = new anaPlanner(&environment_nav2D, bforwardsearch);
         break;
+
     default:
         printf("Invalid planner type\n");
         break;
@@ -1552,6 +1601,12 @@ int planrobarm(PlannerType plannerType, char* envCfgFilename, bool forwardSearch
 
     return bRet;
 }
+
+
+
+// Main
+// ====
+
 
 /*******************************************************************************
  * main - Parse command line arguments and launch one of the sbpl examples above.

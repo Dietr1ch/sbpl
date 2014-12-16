@@ -18,6 +18,7 @@ add_library(sbpl SHARED
   src/discrete_space_information/environment_nav2Duu.cpp
   src/discrete_space_information/environment_XXX.cpp
   src/discrete_space_information/environment_robarm.cpp
+  src/planners/adaptiveASTAR.cpp
   src/planners/araplanner.cpp
   src/planners/adplanner.cpp
   src/planners/viplanner.cpp

@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2008, Maxim Likhachev
  * All rights reserved.
@@ -32,12 +31,18 @@ using namespace std;
 #include <sbpl/planners/adaptiveASTAR.h>
 
 #include <iostream>
+#include <stdlib.h>     /* malloc, free, rand */
+#include <math.h>
+#include <time.h>
 
-
+// SBPL includes
+#include <sbpl/utils/heap.h>
+#include <sbpl/utils/list.h>
+#include <sbpl/utils/key.h>
 
 
 AAPlanner::AAPlanner(DiscreteSpaceInformation *environment, bool bSearchForward) {
-    printf("call AAstar constructor_________________________\n");
+    SBPL_DEBUG("call AAstar constructor_________________________\n");
 
     bforwardsearch = bSearchForward;
     environment_ = environment;
@@ -49,19 +54,17 @@ AAPlanner::AAPlanner(DiscreteSpaceInformation *environment, bool bSearchForward)
     MaxMemoryCounter = 0;
     fDeb = fopen("AAstar_debug.txt", "w");
 
-    printf("debug on\n");
+    SBPL_DEBUG("debug on\n");
 
     pSearchStateSpace_ = new AASearchStateSpace_t;
 
-  // Create and initialize the search space
+    // Create and initialize the search space
     if (CreateSearchStateSpace(pSearchStateSpace_) != 1) {
-        printf("ERROR: failed to create statespace\n");
+        SBPL_ERROR("ERROR: failed to create the state space\n");
         return;
     }
-
-//Xiaoxun 1: initialize search start = NULL, it will be set by another function that follows
-    if (InitializeSearchStateSpace(pSearchStateSpace_) != 1) { //set the start and goal states (not true here)
-        printf("ERROR: failed to create statespace\n");
+    if (InitializeSearchStateSpace(pSearchStateSpace_) != 1) {
+        SBPL_ERROR("ERROR: failed to initialise the state space\n");
         return;
     }
 }
@@ -94,7 +97,7 @@ CMDPSTATE *AAPlanner::CreateState(int stateID, AASearchStateSpace_t *pSearchStat
 #if DEBUG
 
     if (environment_->StateID2IndexMapping[stateID][ARAMDP_STATEID2IND] != -1) {
-        printf("ERROR in CreateState: state already created\n");
+        SBPL_ERROR("ERROR in CreateState: state already created\n");
         exit(1);
     }
 
@@ -108,7 +111,7 @@ CMDPSTATE *AAPlanner::CreateState(int stateID, AASearchStateSpace_t *pSearchStat
 #if DEBUG
 
     if (state != pSearchStateSpace->searchMDP.StateArray[environment_->StateID2IndexMapping[stateID][ARAMDP_STATEID2IND]]) {
-        printf("ERROR in CreateState: invalid state index\n");
+        SBPL_ERROR("ERROR in CreateState: invalid state index\n");
         exit(1);
     }
 
@@ -127,7 +130,7 @@ CMDPSTATE *AAPlanner::CreateState(int stateID, AASearchStateSpace_t *pSearchStat
 CMDPSTATE *AAPlanner::GetState(int stateID, AASearchStateSpace_t *pSearchStateSpace) {
 
     if (stateID >= (int)environment_->StateID2IndexMapping.size()) {
-        printf("ERROR int GetState: stateID %d is invalid\n", stateID);
+        SBPL_ERROR("ERROR int GetState: stateID %d is invalid\n", stateID);
         exit(1);
     }
 
@@ -256,18 +259,18 @@ int AAPlanner::ImprovePath(AASearchStateSpace_t *pSearchStateSpace, double MaxNu
 #endif
 
     if (pSearchStateSpace->searchgoalstate == NULL) {
-        printf("ERROR searching: no goal state is set\n");
+        SBPL_ERROR("ERROR searching: no goal state is set\n");
         exit(1);
     }
 
     if (pSearchStateSpace->searchstartstate == NULL) {
-        printf("ERROR searching: no start state is set\n");
+        SBPL_ERROR("ERROR searching: no start state is set\n");
         exit(1);
     }
 
 #ifdef XIAOXUN_DEBUG
-    printf("$$$$ call Improve Path , searchiteration == [%d], call = [%d]\n", pSearchStateSpace->searchiteration, pSearchStateSpace->callnumber);
-    fprintf(fDeb, "$$$$ call Improve Path , searchiteration == [%d], call = [%d]\n", pSearchStateSpace->searchiteration, pSearchStateSpace->callnumber);
+    SBPL_DEBUG("$$$$ call Improve Path , searchiteration == [%d], call = [%d]\n", pSearchStateSpace->searchiteration, pSearchStateSpace->callnumber);
+    SBPL_FPRINTF(fDeb, "$$$$ call Improve Path , searchiteration == [%d], call = [%d]\n", pSearchStateSpace->searchiteration, pSearchStateSpace->callnumber);
 #endif
 
 
@@ -314,7 +317,7 @@ int AAPlanner::ImprovePath(AASearchStateSpace_t *pSearchStateSpace, double MaxNu
 
         //recompute goalkey if necessary
         if (goalkey.key[0] != (int)searchstartstate->g) {
-            //printf("re-computing goal key\n");      //recompute the goal key (heuristics should be zero)
+            //SBPL_DEBUG("re-computing goal key\n");      //recompute the goal key (heuristics should be zero)
             goalkey.key[0] = searchstartstate->g;
 #ifdef TIE_LARGE_G
             goalkey.key[1] = searchstartstate->h;
@@ -326,7 +329,7 @@ int AAPlanner::ImprovePath(AASearchStateSpace_t *pSearchStateSpace, double MaxNu
     int retv = 1;
 
     if (searchstartstate->g == INFINITECOST && pSearchStateSpace->heap->emptyheap()) {
-//      printf("solution does not exist: search exited because heap is empty\n");
+//      SBPL_INFO("solution does not exist: search exited because heap is empty\n");
         retv = 0;
     } else {
         retv = 1;
@@ -368,11 +371,11 @@ int AAPlanner::ImprovePath(AASearchStateSpace_t *pSearchStateSpace, double MaxNu
 #ifdef XIAOXUN_DEBUG
 
         if (pSearchStateSpace->callnumber == 1)
-            fprintf(fDeb, "expanding state(%4d): h=%d g=%u key=%u iterclosed=%d callnuma=%d expands=%d (g(goal)=%u)\n",
+            SBPL_FPRINTF(fDeb, "expanding state(%4d): h=%d g=%u key=%u iterclosed=%d callnuma=%d expands=%d (g(goal)=%u)\n",
                     state->MDPstate->StateID, state->h, state->g, state->g + (int)(pSearchStateSpace->eps * state->h),
                     state->iterationclosed, state->callnumberaccessed, state->numofexpands, searchgoalstate->g);
 
-//      fprintf(fDeb, "expanding: ");
+//      SBPL_FPRINTF(fDeb, "expanding: ");
 //      PrintSearchState(state, fDeb);
         fflush(fDeb);
 #endif
@@ -391,7 +394,7 @@ int AAPlanner::ImprovePath(AASearchStateSpace_t *pSearchStateSpace, double MaxNu
 
         //recompute goalkey if necessary
         if (goalkey.key[0] != (int)searchgoalstate->g) {
-            //printf("re-computing goal key\n");      //recompute the goal key (heuristics should be zero)
+            //SBPL_DEBUG("re-computing goal key\n");      //recompute the goal key (heuristics should be zero)
             goalkey.key[0] = searchgoalstate->g;
 #ifdef TIE_LARGE_G
             goalkey.key[1] = searchgoalstate->h;
@@ -401,7 +404,7 @@ int AAPlanner::ImprovePath(AASearchStateSpace_t *pSearchStateSpace, double MaxNu
 #ifdef XIAOXUN_DEBUG
 
         if (expands % 100000 == 0 && expands > 0)
-            printf("expands so far=%u\n", expands);
+            SBPL_DEBUG("expands so far=%u\n", expands);
 
 #endif
 
@@ -409,23 +412,23 @@ int AAPlanner::ImprovePath(AASearchStateSpace_t *pSearchStateSpace, double MaxNu
 
 
 #ifdef XIAOXUN_DEBUG
-    printf("\n when [%d]-th search is done, goaloldkey == goal->g = %d, expands this search = %d\n", pSearchStateSpace->searchiteration, searchgoalstate->g, expands);
-    fprintf(fDeb, "\n when [%d]-th search is done, goaloldkey == goal->g = %d, expands this search = %d\n", pSearchStateSpace->searchiteration, searchgoalstate->g, expands);
+    SBPL_DEBUG("\n when [%d]-th search is done, goaloldkey == goal->g = %d, expands this search = %d\n", pSearchStateSpace->searchiteration, searchgoalstate->g, expands);
+    SBPL_FPRINTF(fDeb, "\n when [%d]-th search is done, goaloldkey == goal->g = %d, expands this search = %d\n", pSearchStateSpace->searchiteration, searchgoalstate->g, expands);
 #endif
 
     int retv = 1;
 
     if (searchgoalstate->g == INFINITECOST && pSearchStateSpace->heap->emptyheap()) {
-//      printf("solution does not exist: search exited because heap is empty\n");
+//      SBPL_INFO("solution does not exist: search exited because heap is empty\n");
         retv = 0;
     } else if (!pSearchStateSpace->heap->emptyheap() && goalkey > minkey) {
-//      printf("search exited because it ran out of time\n");
+//      SBPL_INFO("search exited because it ran out of time\n");
         retv = 2;
     } else if (searchgoalstate->g == INFINITECOST && !pSearchStateSpace->heap->emptyheap()) {
-//      printf("solution does not exist: search exited because all candidates for expansion have infinite heuristics\n");
+//      SBPL_INFO("solution does not exist: search exited because all candidates for expansion have infinite heuristics\n");
         retv = 0;
     } else {
-//      printf("search exited with a solution for eps=%.3f\n", pSearchStateSpace->eps);
+//      SBPL_INFO("search exited with a solution for eps=%.3f\n", pSearchStateSpace->eps);
         retv = 1;
 #ifdef XIAOXUN_STATISTICS
         pSearchStateSpace->expansion_of_the_search[pSearchStateSpace->totalsearchiteration] = expands;
@@ -433,7 +436,7 @@ int AAPlanner::ImprovePath(AASearchStateSpace_t *pSearchStateSpace, double MaxNu
 
     }
 
-    //fprintf(fDeb, "expanded=%d\n", expands);
+    //SBPL_FPRINTF(fDeb, "expanded=%d\n", expands);
     searchexpands += expands;
 
 #endif
@@ -454,30 +457,26 @@ int AAPlanner::ImprovePath(AASearchStateSpace_t *pSearchStateSpace, double MaxNu
 //does not initialize search statespace
 int AAPlanner::CreateSearchStateSpace(AASearchStateSpace_t *pSearchStateSpace) {
 
-    //create a heap
+    // Create heap
     pSearchStateSpace->heap = new CHeap;
     pSearchStateSpace->inconslist = new CList;
-// Xiaoxun 1: REMOVE list
-    pSearchStateSpace->removelist = new RList;
 
-
-
-
+    // Account memory
     MaxMemoryCounter += sizeof(CHeap);
     MaxMemoryCounter += sizeof(CList);
-//Xiaoxun 1: added this
-    MaxMemoryCounter += sizeof(RList);
+    MaxMemoryCounter += sizeof(RList); //  Xiaoxun 1: added this
 
-
+    // Reset start and goal
     pSearchStateSpace->searchgoalstate = NULL;
     pSearchStateSpace->searchstartstate = NULL;
 
+    // Reset statistics
     searchexpands = 0;
 
 
     pSearchStateSpace->bReinitializeSearchStateSpace = false;
 
-    return 1;
+    return 1; // OK (not-so-wise 'success' code
 }
 
 //deallocates memory used by SearchStateSpace
@@ -558,7 +557,7 @@ int AAPlanner::InitializeSearchStateSpace(AASearchStateSpace_t *pSearchStateSpac
 
 //  if(pSearchStateSpace->heap->currentsize != 0 || pSearchStateSpace->inconslist->currentsize != 0)
     if (pSearchStateSpace->heap->currentsize != 0) {
-        printf("ERROR in InitializeSearchStateSpace: heap or list is not empty\n");
+        SBPL_ERROR("ERROR in InitializeSearchStateSpace: heap or list is not empty\n");
         exit(1);
     }
 
@@ -650,7 +649,7 @@ int AAPlanner::ReconstructPath(AASearchStateSpace_t *pSearchStateSpace) {
 
 
 #ifdef XIAOXUN_DEBUG
-        fprintf(fDeb, "reconstructing a path:\n");
+        SBPL_FPRINTF(fDeb, "reconstructing a path:\n");
 #endif
 
         while (MDPstate != pSearchStateSpace->searchstartstate) {
@@ -661,13 +660,13 @@ int AAPlanner::ReconstructPath(AASearchStateSpace_t *pSearchStateSpace) {
 #endif
 
             if (stateinfo->g == INFINITECOST) {
-                //printf("ERROR in ReconstructPath: g of the state on the path is INFINITE\n");
+                //SBPL_ERROR("ERROR in ReconstructPath: g of the state on the path is INFINITE\n");
                 //exit(1);
                 return -1;
             }
 
             if (stateinfo->bestpredstate == NULL) {
-                printf("ERROR in ReconstructPath: bestpred is NULL\n");
+                SBPL_ERROR("ERROR in ReconstructPath: bestpred is NULL\n");
                 exit(1);
             }
 
@@ -681,7 +680,7 @@ int AAPlanner::ReconstructPath(AASearchStateSpace_t *pSearchStateSpace) {
             //check the decrease of g-values along the path
             /*          if(predstateinfo->v >= stateinfo->g)
                         {
-                            printf("ERROR in ReconstructPath: g-values are non-decreasing\n");
+                            SBPL_ERROR("ERROR in ReconstructPath: g-values are non-decreasing\n");
                             PrintSearchState(predstateinfo, fDeb);
                             exit(1);
                         }
@@ -697,12 +696,12 @@ int AAPlanner::ReconstructPath(AASearchStateSpace_t *pSearchStateSpace) {
             stateinfo = (AAState *)MDPstate->PlannerSpecificData;
 
             if (stateinfo->g == INFINITECOST) {
-                printf("ERROR in ReconstructPath: g of the state on the path is INFINITE\n");
+                SBPL_ERROR("ERROR in ReconstructPath: g of the state on the path is INFINITE\n");
                 exit(1);
             }
 
             if (stateinfo->bestnextstate == NULL) {
-                printf("ERROR in ReconstructPath: bestpred is NULL\n");
+                SBPL_ERROR("ERROR in ReconstructPath: bestpred is NULL\n");
                 exit(1);
             }
 
@@ -713,7 +712,7 @@ int AAPlanner::ReconstructPath(AASearchStateSpace_t *pSearchStateSpace) {
 
             //check the decrease of g-values along the path
             if (predstateinfo->g >= stateinfo->g) {
-                printf("ERROR in ReconstructPath: g-values are non-decreasing\n");
+                SBPL_ERROR("ERROR in ReconstructPath: g-values are non-decreasing\n");
                 PrintSearchState(predstateinfo, fDeb);
                 exit(1);
             }
@@ -732,8 +731,8 @@ int AAPlanner::ReconstructPath(AASearchStateSpace_t *pSearchStateSpace) {
 
 
 #ifdef XIAOXUN_DEBUG
-    printf("After reconstructing a path:\n");
-    fprintf(fDeb, "After reconstructing a path:\n");
+    SBPL_DEBUG("After reconstructing a path:\n");
+    SBPL_FPRINTF(fDeb, "After reconstructing a path:\n");
 #endif
 
     return 1;
@@ -771,9 +770,9 @@ void AAPlanner::PrintSearchPath(AASearchStateSpace_t *pSearchStateSpace, FILE *f
 //  PathCost = ((AAState*)pSearchStateSpace->searchgoalstate->PlannerSpecificData)->g;
 
 
-    fprintf(fOut, "Printing a path from state %d to the goal state %d\n",
+    SBPL_FPRINTF(fOut, "Printing a path from state %d to the goal state %d\n",
             state->StateID, pSearchStateSpace->searchgoalstate->StateID);
-    fprintf(fOut, "Path cost = %d:\n", PathCost);
+    SBPL_FPRINTF(fOut, "Path cost = %d:\n", PathCost);
 
 
     environment_->PrintState(state->StateID, false, fOut);
@@ -781,22 +780,22 @@ void AAPlanner::PrintSearchPath(AASearchStateSpace_t *pSearchStateSpace, FILE *f
     int costFromStart = 0;
 
     while (state->StateID != goalID) {
-        fprintf(fOut, "state %d ", state->StateID);
+        SBPL_FPRINTF(fOut, "state %d ", state->StateID);
 
         if (state->PlannerSpecificData == NULL) {
-            fprintf(fOut, "path does not exist since search data does not exist\n");
+            SBPL_FPRINTF(fOut, "path does not exist since search data does not exist\n");
             break;
         }
 
         searchstateinfo = (AAState *)state->PlannerSpecificData;
 
         if (searchstateinfo->bestnextstate == NULL) {
-            fprintf(fOut, "path does not exist since bestnextstate == NULL  ????????????\n");
+            SBPL_FPRINTF(fOut, "path does not exist since bestnextstate == NULL  ????????????\n");
             break;
         }
 
         if (searchstateinfo->g == INFINITECOST) {
-            fprintf(fOut, "path does not exist since bestnextstate == NULL\n");
+            SBPL_FPRINTF(fOut, "path does not exist since bestnextstate == NULL\n");
             break;
         }
 
@@ -808,7 +807,7 @@ void AAPlanner::PrintSearchPath(AASearchStateSpace_t *pSearchStateSpace, FILE *f
 
         costFromStart += transcost;
 
-        fprintf(fOut, "g=%d-->state %d, h = %d ctg = %d  ", searchstateinfo->g,
+        SBPL_FPRINTF(fOut, "g=%d-->state %d, h = %d ctg = %d  ", searchstateinfo->g,
                 searchstateinfo->bestnextstate->StateID, searchstateinfo->h, costToGoal);
 
         state = searchstateinfo->bestnextstate;
@@ -821,7 +820,7 @@ void AAPlanner::PrintSearchPath(AASearchStateSpace_t *pSearchStateSpace, FILE *f
 }
 
 void AAPlanner::PrintSearchState(AAState *state, FILE *fOut) {
-    fprintf(fOut, "state %d: h=%d g=%u iterc=%d callnuma=%d expands=%d heapind=%d \n",
+    SBPL_FPRINTF(fOut, "state %d: h=%d g=%u iterc=%d callnuma=%d expands=%d heapind=%d \n",
             state->MDPstate->StateID, state->h, state->g,
             state->iterationclosed, state->callnumberaccessed, state->numofexpands, state->heapindex);
     environment_->PrintState(state->MDPstate->StateID, true, fOut);
@@ -869,19 +868,19 @@ vector<int> AAPlanner::GetSearchPath(AASearchStateSpace_t *pSearchStateSpace, in
 
     while (state->StateID != goalstate->StateID) {
         if (state->PlannerSpecificData == NULL) {
-            fprintf(fOut, "path does not exist since search data does not exist\n");
+            SBPL_FPRINTF(fOut, "path does not exist since search data does not exist\n");
             break;
         }
 
         searchstateinfo = (AAState *)state->PlannerSpecificData;
 
         if (searchstateinfo->bestnextstate == NULL) {
-            fprintf(fOut, "path does not exist since bestnextstate == NULL 2222222 HERE \n");
+            SBPL_FPRINTF(fOut, "path does not exist since bestnextstate == NULL 2222222 HERE \n");
             break;
         }
 
         if (searchstateinfo->g == INFINITECOST) {
-            fprintf(fOut, "path does not exist since g == INFINITYCOST  22222 \n");
+            SBPL_FPRINTF(fOut, "path does not exist since g == INFINITYCOST  22222 \n");
             break;
         }
 
@@ -902,12 +901,12 @@ vector<int> AAPlanner::GetSearchPath(AASearchStateSpace_t *pSearchStateSpace, in
         }
 
         if (actioncost == INFINITECOST)
-            printf("WARNING: actioncost = %d\n", actioncost);
+            SBPL_WARN("WARNING: actioncost = %d\n", actioncost);
 
         solcost += actioncost;
 #endif
 
-//fprintf(fDeb, "actioncost=%d between states %d and %d\n",
+//SBPL_FPRINTF(fDeb, "actioncost=%d between states %d and %d\n",
 //        actioncost, state->StateID, searchstateinfo->bestnextstate->StateID);
 //environment_->PrintState(state->StateID, false, fDeb);
 //environment_->PrintState(searchstateinfo->bestnextstate->StateID, false, fDeb);
@@ -917,9 +916,9 @@ vector<int> AAPlanner::GetSearchPath(AASearchStateSpace_t *pSearchStateSpace, in
         AAState *nextstateinfo = (AAState *)(searchstateinfo->bestnextstate->PlannerSpecificData);
 
         if (actioncost != abs((int)(searchstateinfo->g - nextstateinfo->g)) && pSearchStateSpace->eps_satisfied <= 1.001) {
-            fprintf(fDeb, "ERROR: actioncost=%d is not matching the difference in g-values of %d\n",
+            SBPL_FPRINTF(fDeb, "ERROR: actioncost=%d is not matching the difference in g-values of %d\n",
                     actioncost, abs((int)(searchstateinfo->g - nextstateinfo->g)));
-            printf("ERROR: actioncost=%d is not matching the difference in g-values of %d\n",
+            SBPL_ERROR("ERROR: actioncost=%d is not matching the difference in g-values of %d\n",
                    actioncost, abs((int)(searchstateinfo->g - nextstateinfo->g)));
             PrintSearchState(searchstateinfo, fDeb);
             PrintSearchState(nextstateinfo, fDeb);
@@ -950,8 +949,8 @@ bool AAPlanner::Search(AASearchStateSpace_t *pSearchStateSpace, vector<int> &pat
 
     if (pSearchStateSpace->bReinitializeSearchStateSpace == true) {
 //#ifdef XIAOXUN_DEBUG
-        printf("call AAPlanner::search() function ____+++______ReinitializeSearchSpace \n");
-        fprintf(fDeb, "call AAPlanner::search() function ____+++______ReinitializeSearchSpace \n");
+        SBPL_DEBUG("call AAPlanner::search() function ____+++______ReinitializeSearchSpace \n");
+        SBPL_FPRINTF(fDeb, "call AAPlanner::search() function ____+++______ReinitializeSearchSpace \n");
 //#endif
         //re-initialize state space
         ReInitializeSearchStateSpace(pSearchStateSpace);
@@ -982,20 +981,20 @@ bool AAPlanner::Search(AASearchStateSpace_t *pSearchStateSpace, vector<int> &pat
 //call  improve_path()
     if (ImprovePath(pSearchStateSpace, MaxNumofSecs) == 1) {
 #ifdef XIAOXUN_DEBUG
-        printf("AA* improve_path is done, and path found.\n");
+        SBPL_DEBUG("AA* improve_path is done, and path found.\n");
 #endif
     } else { // Xiaoxun added
-        printf("no path exists, exit. \n");
+        SBPL_INFO("no path exists, exit. \n");
         exit(1);
     }
 
 
 #ifdef XIAOXUN_DEBUG
     //print the solution cost and eps bound
-    printf("***********************************************\n expands=%d g(searchgoal)=%d time=%.3f \n",
+    SBPL_DEBUG("***********************************************\n expands=%d g(searchgoal)=%d time=%.3f \n",
            searchexpands - prevexpands,
            ((AAState *)pSearchStateSpace->searchgoalstate->PlannerSpecificData)->g, double(clock() - loop_time) / CLOCKS_PER_SEC);
-    fprintf(fDeb, "***********************************************\n expands=%d g(searchgoal)=%d time=%.3f \n",
+    SBPL_FPRINTF(fDeb, "***********************************************\n expands=%d g(searchgoal)=%d time=%.3f \n",
             searchexpands - prevexpands,
             ((AAState *)pSearchStateSpace->searchgoalstate->PlannerSpecificData)->g, double(clock() - loop_time) / CLOCKS_PER_SEC);
 #endif
@@ -1029,32 +1028,32 @@ bool AAPlanner::Search(AASearchStateSpace_t *pSearchStateSpace, vector<int> &pat
     bool ret = false;
 
     if (PathCost == INFINITECOST) {
-        printf("AA* could not find a solution\n");
+        SBPL_INFO("AA* could not find a solution\n");
         ret = false;
     } else {
 #ifdef XIAOXUN_DEBUG
-        printf("[%3d]-th search is finished with a solution \n", pSearchStateSpace->searchiteration);
-        fprintf(fDeb, "[%3d]-th search is finished with a solution \n", pSearchStateSpace->searchiteration);
-//      printf("solution is found\n");
+        SBPL_DEBUG("[%3d]-th search is finished with a solution \n", pSearchStateSpace->searchiteration);
+        SBPL_FPRINTF(fDeb, "[%3d]-th search is finished with a solution \n", pSearchStateSpace->searchiteration);
+//      SBPL_INFO("solution is found\n");
 #endif
         pathIds = GetSearchPath(pSearchStateSpace, solcost);   // get the STATE_ID of the cells along the path
         ret = true;
 
 
 #ifdef XIAOXUN_DEBUG
-        printf("[%3d]-th search, after tracing back a path \n", pSearchStateSpace->searchiteration);
-        fprintf(fDeb, "[%3d]-th search, after tracing back a path \n", pSearchStateSpace->searchiteration);
-//      printf("solution is found\n");
+        SBPL_DEBUG("[%3d]-th search, after tracing back a path \n", pSearchStateSpace->searchiteration);
+        SBPL_FPRINTF(fDeb, "[%3d]-th search, after tracing back a path \n", pSearchStateSpace->searchiteration);
+//      SBPL_INFO("solution is found\n");
 #endif
 
     }
 
 
 #ifdef XIAOXUN_DISPLAY
-    printf("total state-expansion this search = %d, time = %.3f secs, solution cost=%d\n",
+    SBPL_INFO("total state-expansion this search = %d, time = %.3f secs, solution cost=%d\n",
            searchexpands, (clock() - TimeStarted) / ((double)CLOCKS_PER_SEC), solcost);
 #endif
-    //fprintf(fStat, "%d %d\n", searchexpands, solcost);
+    //SBPL_FPRINTF(fStat, "%d %d\n", searchexpands, solcost);
 
     return ret;
 }
@@ -1091,8 +1090,8 @@ int AAPlanner::replan(double allocated_time_secs, vector<int> *solution_stateIDs
 
 
     //Xiaoxun 1: ComputeShortestPath() is caled here......    //plan a path
-//printf("_________AA planner: calling function replan() (bFirstSol=%d, bOptSol=%d)\n", bFirstSolution, bOptimalSolution);
-    printf("_________AA planner: calling function replan() (bFirstSol=%d, bOptSol=%d)\n", bFirstSolution);
+//SBPL_DEBUG("_________AA planner: calling function replan() (bFirstSol=%d, bOptSol=%d)\n", bFirstSolution, bOptimalSolution);
+    SBPL_DEBUG("_________AA planner: calling function replan() (bFirstSol=%d, bOptSol=%d)\n", bFirstSolution);
 
 
 
@@ -1104,9 +1103,9 @@ int AAPlanner::replan(double allocated_time_secs, vector<int> *solution_stateIDs
 
     for (int i = 0; i < RUNS; i++) {
 #ifdef ADAPTIVE_H
-        printf("Adaptive A* TEST CASE = [%d],  callnumber = [%d] \n", i, pSearchStateSpace_->callnumber);
+        SBPL_INFO("Adaptive A* TEST CASE = [%d],  callnumber = [%d] \n", i, pSearchStateSpace_->callnumber);
 #else
-        printf("A* TEST CASE = [%d],  callnumber = [%d] \n", i, pSearchStateSpace_->callnumber);
+        SBPL_INFO("A* TEST CASE = [%d],  callnumber = [%d] \n", i, pSearchStateSpace_->callnumber);
 #endif
 
         robot_need_to_replan = true;
@@ -1115,8 +1114,8 @@ int AAPlanner::replan(double allocated_time_secs, vector<int> *solution_stateIDs
         ////////////////////////////////////////////////////////////////////////////////////////
         if (pSearchStateSpace_->callnumber > 0) {
 #ifdef XIAOXUN_DEBUG
-            printf("\n\n +++++++++++++++++++++++Reset for the (%d)-th TEST CASE   ++++++++++++++++++\n\n", pSearchStateSpace_->callnumber);
-            fprintf(fDeb, "\n\n +++++++++++++++++++++++Reset for the (%d)-th TEST CASE   ++++++++++++++++++\n\n", pSearchStateSpace_->callnumber);
+            SBPL_DEBUG("\n\n +++++++++++++++++++++++Reset for the (%d)-th TEST CASE   ++++++++++++++++++\n\n", pSearchStateSpace_->callnumber);
+            SBPL_FPRINTF(fDeb, "\n\n +++++++++++++++++++++++Reset for the (%d)-th TEST CASE   ++++++++++++++++++\n\n", pSearchStateSpace_->callnumber);
 #endif
             Reset_New_Test_Case(pSearchStateSpace_);
         }
@@ -1131,10 +1130,10 @@ int AAPlanner::replan(double allocated_time_secs, vector<int> *solution_stateIDs
         while (pSearchStateSpace_->searchgoalstate != pSearchStateSpace_->searchstartstate) {
             if (robot_need_to_replan == true) {
 
-                printf("%d-th_s    ", pSearchStateSpace_->searchiteration);
+                SBPL_DEBUG("%d-th_s    ", pSearchStateSpace_->searchiteration);
 
                 if ((bFound = Search(pSearchStateSpace_, pathIds, PathCost, bFirstSolution, bOptimalSolution, allocated_time_secs)) == false) {
-                    printf("AA* failed to find a solution after calling Search()... \n");
+                    SBPL_ERROR("AA* failed to find a solution after calling Search()... \n");
                     return (int)bFound;
                 }
 
@@ -1142,13 +1141,13 @@ int AAPlanner::replan(double allocated_time_secs, vector<int> *solution_stateIDs
                 *solution_stateIDs_V = pathIds; //copy the solution
                 *psolcost = PathCost;
 
-                printf("  - Pathcost  == %d ", PathCost);
+                SBPL_DEBUG("  - Pathcost  == %d ", PathCost);
 
 
 
 #ifdef XIAOXUN_DEBUG
-                printf("\n\n ++++++++ 1 +++++++++++++++ The (%d)-th search is done  ++++++++++++++++++\n", pSearchStateSpace_->searchiteration);
-                fprintf(fDeb, "\n\n ++++++++ 1 +++++++++++++++ The (%d)-th search is done  ++++++++++++++++++\n\n", pSearchStateSpace_->searchiteration);
+                SBPL_DEBUG("\n\n ++++++++ 1 +++++++++++++++ The (%d)-th search is done  ++++++++++++++++++\n", pSearchStateSpace_->searchiteration);
+                SBPL_FPRINTF(fDeb, "\n\n ++++++++ 1 +++++++++++++++ The (%d)-th search is done  ++++++++++++++++++\n\n", pSearchStateSpace_->searchiteration);
 #endif
             }
 
@@ -1161,26 +1160,23 @@ int AAPlanner::replan(double allocated_time_secs, vector<int> *solution_stateIDs
             ////////////////////////////////////////////////
             if (robot_need_to_replan == false) {
 #ifdef XIAOXUN_DEBUG
-                printf("1before robot moved, old start ID = [%d] \n", pSearchStateSpace_->searchstartstate->StateID);
-                fprintf(fDeb, "1before robot moved, old start ID = [%d] \n", pSearchStateSpace_->searchstartstate->StateID);
+                SBPL_DEBUG("1before robot moved, old start ID = [%d] \n", pSearchStateSpace_->searchstartstate->StateID);
+                SBPL_FPRINTF(fDeb, "1before robot moved, old start ID = [%d] \n", pSearchStateSpace_->searchstartstate->StateID);
 #endif
                 start_moved(pSearchStateSpace_);
                 pSearchStateSpace_->robot_steps++;  // ++ robot_steps
                 pSearchStateSpace_->total_robot_steps++;  // ++ robot_steps
 
 #ifdef XIAOXUN_DEBUG
-                printf("2after robot moved, new start ID = [%d] \n", pSearchStateSpace_->searchstartstate->StateID);
-                fprintf(fDeb, "2after robot moved, new start ID = [%d] \n", pSearchStateSpace_->searchstartstate->StateID);
+                SBPL_DEBUG("2after robot moved, new start ID = [%d] \n", pSearchStateSpace_->searchstartstate->StateID);
+                SBPL_FPRINTF(fDeb, "2after robot moved, new start ID = [%d] \n", pSearchStateSpace_->searchstartstate->StateID);
 #endif
             }
 
             //  if(pSearchStateSpace_->searchstartstate == pSearchStateSpace_->searchgoalstate || pSearchStateSpace_->searchstartstate == pSearchStateSpace_->temp_goal_state)
             if (pSearchStateSpace_->searchstartstate == pSearchStateSpace_->temp_goal_state) {
-                //      printf("********************************************************************\n");
-                printf("**               robot caught the target                          **\n");
-                //      printf("********************************************************************\n");
+                SBPL_INFO("**               robot caught the target                          **\n");
                 break;
-                //  return 1; // agent moved to target
             }
 
 
@@ -1189,8 +1185,8 @@ int AAPlanner::replan(double allocated_time_secs, vector<int> *solution_stateIDs
             //  if(pSearchStateSpace_->robot_steps % SPEED == 0)  // SPEED (robot : target) = 10 : 1
             if (pSearchStateSpace_->robot_steps % SPEED != 0) { // SPEED (robot : target) = 10 : 9
 #ifdef XIAOXUN_DEBUG
-                printf("call goal_mvoed_________________________________\n");
-                fprintf(fDeb, "call goal_mvoed_________________________________\n");
+                SBPL_DEBUG("call goal_mvoed_________________________________\n");
+                SBPL_FPRINTF(fDeb, "call goal_mvoed_________________________________\n");
 #endif
                 // if retv == 0, goal stay in previous path, no need to re-plan
                 // if retv == 1, move off the path,  need replan
@@ -1207,33 +1203,31 @@ int AAPlanner::replan(double allocated_time_secs, vector<int> *solution_stateIDs
 
 
 #ifdef XIAOXUN_DEBUG
-                printf("@@@@@@@@@  target moved to id--> [%d]\n", pSearchStateSpace_->temp_goal_state->StateID);
-                fprintf(fDeb, "@@@@@@@@@  target moved to id--> [%d]\n", pSearchStateSpace_->temp_goal_state->StateID);
+                SBPL_DEBUG("@@@@@@@@@  target moved to id--> [%d]\n", pSearchStateSpace_->temp_goal_state->StateID);
+                SBPL_FPRINTF(fDeb, "@@@@@@@@@  target moved to id--> [%d]\n", pSearchStateSpace_->temp_goal_state->StateID);
 #endif
 
 
                 if (pSearchStateSpace_->searchstartstate == pSearchStateSpace_->temp_goal_state) {
-                    //          printf("********************************************************************\n");
-                    printf("**               target moved to the robot                        **\n");
-                    //          printf("********************************************************************\n");
+                    SBPL_INFO("**               target moved to the robot                        **\n");
                     break;
                 }
 
 
 #ifdef XIAOXUN_DEBUG
-                printf("\n  retu_value == [%d]\n", retu_value);
-                fprintf(fDeb, "\n  retu_value == [%d]\n", retu_value);
+                SBPL_DEBUG("\n  retu_value == [%d]\n", retu_value);
+                SBPL_FPRINTF(fDeb, "\n  retu_value == [%d]\n", retu_value);
 
                 if (retu_value == 1) {
-                    printf("target moved off the path, so need replan \n");
-                    fprintf(fDeb, "target moved off the path, so need replan \n");
+                    SBPL_DEBUG("target moved off the path, so need replan \n");
+                    SBPL_FPRINTF(fDeb, "target moved off the path, so need replan \n");
                 } else {
-                    printf("target stayed in the path, no re-plan needed \n");
-                    fprintf(fDeb, "target stayed in the path, no re-plan needed \n");
+                    SBPL_DEBUG("target stayed in the path, no re-plan needed \n");
+                    SBPL_FPRINTF(fDeb, "target stayed in the path, no re-plan needed \n");
                 }
 
-                printf("finished goal_mvoed__________________________\n");
-                fprintf(fDeb, "finished goal_mvoed__________________________\n");
+                SBPL_DEBUG("finished goal_mvoed__________________________\n");
+                SBPL_FPRINTF(fDeb, "finished goal_mvoed__________________________\n");
 #endif
 
 
@@ -1259,7 +1253,7 @@ int AAPlanner::replan(double allocated_time_secs, vector<int> *solution_stateIDs
                 AA_ReInitializeState(F_tempgoal, pSearchStateSpace_);    // (1)
                 pSearchStateSpace_->keymodifer = pSearchStateSpace_->keymodifer + F_tempgoal->h;
 #endif
-                //printf("F_tempgoal->h == %d \n", F_tempgoal->h);
+                //SBPL_DEBUG("F_tempgoal->h == %d \n", F_tempgoal->h);
 #endif
                 pSearchStateSpace_->searchgoalstate = pSearchStateSpace_->temp_goal_state;
 
@@ -1292,7 +1286,7 @@ int AAPlanner::replan(double allocated_time_secs, vector<int> *solution_stateIDs
 
     for (int j = 1; j <= pSearchStateSpace_->totalsearchiteration; j++) {
         total_expansion += pSearchStateSpace_->expansion_of_the_search[j];
-        fprintf(fDeb, "%d \n", pSearchStateSpace_->expansion_of_the_search[j]); // write the expansion of each search to a file
+        SBPL_FPRINTF(fDeb, "%d \n", pSearchStateSpace_->expansion_of_the_search[j]); // write the expansion of each search to a file
     }
 
     expansion_per_search = total_expansion / pSearchStateSpace_->totalsearchiteration;
@@ -1311,62 +1305,58 @@ int AAPlanner::replan(double allocated_time_secs, vector<int> *solution_stateIDs
 
 /////////////////////////////////////////////////////////////////////////////////////
 #ifdef ADAPTIVE_H
-    printf(" Adaptive A*  \n");
+    SBPL_INFO(" Adaptive A*\n");
 #else
-    printf(" Pure A*      \n");
+    SBPL_INFO(" Pure A*\n");
 #endif
 
 #ifdef REVERSE
-    printf("Backwards search \n");
+    SBPL_INFO("Backwards search\n");
 #else
-    printf("Forwards search \n");
+    SBPL_INFO("Forwards search\n");
 #endif
 
-    printf(" Test case  RUNS        == [%10d] \n",  RUNS);
-    printf("Searches per test case  == [%10d] \n",  pSearchStateSpace_->totalsearchiteration / RUNS);
-    printf("Robot total moves step  == [%10d] \n",  pSearchStateSpace_->total_robot_steps);
-    printf("Robot moves step/ RUN   == [%10d] \n", (pSearchStateSpace_->total_robot_steps)  / RUNS);
-    printf("Robot moves cost/ RUN   == [%10d] \n", (pSearchStateSpace_->totalmovecost)      / RUNS);
-    printf("expansion / search      == [%10d] \n",  expansion_per_search);
-    printf("SDOM_expansion          == [%10d] \n",  expa_SDOM);
-    printf("Search total time       == [%10f] \n",  totaltime);
-    printf("Time per search         == [%10f] \n",  time_per_search);
-//________________________________________________________________________________
-    fprintf(fDeb, "Test case  RUNS           == [%10d] \n",  RUNS);
-    fprintf(fDeb, "Searches per test case    == [%10d] \n",  pSearchStateSpace_->totalsearchiteration / RUNS);
-    fprintf(fDeb, "Robot moves step          == [%10d] \n",  pSearchStateSpace_->total_robot_steps);
-    fprintf(fDeb, "Robot moves step/ RUN     == [%10d] \n", (pSearchStateSpace_->total_robot_steps) / RUNS);
-    fprintf(fDeb, "Robot moves cost/ RUN     == [%10d] \n", (pSearchStateSpace_->totalmovecost)      / RUNS);
-    fprintf(fDeb, "expansion / search        == [%10d] \n",  expansion_per_search);
-    fprintf(fDeb, "SDOM_expansion            == [%10d] \n",  expa_SDOM);
-    fprintf(fDeb, "Search total time         == [%10f] \n",  totaltime);
-    fprintf(fDeb, "Time per search           == [%10f] \n",  time_per_search);
+    SBPL_INFO("Test case  RUNS        == [%10d]\n", RUNS);
+    SBPL_INFO("Searches per test case == [%10d]\n", pSearchStateSpace_->totalsearchiteration / RUNS);
+    SBPL_INFO("Robot total moves step == [%10d]\n", pSearchStateSpace_->total_robot_steps);
+    SBPL_INFO("Robot moves step/ RUN  == [%10d]\n", (pSearchStateSpace_->total_robot_steps)  / RUNS);
+    SBPL_INFO("Robot moves cost/ RUN  == [%10d]\n", (pSearchStateSpace_->totalmovecost)      / RUNS);
+    SBPL_INFO("expansion / search     == [%10d]\n", expansion_per_search);
+    SBPL_INFO("SDOM_expansion         == [%10d]\n", expa_SDOM);
+    SBPL_INFO("Search total time      == [%10f]\n", totaltime);
+    SBPL_INFO("Time per search        == [%10f]\n", time_per_search);
 
+    SBPL_FPRINTF(fDeb, "Test case  RUNS        == [%10d]\n", RUNS);
+    SBPL_FPRINTF(fDeb, "Searches per test case == [%10d]\n", pSearchStateSpace_->totalsearchiteration / RUNS);
+    SBPL_FPRINTF(fDeb, "Robot moves step       == [%10d]\n", pSearchStateSpace_->total_robot_steps);
+    SBPL_FPRINTF(fDeb, "Robot moves step/ RUN  == [%10d]\n", (pSearchStateSpace_->total_robot_steps)  / RUNS);
+    SBPL_FPRINTF(fDeb, "Robot moves cost/ RUN  == [%10d]\n", (pSearchStateSpace_->totalmovecost)      / RUNS);
+    SBPL_FPRINTF(fDeb, "expansion / search     == [%10d]\n", expansion_per_search);
+    SBPL_FPRINTF(fDeb, "SDOM_expansion         == [%10d]\n", expa_SDOM);
+    SBPL_FPRINTF(fDeb, "Search total time      == [%10f]\n", totaltime);
+    SBPL_FPRINTF(fDeb, "Time per search        == [%10f]\n", time_per_search);
 
-
-
-
-    return (int)bFound;
+    return (int) bFound;
 }
 
 
 int AAPlanner::set_goal(int goal_stateID) {
 
-    printf("planner: setting goal to %d\n", goal_stateID);
+    SBPL_DEBUG("planner: setting goal to %d\n", goal_stateID);
     environment_->PrintState(goal_stateID, true, stdout);
 
     if (bforwardsearch) { //Xiaoxun 1: if search forward
         if (SetSearchGoalState(goal_stateID, pSearchStateSpace_) != 1) {
-            printf("ERROR: failed to set search goal state\n");
+            SBPL_ERROR("ERROR: failed to set search goal state\n");
             return 0;
         }
     } else { // reverse
         if (SetSearchGoalState(goal_stateID, pSearchStateSpace_) != 1) {
-            printf("ERROR: failed to set search goal state\n");
+            SBPL_ERROR("ERROR: failed to set search goal state\n");
             return 0;
         }
 
-//      printf("___error__AA* can only search forwards____________\n");
+//      SBPL_ERROR("___error__AA* can only search forwards____________\n");
 //      exit(0);
     }
 
@@ -1375,12 +1365,12 @@ int AAPlanner::set_goal(int goal_stateID) {
 
 //Xiaoxun: set the start_state
 int AAPlanner::set_start(int start_stateID) {
-    printf("AA planner: setting start to %d\n", start_stateID);
+    SBPL_DEBUG("AA planner: setting start to %d\n", start_stateID);
     environment_->PrintState(start_stateID, true, stdout);
 
 
     if (SetSearchStartState(start_stateID, pSearchStateSpace_) != 1) {
-        printf("ERROR: failed to set search start state\n");
+        SBPL_ERROR("ERROR: failed to set search start state\n");
         return 0;
     }
 
@@ -1407,7 +1397,7 @@ void AAPlanner::costs_changed() {
 
 
 int AAPlanner::force_planning_from_scratch() {
-    printf("planner: forceplanfromscratch set\n");
+    SBPL_DEBUG("planner: forceplanfromscratch set\n");
 
     pSearchStateSpace_->bReinitializeSearchStateSpace = true;
 
@@ -1417,7 +1407,7 @@ int AAPlanner::force_planning_from_scratch() {
 
 int AAPlanner::set_search_mode(bool bSearchUntilFirstSolution) { // set to true
 // Xiaoxun 1: this is to set whether AA* will keep searching until the first solution is found
-    printf("planner: search mode set to %d\n", bSearchUntilFirstSolution);
+    SBPL_DEBUG("planner: search mode set to %d\n", bSearchUntilFirstSolution);
 
     bsearchuntilfirstsolution = bSearchUntilFirstSolution;
 
@@ -1456,15 +1446,15 @@ AAState *AAPlanner::ChooseOneSuccs_for_TargetMove(AAState *state, AASearchStateS
         state->SuccsCostV[i] = CostV[i];
     }
 
-//printf("2. in Choose_OneSuccs_for_TargetMove,  SuccIDV.size() == %d \n", SuccIDV.size());
+//SBPL_DEBUG("2. in Choose_OneSuccs_for_TargetMove,  SuccIDV.size() == %d \n", SuccIDV.size());
 
 
 // 2 generate a random number among all succerssors
     rand_succ = rand() % ((int)state->succ_num) ;
 
 #ifdef XIAOXUN_DEBUG
-    printf("3. in Choose_OneSuccs_for_TargetMove,  rand_succ == %d \n", rand_succ);
-    fprintf(fDeb, "new goal move cost == %d,    \n", state->SuccsCostV[rand_succ]);
+    SBPL_DEBUG("3. in Choose_OneSuccs_for_TargetMove,  rand_succ == %d \n", rand_succ);
+    SBPL_FPRINTF(fDeb, "new goal move cost == %d,    \n", state->SuccsCostV[rand_succ]);
 #endif
 
     CMDPSTATE *SuccMDPState = GetState(state->SuccsIDV[rand_succ], pSearchStateSpace);
@@ -1481,7 +1471,7 @@ AAState *AAPlanner::ChooseOneSuccs_for_TargetMove(AAState *state, AASearchStateS
         if (F_succstate->bestpredstate == NULL) {
             F_succstate->callnumberaccessed = 0;
 #ifdef XIAOXUN_DEBUG
-            fprintf(fDeb, "post processing here once, for  Choose_OneSuccs_for_TargetMove, i == [%d] \n", i);
+            SBPL_FPRINTF(fDeb, "post processing here once, for  Choose_OneSuccs_for_TargetMove, i == [%d] \n", i);
 #endif
         }
     }
@@ -1535,17 +1525,17 @@ int AAPlanner::ReSetSearchGoalState(int SearchGoalStateID, AASearchStateSpace_t 
 //function 3:
 int AAPlanner::reset_goal(int goal_stateID) {
 #ifdef XIAOXUN_DEBUG
-    printf("planner: resetting goal to %d\n", goal_stateID);
+    SBPL_DEBUG("planner: resetting goal to %d\n", goal_stateID);
 //  environment_->PrintState(goal_stateID, true, stdout);
 #endif
 
     if (bforwardsearch) { //Xiaoxun 1: if search forward
         if (ReSetSearchGoalState(goal_stateID, pSearchStateSpace_) != 1) {
-            printf("ERROR: failed to set search goal state\n");
+            SBPL_ERROR("ERROR: failed to set search goal state\n");
             return 0;
         }
     } else { // reverse
-        printf("___error__AA* can only search forwards____________\n");
+        SBPL_ERROR("___error__AA* can only search forwards____________\n");
         exit(0);
     }
 
@@ -1573,11 +1563,12 @@ int AAPlanner::goal_moved(AASearchStateSpace_t *pSearchStateSpace) {
 
 ////////////////////////////////////////////////////////////////////////////////////
 //2010.02.28
+// FFS...
 
     target_move_cost = GetTargetMoveCost(oldsearchgoalstate, newsearchgoalstate, pSearchStateSpace);
     pSearchStateSpace->target_movecost_testcase += target_move_cost;
 
-    printf("target move cost == %d \n", target_move_cost);
+    SBPL_DEBUG("target move cost == %d \n", target_move_cost);
 //      pSearchStateSpace->target_movecost_testcase += GetTargetMoveCost(oldsearchgoalstate, newsearchgoalstate, pSearchStateSpace);
 ////////////////////////////////////////////////////////////////////////////////////
 
@@ -1640,13 +1631,13 @@ int AAPlanner::ReSetSearchStartState(int SearchStartStateID, AASearchStateSpace_
 //Xiaoxun: set the start_state
 int AAPlanner::reset_start(int start_stateID) {
 #ifdef XIAOXUN_DEBUG
-    printf("AA planner: re-setting start to STATEID = [%d]\n", start_stateID);
+    SBPL_DEBUG("AA planner: re-setting start to STATEID = [%d]\n", start_stateID);
     environment_->PrintState(start_stateID, true, stdout);
 #endif
 
 
     if (ReSetSearchStartState(start_stateID, pSearchStateSpace_) != 1) {
-        printf("ERROR: failed to set search start state\n");
+        SBPL_ERROR("ERROR: failed to set search start state\n");
         return 0;
     }
 
@@ -1693,13 +1684,13 @@ int AAPlanner::start_moved(AASearchStateSpace_t *pSearchStateSpace) {
 #endif
 #endif
 
-    printf(" -hunter cost = %d ", movecost);
+    SBPL_DEBUG(" -hunter cost = %d ", movecost);
 
     reset_start(newsearchstartstate->MDPstate->StateID); // set new start state for the (ps) search space
 
 
 #ifdef XIAOXUN_DEBUG
-    printf("______robot moved, show the information of old and new start \n");
+    SBPL_DEBUG("______robot moved, show the information of old and new start \n");
     environment_->PrintState(oldsearchstartstate->MDPstate->StateID, true, stdout);
     environment_->PrintState(newsearchstartstate->MDPstate->StateID, true, stdout);
 #endif
@@ -1882,8 +1873,8 @@ void AAPlanner::Reset_New_Test_Case(AASearchStateSpace_t *pSearchStateSpace) {
 
 
 #ifdef XIAOXUN_DEBUG
-    printf("When Rest_New_Test_Case_______________________\n");
-    fprintf(fDeb, "When Rest_New_Test_Case_______________________\n");
+    SBPL_DEBUG("When Rest_New_Test_Case_______________________\n");
+    SBPL_FPRINTF(fDeb, "When Rest_New_Test_Case_______________________\n");
     environment_->PrintState(newstart_id, true, fDeb);
     environment_->PrintState(newgoal_id,  true, fDeb);
 #endif
@@ -1924,8 +1915,8 @@ void AAPlanner::ReInitializeNewSearch(AASearchStateSpace_t *pSearchStateSpace) {
     CKey key;
 
 #ifdef XIAOXUN_DEBUG
-    printf("call ReInitialize_NewSearch, after [%d]-th search \n", pSearchStateSpace->searchiteration);
-    fprintf(fDeb, "call ReInitialize_NewSearch, after [%d]-th search \n", pSearchStateSpace->searchiteration);
+    SBPL_DEBUG("call ReInitialize_NewSearch, after [%d]-th search \n", pSearchStateSpace->searchiteration);
+    SBPL_FPRINTF(fDeb, "call ReInitialize_NewSearch, after [%d]-th search \n", pSearchStateSpace->searchiteration);
 #endif
 
 
@@ -2031,7 +2022,7 @@ int AAPlanner::GetMoveCost(AAState *state, AASearchStateSpace_t *pSearchStateSpa
 
 
 #ifdef REVERSE
-    printf("state->pred_num  == %d \n", state->pred_num);
+    SBPL_DEBUG("state->pred_num  == %d \n", state->pred_num);
 
 
     for (int sind = 0; sind < state->pred_num; sind++) {
@@ -2055,7 +2046,7 @@ int AAPlanner::GetMoveCost(AAState *state, AASearchStateSpace_t *pSearchStateSpa
 
 #endif
 
-//  printf("actioncost == %d \n",actioncost);
+//  SBPL_DEBUG("actioncost == %d \n",actioncost);
 
     return actioncost;
 }

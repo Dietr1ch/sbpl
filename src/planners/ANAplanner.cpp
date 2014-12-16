@@ -369,13 +369,13 @@ int anaPlanner::ImprovePath(anaSearchStateSpace_t* pSearchStateSpace, double Max
         }
 
 #if DEBUG
-        //fprintf(fDeb, "expanding state(%d): h=%d g=%u key=%u v=%u iterc=%d callnuma=%d expands=%d (g(goal)=%u)\n",
+        //SBPL_FPRINTF(fDeb, "expanding state(%d): h=%d g=%u key=%u v=%u iterc=%d callnuma=%d expands=%d (g(goal)=%u)\n",
         //	state->MDPstate->StateID, state->h, state->g, state->g+(int)(pSearchStateSpace->eps*state->h), state->v,
         //	state->iterationclosed, state->callnumberaccessed, state->numofexpands, searchgoalstate->g);
-        //fprintf(fDeb, "expanding: ");
+        //SBPL_FPRINTF(fDeb, "expanding: ");
         //PrintSearchState(state, fDeb);
         if (state->listelem[ana_INCONS_LIST_ID] != NULL) {
-            fprintf(fDeb, "ERROR: expanding a state from inconslist\n");
+            SBPL_FPRINTF(fDeb, "ERROR: expanding a state from inconslist\n");
             printf("ERROR: expanding a state from inconslist\n");
             exit(1);
         }
@@ -393,7 +393,7 @@ int anaPlanner::ImprovePath(anaSearchStateSpace_t* pSearchStateSpace, double Max
         if (state->v == state->g) {
             printf("ERROR: consistent state is being expanded\n");
 #if DEBUG
-            fprintf(fDeb, "ERROR: consistent state is being expanded\n");
+            SBPL_FPRINTF(fDeb, "ERROR: consistent state is being expanded\n");
             exit(1);
 #endif
         }
@@ -448,7 +448,7 @@ int anaPlanner::ImprovePath(anaSearchStateSpace_t* pSearchStateSpace, double Max
         retv = 3;
     }
 
-    //fprintf(fDeb, "expanded=%d\n", expands);
+    //SBPL_FPRINTF(fDeb, "expanded=%d\n", expands);
 
     searchexpands += expands;
 
@@ -552,7 +552,7 @@ void anaPlanner::ReInitializeSearchStateSpace(anaSearchStateSpace_t* pSearchStat
     pSearchStateSpace->G = INFINITECOST;
 
 #if DEBUG
-    fprintf(fDeb, "reinitializing search state-space (new call number=%d search iter=%d)\n",
+    SBPL_FPRINTF(fDeb, "reinitializing search state-space (new call number=%d search iter=%d)\n",
         pSearchStateSpace->callnumber,pSearchStateSpace->searchiteration );
 #endif
 
@@ -658,7 +658,7 @@ int anaPlanner::ReconstructPath(anaSearchStateSpace_t* pSearchStateSpace)
         anaState *predstateinfo, *stateinfo;
 
 #if DEBUG
-        fprintf(fDeb, "reconstructing a path:\n");
+        SBPL_FPRINTF(fDeb, "reconstructing a path:\n");
 #endif
 
         while (MDPstate != pSearchStateSpace->searchstartstate) {
@@ -719,29 +719,29 @@ void anaPlanner::PrintSearchPath(anaSearchStateSpace_t* pSearchStateSpace, FILE*
 
     PathCost = ((anaState*)pSearchStateSpace->searchgoalstate->PlannerSpecificData)->g;
 
-    fprintf(fOut, "Printing a path from state %d to the goal state %d\n", state->StateID,
+    SBPL_FPRINTF(fOut, "Printing a path from state %d to the goal state %d\n", state->StateID,
             pSearchStateSpace->searchgoalstate->StateID);
-    fprintf(fOut, "Path cost = %d:\n", PathCost);
+    SBPL_FPRINTF(fOut, "Path cost = %d:\n", PathCost);
 
     environment_->PrintState(state->StateID, false, fOut);
 
     int costFromStart = 0;
     while (state->StateID != goalID) {
-        fprintf(fOut, "state %d ", state->StateID);
+        SBPL_FPRINTF(fOut, "state %d ", state->StateID);
 
         if (state->PlannerSpecificData == NULL) {
-            fprintf(fOut, "path does not exist since search data does not exist\n");
+            SBPL_FPRINTF(fOut, "path does not exist since search data does not exist\n");
             break;
         }
 
         searchstateinfo = (anaState*)state->PlannerSpecificData;
 
         if (searchstateinfo->bestnextstate == NULL) {
-            fprintf(fOut, "path does not exist since bestnextstate == NULL\n");
+            SBPL_FPRINTF(fOut, "path does not exist since bestnextstate == NULL\n");
             break;
         }
         if (searchstateinfo->g == INFINITECOST) {
-            fprintf(fOut, "path does not exist since bestnextstate == NULL\n");
+            SBPL_FPRINTF(fOut, "path does not exist since bestnextstate == NULL\n");
             break;
         }
 
@@ -751,7 +751,7 @@ void anaPlanner::PrintSearchPath(anaSearchStateSpace_t* pSearchStateSpace, FILE*
 
         costFromStart += transcost;
 
-        fprintf(fOut, "g=%d-->state %d, h = %d ctg = %d  ", searchstateinfo->g,
+        SBPL_FPRINTF(fOut, "g=%d-->state %d, h = %d ctg = %d  ", searchstateinfo->g,
                 searchstateinfo->bestnextstate->StateID, searchstateinfo->h, costToGoal);
 
         state = searchstateinfo->bestnextstate;
@@ -762,7 +762,7 @@ void anaPlanner::PrintSearchPath(anaSearchStateSpace_t* pSearchStateSpace, FILE*
 
 void anaPlanner::PrintSearchState(anaState* state, FILE* fOut)
 {
-    fprintf(fOut, "state %d: h=%d g=%u v=%u iterc=%d callnuma=%d expands=%d heapind=%d inconslist=%d\n",
+    SBPL_FPRINTF(fOut, "state %d: h=%d g=%u v=%u iterc=%d callnuma=%d expands=%d heapind=%d inconslist=%d\n",
             state->MDPstate->StateID, state->h, state->g, state->v, state->iterationclosed, state->callnumberaccessed,
             state->numofexpands, state->heapindex, state->listelem[ana_INCONS_LIST_ID] ? 1 : 0);
     environment_->PrintState(state->MDPstate->StateID, true, fOut);
@@ -805,18 +805,18 @@ vector<int> anaPlanner::GetSearchPath(anaSearchStateSpace_t* pSearchStateSpace, 
     FILE* fOut = stdout;
     while (state->StateID != goalstate->StateID) {
         if (state->PlannerSpecificData == NULL) {
-            fprintf(fOut, "path does not exist since search data does not exist\n");
+            SBPL_FPRINTF(fOut, "path does not exist since search data does not exist\n");
             break;
         }
 
         searchstateinfo = (anaState*)state->PlannerSpecificData;
 
         if (searchstateinfo->bestnextstate == NULL) {
-            fprintf(fOut, "path does not exist since bestnextstate == NULL\n");
+            SBPL_FPRINTF(fOut, "path does not exist since bestnextstate == NULL\n");
             break;
         }
         if (searchstateinfo->g == INFINITECOST) {
-            fprintf(fOut, "path does not exist since bestnextstate == NULL\n");
+            SBPL_FPRINTF(fOut, "path does not exist since bestnextstate == NULL\n");
             break;
         }
 
@@ -831,7 +831,7 @@ vector<int> anaPlanner::GetSearchPath(anaSearchStateSpace_t* pSearchStateSpace, 
 
         solcost += actioncost;
 
-        //fprintf(fDeb, "actioncost=%d between states %d and %d\n",
+        //SBPL_FPRINTF(fDeb, "actioncost=%d between states %d and %d\n",
         //        actioncost, state->StateID, searchstateinfo->bestnextstate->StateID);
         //environment_->PrintState(state->StateID, false, fDeb);
         //environment_->PrintState(searchstateinfo->bestnextstate->StateID, false, fDeb);
@@ -840,7 +840,7 @@ vector<int> anaPlanner::GetSearchPath(anaSearchStateSpace_t* pSearchStateSpace, 
         anaState* nextstateinfo = (anaState*)(searchstateinfo->bestnextstate->PlannerSpecificData);
         if(actioncost != abs((int)(searchstateinfo->g - nextstateinfo->g)) && pSearchStateSpace->eps_satisfied <= 1.001)
         {
-            fprintf(fDeb, "ERROR: actioncost=%d is not matching the difference in g-values of %d\n",
+            SBPL_FPRINTF(fDeb, "ERROR: actioncost=%d is not matching the difference in g-values of %d\n",
                 actioncost, abs((int)(searchstateinfo->g - nextstateinfo->g)));
             printf("ERROR: actioncost=%d is not matching the difference in g-values of %d\n",
                 actioncost,abs((int)(searchstateinfo->g - nextstateinfo->g)));
@@ -865,7 +865,7 @@ bool anaPlanner::Search(anaSearchStateSpace_t* pSearchStateSpace, vector<int>& p
     searchexpands = 0;
 
 #if DEBUG
-    fprintf(fDeb, "new search call (call number=%d)\n", pSearchStateSpace->callnumber);
+    SBPL_FPRINTF(fDeb, "new search call (call number=%d)\n", pSearchStateSpace->callnumber);
 #endif
 
     if (pSearchStateSpace->bReinitializeSearchStateSpace == true) {
@@ -961,7 +961,7 @@ bool anaPlanner::Search(anaSearchStateSpace_t* pSearchStateSpace, vector<int>& p
         }
 
 #if DEBUG
-        fprintf(fDeb, "eps=%f expands=%d g(searchgoal)=%d time=%.3f\n", pSearchStateSpace->eps_satisfied, searchexpands - prevexpands,
+        SBPL_FPRINTF(fDeb, "eps=%f expands=%d g(searchgoal)=%d time=%.3f\n", pSearchStateSpace->eps_satisfied, searchexpands - prevexpands,
             ((anaState*)pSearchStateSpace->searchgoalstate->PlannerSpecificData)->g,double(clock()-loop_time)/CLOCKS_PER_SEC);
         PrintSearchState((anaState*)pSearchStateSpace->searchgoalstate->PlannerSpecificData, fDeb);
 #endif
@@ -1000,7 +1000,7 @@ bool anaPlanner::Search(anaSearchStateSpace_t* pSearchStateSpace, vector<int>& p
     printf("total expands this call = %d, planning time = %.3f secs, solution cost=%d\n", searchexpands, (clock()
         - TimeStarted) / ((double)CLOCKS_PER_SEC), solcost);
 
-    //fprintf(fStat, "%d %d\n", searchexpands, solcost);
+    //SBPL_FPRINTF(fStat, "%d %d\n", searchexpands, solcost);
 
     return ret;
 }

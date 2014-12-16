@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2008, Maxim Likhachev
  * All rights reserved.
@@ -30,9 +29,23 @@
 #ifndef __AAPLANNER_H_
 #define __AAPLANNER_H_
 
-#include "../planner.h"
+#include <sbpl/planners/planner.h>
 
-//---configuration----
+#include <time.h>
+
+// SBPL includes
+#include <sbpl/utils/mdp.h>
+#include <sbpl/utils/mdpconfig.h>
+#include <sbpl/discrete_space_information/environment.h>
+
+
+
+
+class DiscreteSpaceInformation;
+
+
+// Configuration
+// =============
 
 //control of EPS
 #define AA_DEFAULT_INITIAL_EPS      5.0
@@ -78,8 +91,7 @@ typedef class AASEARCHSTATEDATA : public AbstractSearchState {
         unsigned int costtobestnextstate;
         int h;
 
-    //Xiaoxun added this for AA* STATE:  (for optimization)
-    //Dear Xiaoxun, you might want to try git =)
+        //Xiaoxun added this for AA* STATE:  (for optimization)
         bool succs_ever_generated;
         bool preds_ever_generated;
 

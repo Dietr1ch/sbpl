@@ -31,6 +31,36 @@
 #include <cstdio>
 #include <iostream>
 #include <string>
+#include <getopt.h>
+
+
+
+
+// Macros (Maybe this should go somewhere else)
+// ======
+
+
+//Math (avoid ++, --, etc...)
+#define MAX(a,b) ( (a)>(b) ? (a):(b) )
+#define MIN(a,b) ( (a)<(b) ? (a):(b) )
+#define CAP(x,m,M) ( (x) < (m) ? (m) : (MIN((x),(M))) )
+
+//Loops
+#define LOOP while(1)
+#define UNTIL(exp) while(!(exp))
+#define SKIP(exp) if(exp) continue;
+#define ONLY(exp) if(!(exp)) continue;
+
+
+#if defined NDEBUG
+  #define TRACE(format, ...)
+#else
+  //The ## operator removes the last comma when __VA_ARGS__ is empty.
+  //http://gcc.gnu.org/onlinedocs/gcc/Variadic-Macros.html
+  #define TRACE(format, ...) fprintf(stderr, "%s::%s(%d)" format, __FILE__, __FUNCTION__,  __LINE__, ## __VA_ARGS__ )
+#endif
+
+
 
 using namespace std;
 
@@ -38,24 +68,29 @@ using namespace std;
 
 
 
+
+
+
+
+
+
 // Planners
-// --------
+// ========
 
 // Planner names
-#define PLANNER_STR_ADSTAR "adstar"
-#define PLANNER_STR_ARASTAR "arastar"
-#define PLANNER_STR_PPCP "ppcp"
-#define PLANNER_STR_RSTAR "rstar"
+#define PLANNER_STR_ADSTAR "adaptiveD*"
+#define PLANNER_STR_ARASTAR "ARA*"
+#define PLANNER_STR_PPCP "PPCP"
+#define PLANNER_STR_RSTAR "R*"
 #define PLANNER_STR_VI "vi"
-#define PLANNER_STR_ANASTAR "anastar"
+#define PLANNER_STR_ANASTAR "ANA*"
 #define PLANNER_STR_AASTAR "adaptiveA*"
 
 #define PLANNER_STR_INVALID "invalid"
 
 
 // Planner enum
-enum PlannerType
-{
+enum PlannerType {
     INVALID_PLANNER_TYPE = -1,
     PLANNER_TYPE_ADSTAR,
     PLANNER_TYPE_ARASTAR,
@@ -69,32 +104,31 @@ enum PlannerType
 };
 
 // Planner to string
-string PlannerTypeToStr(PlannerType plannerType)
-{
-    switch (plannerType) {
-    case PLANNER_TYPE_ADSTAR:
-        return string(PLANNER_STR_ADSTAR);
-    case PLANNER_TYPE_ARASTAR:
-        return string(PLANNER_STR_ARASTAR);
-    case PLANNER_TYPE_PPCP:
-        return string(PLANNER_STR_PPCP);
-    case PLANNER_TYPE_RSTAR:
-        return string(PLANNER_STR_RSTAR);
-    case PLANNER_TYPE_VI:
-        return string(PLANNER_STR_VI);
-    case PLANNER_TYPE_ANASTAR:
-        return string(PLANNER_STR_ANASTAR);
-    case PLANNER_TYPE_AASTAR:
-        return string(PLANNER_STR_AASTAR);
+string PlannerTypeToStr(PlannerType plannerType) {
 
-    default:
-        return string(PLANNER_STR_INVALID);
+    switch (plannerType) {
+        case PLANNER_TYPE_ADSTAR:
+            return string(PLANNER_STR_ADSTAR);
+        case PLANNER_TYPE_ARASTAR:
+            return string(PLANNER_STR_ARASTAR);
+        case PLANNER_TYPE_PPCP:
+            return string(PLANNER_STR_PPCP);
+        case PLANNER_TYPE_RSTAR:
+            return string(PLANNER_STR_RSTAR);
+        case PLANNER_TYPE_VI:
+            return string(PLANNER_STR_VI);
+        case PLANNER_TYPE_ANASTAR:
+            return string(PLANNER_STR_ANASTAR);
+        case PLANNER_TYPE_AASTAR:
+            return string(PLANNER_STR_AASTAR);
+
+        default:
+            return string(PLANNER_STR_INVALID);
     }
 }
 
 // String to planner
-PlannerType StrToPlannerType(const char* str)
-{
+PlannerType StrToPlannerType(const char* str) {
     if (!strcmp(str, PLANNER_STR_ADSTAR))
         return PLANNER_TYPE_ADSTAR;
     if (!strcmp(str, PLANNER_STR_ARASTAR))
@@ -114,55 +148,71 @@ PlannerType StrToPlannerType(const char* str)
 }
 
 
-// Environments
-// ------------
 
-// Environment enum
-enum EnvironmentType
-{
+
+
+
+
+
+
+
+
+
+
+// Environments
+// ============
+#define ENV_STR_2D "2D"
+#define ENV_STR_2DUU "2DUU"
+#define ENV_STR_ROBARM "RobotArm"
+#define ENV_STR_XYTHETA "X-Y-Theta"
+#define ENV_STR_XYTHETAMLEV "X-Y-Theta_mlev"
+
+#define ENV_STR_INVALID "Invalid"
+
+// Environment types
+enum EnvironmentType {
     INVALID_ENV_TYPE = -1,
     ENV_TYPE_2D,
     ENV_TYPE_2DUU,
+    ENV_TYPE_ROBARM,
     ENV_TYPE_XYTHETA,
     ENV_TYPE_XYTHETAMLEV,
-    ENV_TYPE_ROBARM,
 
     NUM_ENV_TYPES
 };
 
 // Environment to string
-string EnvironmentTypeToStr(EnvironmentType environmentType)
-{
+string EnvironmentTypeToStr(EnvironmentType environmentType) {
     switch (environmentType) {
     case ENV_TYPE_2D:
-        return string("2d");
+        return string(ENV_STR_2D);
     case ENV_TYPE_2DUU:
-        return string("2duu");
-    case ENV_TYPE_XYTHETA:
-        return string("xytheta");
-    case ENV_TYPE_XYTHETAMLEV:
-        return string("xythetamlev");
+        return string(ENV_STR_2DUU);
     case ENV_TYPE_ROBARM:
-        return string("robarm");
+        return string(ENV_STR_ROBARM);
+    case ENV_TYPE_XYTHETA:
+        return string(ENV_STR_XYTHETA);
+    case ENV_TYPE_XYTHETAMLEV:
+        return string(ENV_STR_XYTHETAMLEV);
 
     default:
-        return string("invalid");
+        return string(ENV_STR_INVALID);
     }
 }
 
 // String to Environment
-EnvironmentType StrToEnvironmentType(const char* str)
-{
-    if (!strcmp(str, "2d"))
+EnvironmentType StrToEnvironmentType(const char* str) {
+    if (!strcmp(str, ENV_STR_2D))
         return ENV_TYPE_2D;
-    if (!strcmp(str, "2duu"))
+    if (!strcmp(str, ENV_STR_2DUU))
         return ENV_TYPE_2DUU;
-    if (!strcmp(str, "xytheta"))
-        return ENV_TYPE_XYTHETA;
-    if (!strcmp(str, "xythetamlev"))
-        return ENV_TYPE_XYTHETAMLEV;
-    if (!strcmp(str, "robarm"))
+    if (!strcmp(str, ENV_STR_ROBARM))
         return ENV_TYPE_ROBARM;
+    if (!strcmp(str, ENV_STR_XYTHETA))
+        return ENV_TYPE_XYTHETA;
+    if (!strcmp(str, ENV_STR_XYTHETAMLEV))
+        return ENV_TYPE_XYTHETAMLEV;
+
 
     return INVALID_ENV_TYPE;
 }
@@ -170,8 +220,7 @@ EnvironmentType StrToEnvironmentType(const char* str)
 
 
 
-enum MainResultType
-{
+enum MainResultType {
     INVALID_MAIN_RESULT = -1,
 
     MAIN_RESULT_SUCCESS = 0,
@@ -185,147 +234,197 @@ enum MainResultType
 
 
 
-// Command line help
-// =================
-
-/******************************************************************************
- * PrintUsage - Prints the proper usage of the sbpl test executable.
- *
- * @param argv The command-line arguments; used to determine the name of the
- *             test executable.
- ******************************************************************************/
-void PrintUsage(char *argv[])
-{
-    printf("USAGE: %s [-s] [--env=<env_t>] [--planner=<planner_t>] [--search-dir=<search_t>] <cfg file> [mot prims]\n",
-           argv[0]);
-    printf("See '%s -h' for help.\n", argv[0]);
-}
-
-/******************************************************************************
- * PrintHelp - Prints a help prompt to the command line when the -h option is
- *             used.
- *
- * @param argv The command line arguments; used to determine the name of the
- *             test executable
- ******************************************************************************/
-void PrintHelp(char** argv)
-{
-    printf("\n");
-    printf("Search-Based Planning Library\n");
-    printf("\n");
-    printf("    %s -h\n", argv[0]);
-    printf("    %s [-s] [--env=<env_t>] [--planner=<planner_t>] [--search-dir=<search_t>] <env cfg> [mot prim]\n",
-           argv[0]);
-    printf("\n");
-    printf("[-s]                      (optional) Find a solution for an example navigation\n");
-    printf("                          scenario where the robot only identifies obstacles as\n");
-    printf("                          it approaches them.\n");
-    printf("[--env=<env_t>]           (optional) Select an environment type to choose what\n");
-    printf("                          example to run. The default is \"xytheta\".\n");
-    printf("<env_t>                   One of 2d, xytheta, xythetamlev, robarm.\n");
-    printf("[--planner=<planner_t>]   (optional) Select a planner to use for the example.\n");
-    printf("                          The default is \"arastar\".\n");
-    printf("<planner_t>               One of arastar, adstar, rstar, anastar.\n");
-    printf("[--search-dir=<search_t>] (optional) Select the type of search to run. The default\n");
-    printf("                          is \"backwards\".\n");
-    printf("<search_t>                One of backward, forward.\n");
-    printf("<env cfg>                 Config file representing the environment configuration.\n");
-    printf("                          See sbpl/env_examples/ for examples.\n");
-    printf("[mot prim]                (optional) Motion primitives file for x,y,theta lattice\n");
-    printf("                          planning. See sbpl/matlab/mprim/ for examples.\n");
-    printf("                          NOTE: resolution of motion primtives should match that\n");
-    printf("                              of the config file.\n");
-    printf("                          NOTE: optional use of these for x,y,theta planning is\n");
-    printf("                              deprecated.\n");
-    printf("\n");
-}
 
 
 
 
 
-// Command line arguments parsing (there are libraries for this)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Command line arguments parsing
 // ==============================
 
 
-/*******************************************************************************
- * CheckIsNavigating
- * @brief Returns whether the -s option is being used.
- *
- * @param numOptions The number of options passed through the command line
- * @param argv The command-line arguments
- * @return whether the -s option was passed in on the cmd line
- *******************************************************************************/
-bool CheckIsNavigating(int numOptions, char** argv)
-{
-    for (int i = 1; i < numOptions + 1; i++) {
-        if (strcmp(argv[i], "-s") == 0) {
-            return true;
-        }
-    }
-    return false;
+// Settings
+// --------
+
+// Random environments (defaults to no random environments)
+char *env_type     = nullptr;
+char *env_settings = nullptr;
+EnvironmentType selectedEnvironment = ENV_TYPE_2D;
+
+int env_random_start = 0;
+int env_random_count = 0;
+
+// Runs (Defaults to test run 0 only)
+int run_start = 0;
+int run_count = 1;
+
+// Output text
+char *output_raw_fileName = nullptr;
+bool  output_print_raw    = false;
+// Output sql
+char *output_sql_fileName = nullptr;
+bool  output_print_sql    = false;
+
+
+/**
+ * Prints the help  **flies away**
+ */
+//void printHelp(option *opts[]){
+void printHelp(){
+    // TODO: print help (from option[]?)
+    cout << "" << endl;
 }
 
-/*******************************************************************************
- * CheckSearchDirection -
- * @brief Returns the search direction being used
- *
- * @param numOptions The number of options passed through the command line
- * @param argv The command-line arguments
- * @return A string representing the search direction; "backward" by default
- ******************************************************************************/
-string CheckSearchDirection(int numOptions, char** argv)
-{
-    int optionLength = strlen("--search-dir=");
-    for (int i = 1; i < numOptions + 1; i++) {
-        if (strncmp("--search-dir=", argv[i], optionLength) == 0) {
-            string s(&argv[i][optionLength]);
-            return s;
+/**
+ * Parses all settings.
+ */
+int parseInput(int argc, char **argv){
+
+    // Available options
+    static struct option long_options[] = {
+    //{const char *name, (no_argument/required_argument/optional_argument), int *flag,int *val}
+
+        // Random environment type
+        {"env-type",          optional_argument, 0, 't'},
+        {"env-settings",      optional_argument, 0, 'e'},
+        // Environments to generate
+        {"env-random-count",  optional_argument, 0, 'n'},
+        {"env-random-start",  optional_argument, 0, 'N'},
+
+
+        // Search Algorithm
+        {"alg", optional_argument, 0, 'a'},
+
+
+        // Runs to test on each environment
+        {"run-count", optional_argument, 0, 'r'},
+        {"run-start", optional_argument, 0, 'R'},
+
+
+        // Output files
+        {"csv-file", optional_argument, 0, 'o'},
+        {"csv-file", optional_argument, 0, 'O'},
+        {"sql-file", optional_argument, 0, 's'},
+        {"sql-file", optional_argument, 0, 'S'},
+
+
+        // Help
+        {"help", optional_argument, 0, 'h'},
+
+        {0, 0, 0, 0}  // End of arguments
+    };
+
+
+    // Option parsing
+    opterr = 0;
+    int getopt_ret, option_index;
+    char *tail;
+
+    LOOP {
+        getopt_ret = getopt_long(
+            argc,
+            argv,
+            "t:e:n:N:a:r:R:o::O::s::S::",
+            long_options,
+            &option_index);
+
+        if (getopt_ret == -1)
+            break;
+
+        switch (getopt_ret) {
+            // Help
+            case 'h':
+                printHelp();
+                exit(0);
+
+            // Random environments
+            case 't':
+                if (!optarg || !strlen(optarg))
+                    break;
+                env_type = optarg;
+                selectedEnvironment = StrToEnvironmentType(env_type);
+                break;
+            case 'e':
+                if (!optarg || !strlen(optarg))
+                    break;
+                env_settings = optarg;
+                break;
+
+            case 'n':
+                env_random_count = strtol(optarg, &tail, 0);
+                env_random_count = MAX(env_random_count, 0);
+                break;
+            case 'N':
+                env_random_start = strtol(optarg, &tail, 0);
+                break;
+
+
+            // Runs to test on each environment
+            case 'r':
+                run_count = strtol(optarg, &tail, 0);
+                run_count = MAX(run_count, 1);
+                break;
+            case 'R':
+                run_start = strtol(optarg, &tail, 0);
+                break;
+
+
+
+             // Output files
+            case 'o':
+            case 'O':
+                if (!optarg || !strlen(optarg))
+                    break;
+                output_raw_fileName = optarg;
+                output_print_raw = 1;
+                break;
+            case 's':
+            case 'S':
+                if (!optarg || !strlen(optarg))
+                    break;
+                output_sql_fileName = optarg;
+                output_print_sql = 1;
+                break;
+
+            case 0:
+                break;
+            case '?':
+            default:
+                printf("Unknown option\n");
+                break;
         }
     }
-    return string("backward");
+
+    return 0;
 }
 
-/*******************************************************************************
- * CheckEnvironmentType
- * @brief Returns the environment being used
- *
- * @param numOptions The number of options passed through the command line
- * @param argv The command-line arguments
- * @return A string denoting the environment type; "xytheta" by default
- *******************************************************************************/
-string CheckEnvironmentType(int numOptions, char** argv)
-{
-    int optionLength = strlen("--env=");
-    for (int i = 1; i < numOptions + 1; i++) {
-        if (strncmp("--env=", argv[i], optionLength) == 0) {
-            string s(&argv[i][optionLength]);
-            return s;
-        }
-    }
-    return string("xytheta");
-}
 
-/*******************************************************************************
- * CheckPlannerType - Checks for a planner specifier passed in through the
- *                    command line. This determines what planner to run in
- *                    the example. If none is found, ARA* is assumed.
- *
- * @param numOptions The number of options passed through the command line
- * @param argv The command-line arguments
- * @return A string denoting the planner type; "arastar" by default
- ******************************************************************************/
-string CheckPlannerType(int numOptions, char** argv)
-{
-    int optionLength = strlen("--planner=");
-    for (int i = 1; i < numOptions + 1; i++) {
-        if (strncmp("--planner=", argv[i], optionLength) == 0) {
-            string s(&argv[i][optionLength]);
-            return s;
-        }
-    }
-    return string("arastar");
-}
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -341,8 +440,7 @@ string CheckPlannerType(int numOptions, char** argv)
  *                       sbpl/env_examples/nav2d/ for examples
  * @return 1 if the planner successfully found a solution; 0 otherwise
  *******************************************************************************/
-int plan2d(PlannerType plannerType, char* envCfgFilename, bool forwardSearch)
-{
+int plan2d(PlannerType plannerType, char* envCfgFilename, bool forwardSearch) {
     int bRet = 0;
     double allocated_time_secs = 100.0; // in seconds
     double initialEpsilon = 3.0;
@@ -451,8 +549,7 @@ int plan2d(PlannerType plannerType, char* envCfgFilename, bool forwardSearch)
  *                       sbpl/env_examples/nav2duu/ for examples
  * @return 1 if the planner successfully found a solution; 0 otherwise
  *******************************************************************************/
-int plan2duu(PlannerType plannerType, char* envCfgFilename)
-{
+int plan2duu(PlannerType plannerType, char* envCfgFilename) {
     int bRet = 0;
     double allocated_time_secs = 10.0; //in seconds
     MDPConfig MDPCfg;
@@ -514,8 +611,7 @@ int plan2duu(PlannerType plannerType, char* envCfgFilename)
  *                        sbpl/matlab/mprim/ for examples
  * @return 1 if the planner successfully found a solution; 0 otherwise
  *******************************************************************************/
-int planxythetalat(PlannerType plannerType, char* envCfgFilename, char* motPrimFilename, bool forwardSearch)
-{
+int planxythetalat(PlannerType plannerType, char* envCfgFilename, char* motPrimFilename, bool forwardSearch) {
     int bRet = 0;
     double allocated_time_secs = 10.0; // in seconds
     double initialEpsilon = 3.0;
@@ -667,8 +763,7 @@ int planxythetalat(PlannerType plannerType, char* envCfgFilename, char* motPrimF
  *                        sbpl/matlab/mprim/ for examples
  * @return 1 if the planner successfully found a solution; 0 otherwise
  *******************************************************************************/
-int planxythetamlevlat(PlannerType plannerType, char* envCfgFilename, char* motPrimFilename, bool forwardSearch)
-{
+int planxythetamlevlat(PlannerType plannerType, char* envCfgFilename, char* motPrimFilename, bool forwardSearch) {
     int bRet = 0;
 
     double allocated_time_secs = 10.0; //in seconds
@@ -731,11 +826,11 @@ int planxythetamlevlat(PlannerType plannerType, char* envCfgFilename, char* motP
     unsigned char cost_inscribed_thresh_addlevels[2]; //size should be at least numofaddlevels
     unsigned char cost_possibly_circumscribed_thresh_addlevels[2]; //size should be at least numofaddlevels
     //no costs are indicative of whether a cell is within inner circle
-    cost_inscribed_thresh_addlevels[0] = 255; 
+    cost_inscribed_thresh_addlevels[0] = 255;
     //no costs are indicative of whether a cell is within outer circle
-    cost_possibly_circumscribed_thresh_addlevels[0] = 0; 
+    cost_possibly_circumscribed_thresh_addlevels[0] = 0;
     //no costs are indicative of whether a cell is within inner circle
-    cost_inscribed_thresh_addlevels[1] = 255; 
+    cost_inscribed_thresh_addlevels[1] = 255;
     //no costs are indicative of whether a cell is within outer circle
     cost_possibly_circumscribed_thresh_addlevels[1] = 0;
     if (!environment_navxythetalat.InitializeAdditionalLevels(numofaddlevels, perimeterptsVV,
@@ -857,8 +952,7 @@ int planxythetamlevlat(PlannerType plannerType, char* envCfgFilename, char* motP
  * @param envCfgFilename The environment config file. See
  *                       sbpl/env_examples/nav2d/ for examples
  *******************************************************************************/
-int planandnavigate2d(PlannerType plannerType, char* envCfgFilename)
-{
+int planandnavigate2d(PlannerType plannerType, char* envCfgFilename) {
     SBPL_DEBUG("Starting 2D planning");
 
     double allocated_time_secs_foreachplan = 0.2; //in seconds
@@ -1137,8 +1231,7 @@ int planandnavigate2d(PlannerType plannerType, char* envCfgFilename)
  * @param envCfgFilename The environment config file. See
  *                       sbpl/env_examples/nav3d/ for examples
  *******************************************************************************/
-int planandnavigatexythetalat(PlannerType plannerType, char* envCfgFilename, char* motPrimFilename, bool forwardSearch)
-{
+int planandnavigatexythetalat(PlannerType plannerType, char* envCfgFilename, char* motPrimFilename, bool forwardSearch) {
     double allocated_time_secs_foreachplan = 10.0; // in seconds
     double initialEpsilon = 3.0;
     bool bsearchuntilfirstsolution = false;
@@ -1395,7 +1488,7 @@ int planandnavigatexythetalat(PlannerType plannerType, char* envCfgFilename, cha
                 environment_navxythetalat.GetPredsofChangedEdges(&changedcellsV, &preds_of_changededgesIDV);
                 // let know the incremental planner about them
                 //use by AD* planner (incremental)
-                ((ADPlanner*)planner)->update_preds_of_changededges(&preds_of_changededgesIDV); 
+                ((ADPlanner*)planner)->update_preds_of_changededges(&preds_of_changededgesIDV);
                 printf("%d states were affected\n", (int)preds_of_changededgesIDV.size());
             }
         }
@@ -1527,8 +1620,7 @@ int planandnavigatexythetalat(PlannerType plannerType, char* envCfgFilename, cha
  *                       sbpl/env_examples/robarm for examples
  * @return 1 if the planner successfully found a solution; 0 otherwise
  *******************************************************************************/
-int planrobarm(PlannerType plannerType, char* envCfgFilename, bool forwardSearch)
-{
+int planrobarm(PlannerType plannerType, char* envCfgFilename, bool forwardSearch) {
     int bRet = 0;
     double allocated_time_secs = 5.0; //in seconds
     MDPConfig MDPCfg;
@@ -1620,103 +1712,15 @@ int planrobarm(PlannerType plannerType, char* envCfgFilename, bool forwardSearch
 
 
 
+
+
+
 // Main
 // ====
 
+int main(int argc, char *argv[]) {
+    parseInput(argc, argv);
 
-/*******************************************************************************
- * main - Parse command line arguments and launch one of the sbpl examples above.
- *        Launch sbpl with just the -h option for usage help.
- *
- * @param argc The number of command-line arguments
- * @param argv The command-line arguments
- *******************************************************************************/
-int main(int argc, char *argv[])
-{
-    // Print help
-    if (argc == 2 && strcmp(argv[1], "-h") == 0) {
-        PrintHelp(argv);
-        return MAIN_RESULT_SUCCESS;
-    }
-    else if (argc < 2) {
-        PrintUsage(argv);
-        return MAIN_RESULT_INSUFFICIENT_ARGS;
-    }
-
-    // Find the number of options passed in; cfg and motprim files come after all options
-    // options include any string starting with "-"
-    int numOptions = 0;
-    for (int i = 1; i < argc; i++) {
-        if (strncmp("-", argv[i], 1) == 0) {
-            numOptions++;
-        }
-        else {
-            break;
-        }
-    }
-
-    // Check command line arguments to find environment type and whether or not to
-    // use one of the navigating examples.
-    bool navigating = CheckIsNavigating(numOptions, argv);
-    string environmentType = CheckEnvironmentType(numOptions, argv);
-    string plannerType = CheckPlannerType(numOptions, argv);
-    string searchDir = CheckSearchDirection(numOptions, argv);
-
-    cout << "Environment: " << environmentType
-         << "; Planner: " << plannerType
-         << "; Search direction: " << searchDir
-         << endl;
-
-    int envArgIdx = numOptions + 1;
-    EnvironmentType environment = StrToEnvironmentType(environmentType.c_str());
-    PlannerType planner = StrToPlannerType(plannerType.c_str());
-    bool forwardSearch = !strcmp(searchDir.c_str(), "forward");
-
-    bool usingMotionPrimitives = (argc == numOptions + 3);
-    char* motPrimFilename = usingMotionPrimitives ? argv[envArgIdx + 1] : NULL;
-
-    // make sure we've been given valid a valid environment
-    if (environment == INVALID_ENV_TYPE || planner == INVALID_PLANNER_TYPE) {
-        PrintUsage(argv);
-        return MAIN_RESULT_INCORRECT_OPTIONS;
-    }
-
-
-    // Launch the correct example given the planner and an environment file.
-    int plannerRes = 0;
-    switch (environment) {
-    case ENV_TYPE_2D:
-        if (navigating) {
-            plannerRes = planandnavigate2d(planner, argv[envArgIdx]);
-        }
-        else {
-            plannerRes = plan2d(planner, argv[envArgIdx], forwardSearch);
-        }
-        break;
-    case ENV_TYPE_2DUU:
-        printf("Warning: planning in two dimensions under uncertainty is not fully implemented!\n");
-        plannerRes = plan2duu(planner, argv[envArgIdx]);
-        break;
-    case ENV_TYPE_XYTHETA:
-        if (navigating) {
-            plannerRes = planandnavigatexythetalat(planner, argv[envArgIdx], motPrimFilename, forwardSearch);
-        }
-        else {
-            plannerRes = planxythetalat(planner, argv[envArgIdx], motPrimFilename, forwardSearch);
-        }
-        break;
-    case ENV_TYPE_XYTHETAMLEV:
-        plannerRes = planxythetamlevlat(planner, argv[envArgIdx], motPrimFilename, forwardSearch);
-        break;
-    case ENV_TYPE_ROBARM:
-        plannerRes = planrobarm(planner, argv[envArgIdx], forwardSearch);
-        break;
-
-    default:
-        printf("Unsupported Environment Type...\n");
-        PrintUsage(argv);
-        return MAIN_RESULT_UNSUPPORTED_ENV;
-    }
-
-    return plannerRes == 1 ? MAIN_RESULT_SUCCESS : MAIN_RESULT_FAILURE;
+    cout << "Options parsed" << endl;
+    exit(0);
 }

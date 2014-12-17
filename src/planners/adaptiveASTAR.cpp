@@ -1846,8 +1846,8 @@ void AAPlanner::Reset_New_Test_Case(AASearchStateSpace_t *pSearchStateSpace) {
 
     srand(pSearchStateSpace->callnumber);
 
-    newstart_id = environment_->SetStart_NewTestCase(pSearchStateSpace->callnumber);
-    newgoal_id  = environment_->SetGoal_NewTestCase(pSearchStateSpace->callnumber);
+    //newstart_id = environment_->SetStart_NewTestCase(pSearchStateSpace->callnumber);
+    //newgoal_id  = environment_->SetGoal_NewTestCase(pSearchStateSpace->callnumber);
 
     pSearchStateSpace->searchstartstate = GetState(newstart_id, pSearchStateSpace);
     pSearchStateSpace->searchgoalstate  = GetState(newgoal_id,  pSearchStateSpace);

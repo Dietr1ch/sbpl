@@ -8,6 +8,14 @@ set(SBPL_PATCH_VERSION 0)
 set(SBPL_VERSION ${SBPL_MAJOR_VERSION}.${SBPL_MINOR_VERSION}.${SBPL_PATCH_VERSION})
 
 set(CMAKE_BUILD_TYPE Release)
+# set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type")
+
+# TODO: some day use more strict flags
+# set(CMAKE_CXX_FLAGS "--pedantic-errors -Wall -Wextra -Werror -ftabstop=4 -march=native -std=gnu++11 -fshow-column -ftabstop=4 -frounding-math -pipe ${FABIO_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "--pedantic-errors -Wall -ftabstop=4 -march=native -std=gnu++14 -fshow-column -ftabstop=4 -frounding-math -pipe ${FABIO_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS_DEBUG "-ggdb3 -DDEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+
 
 include_directories(src/include)
 
@@ -30,7 +38,7 @@ add_library(sbpl SHARED
   src/utils/mdp.cpp
   src/utils/utils.cpp
   src/utils/2Dgridsearch.cpp
-  src/utils/config.cpp	
+  src/utils/config.cpp
   )
 
 set(SBPL_INCLUDE_DIR "${CMAKE_INSTALL_PREFIX}/include")
@@ -62,6 +70,9 @@ install(TARGETS sbpl
 
 add_executable(test_sbpl src/test/main.cpp)
 target_link_libraries(test_sbpl sbpl)
+
+add_executable(benchmark src/test/benchmark.cpp)
+target_link_libraries(benchmark sbpl)
 
 add_executable(test_adjacency_list src/test/test_adjacency_list.cpp)
 target_link_libraries(test_adjacency_list sbpl)

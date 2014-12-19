@@ -322,7 +322,7 @@ public:
      * \brief Generates a random (start, goal) pair cheking for feasibility.
      * Used to benchmark algorithms
      */
-    virtual void generateRandomProblem(MDPConfig *cfg, int seed, int maxTries) {
+    virtual bool generateRandomProblem(MDPConfig *cfg, int seed, int maxTries) {
         SBPL_ERROR("ERROR: generateRandomProblem is not implemented for this environment!\n");
         throw new SBPL_Exception();
     };

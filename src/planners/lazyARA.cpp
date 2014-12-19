@@ -27,6 +27,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sbpl/planners/lazyARA.h>
+
+#include <sbpl/utils/key.h>
 using namespace std;
 
 LazyARAPlanner::LazyARAPlanner(DiscreteSpaceInformation* environment, bool bSearchForward) :
@@ -210,7 +212,7 @@ void LazyARAPlanner::putStateInHeap(LazyARAState* state){
   //that we know we have better costs for
   else if(!state->in_incons){
     if(print)
-      printf("put state %d in incons with state->g and state->isTrueCost=%d\n",state->id,state->g,state->isTrueCost);
+      printf("put state %d in incons with state->g=%u and state->isTrueCost=%d\n",state->id,state->g,state->isTrueCost);
     incons.push_back(state);
     state->in_incons = true;
   }
@@ -224,8 +226,8 @@ int LazyARAPlanner::ImprovePath(){
   CKey min_key = heap.getminkeyheap();
   while(!heap.emptyheap() && 
         min_key.key[0] < INFINITECOST && 
-        (goal_state->g > min_key.key[0] || !goal_state->isTrueCost) &&
-        (goal_state->v > min_key.key[0]) &&
+        (goal_state->g > (uint) min_key.key[0] || !goal_state->isTrueCost) &&
+        (goal_state->v > (uint) min_key.key[0]) &&
         !outOfTime()){
 
     //get the state		
@@ -233,7 +235,7 @@ int LazyARAPlanner::ImprovePath(){
 
     if(state->v == state->g){
       printf("ERROR: consistent state is being expanded\n");
-      printf("id=%d v=%d g=%d isTrueCost=%d lazyListSize=%lu\n",
+      printf("id=%d v=%d g=%d isTrueCost=%d lazyListSize=%u\n",
               state->id,state->v,state->g,state->isTrueCost,state->lazyList.size());
       throw new SBPL_Exception();
     }
@@ -275,7 +277,7 @@ int LazyARAPlanner::ImprovePath(){
    
   if(goal_state->g == INFINITECOST && (heap.emptyheap() || min_key.key[0] >= INFINITECOST))
     return 0;//solution does not exists
-  if(!heap.emptyheap() && goal_state->g > min_key.key[0])
+  if(!heap.emptyheap() && goal_state->g > (uint) min_key.key[0])
     return 2; //search exited because it ran out of time
   printf("search exited with a solution for eps=%.3f\n", eps);
   if(goal_state->g < goal_state->v){

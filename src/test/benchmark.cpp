@@ -1712,8 +1712,61 @@ int planrobarm(PlannerType plannerType, char* envCfgFilename, bool forwardSearch
 
 
 
+// SBPLPlanner *planner;
+// DiscreteSpaceInformation *space;
+// MDPConfig MDPCfg;
+
+SBPLPlanner* getPlanner(PlannerType plannerType, DiscreteSpaceInformation* environment, bool bforwardsearch) {
+
+    switch (plannerType) {
+        case INVALID_PLANNER_TYPE:
+            printf("ERROR: tried to build an INVALID type planner\n");
+            throw new SBPL_Exception();
+            return nullptr;
+
+        case PLANNER_TYPE_ARASTAR:
+            return new ARAPlanner(environment, bforwardsearch);
+        case PLANNER_TYPE_ADSTAR:
+            return new ADPlanner(environment, bforwardsearch);
+        case PLANNER_TYPE_RSTAR:
+            return new RSTARPlanner(environment, bforwardsearch);
+        case PLANNER_TYPE_ANASTAR:
+            return new anaPlanner(environment, bforwardsearch);
+
+        //TODO add new planners
+        case PLANNER_TYPE_AASTAR:
+        case PLANNER_TYPE_PPCP:
+        case PLANNER_TYPE_VI:
+            printf("Unimplemented planner type\n");
+            return nullptr;
+
+        default:
+            printf("Invalid planner type\n");
+            return nullptr;
+    }
+}
+
+int setStartGoal(SBPLPlanner *planner, MDPConfig *startGoal){
+    if (planner->set_start(startGoal->startstateid) == 0) {
+        printf("ERROR: failed to set start state\n");
+        throw new SBPL_Exception();
+    }
+    if (planner->set_goal(startGoal->goalstateid) == 0) {
+        printf("ERROR: failed to set goal state\n");
+        throw new SBPL_Exception();
+    }
+
+    return 0;
+}
 
 
+void loadEnvironment(DiscreteSpaceInformation *space, char* path){
+
+    if (!space->InitializeEnv(path)) {
+        printf("ERROR: InitializeEnv failed\n");
+        throw new SBPL_Exception();
+    }
+}
 
 // Main
 // ====

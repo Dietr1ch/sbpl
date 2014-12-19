@@ -30,6 +30,10 @@
 #ifndef __MDPCONFIG_H_
 #define __MDPCONFIG_H_
 
+
+/**
+ * Defines a (start, goal)  pair for some instance
+ */
 struct MDPConfig
 {
     int startstateid;

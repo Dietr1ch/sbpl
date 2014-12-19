@@ -301,6 +301,34 @@ public:
             throw new SBPL_Exception();
         }
     }
+
+
+
+
+    // Benchmarking
+    // ------------
+
+    /**
+     * \brief Generates a random environment.
+     * Used to benchmark algorithms
+     */
+    virtual void generateRandomEnvironment(int seed) {
+        // TODO: this should take more parameters
+        SBPL_ERROR("ERROR: generateRandomEnvironment is not implemented for this environment!\n");
+        throw new SBPL_Exception();
+    };
+
+    /**
+     * \brief Generates a random (start, goal) pair cheking for feasibility.
+     * Used to benchmark algorithms
+     */
+    virtual void generateRandomProblem(MDPConfig *cfg, int seed, int maxTries) {
+        SBPL_ERROR("ERROR: generateRandomProblem is not implemented for this environment!\n");
+        throw new SBPL_Exception();
+    };
+
+    // TODO: Expose Sensor updates
+
 };
 
 #endif

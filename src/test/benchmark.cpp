@@ -265,7 +265,7 @@ enum MainResultType {
 // Planner
 char *planner_type     = nullptr;
 char *planner_settings = nullptr;
-PlannerType selectedPlanner = INVALID_PLANNER_TYPE;
+PlannerType selectedPlanner = PLANNER_TYPE_AASTAR;
 // Random environments (defaults to no random environments)
 char *env_type     = nullptr;
 char *env_settings = nullptr;
@@ -303,9 +303,12 @@ void printHelp(){
  */
 int parseInput(int argc, char **argv){
 
+
     // Available options
+    // =================
     static struct option long_options[] = {
-    //{const char *name, (no_argument/required_argument/optional_argument), int *flag,int *val}
+    //  {name, (no_argument/required_argument/optional_argument), int *flag, val}
+
         // Planner settings
         {"planner",           optional_argument, 0, 'p'},
         {"planner-settings",  optional_argument, 0, 'P'},
@@ -341,11 +344,11 @@ int parseInput(int argc, char **argv){
     };
 
 
-    // Option parsing
+    // Parsing loop
+    // ============
     opterr = 0;
     int getopt_ret, option_index;
     char *tail;
-
     LOOP {
         getopt_ret = getopt_long(
             argc,
@@ -428,12 +431,15 @@ int parseInput(int argc, char **argv){
             case '?':
             default:
                 printf("Unknown option\n");
-                break;
+                return 10;
         }
     }
 
+    // Post Parsing
+    // ============
     env_random_end = env_random_start + env_random_count;
     run_end = run_start + run_count;
+
 
     return 0;
 }
@@ -1738,6 +1744,7 @@ int planrobarm(PlannerType plannerType, char* envCfgFilename, bool forwardSearch
 
 SBPLPlanner* getPlanner(PlannerType plannerType, DiscreteSpaceInformation* environment, bool bforwardsearch) {
 
+    printf("Creating Planner\n");
     switch (plannerType) {
         case INVALID_PLANNER_TYPE:
             printf("ERROR: tried to build an INVALID type planner\n");
@@ -1752,16 +1759,38 @@ SBPLPlanner* getPlanner(PlannerType plannerType, DiscreteSpaceInformation* envir
             return new RSTARPlanner(environment, bforwardsearch);
         case PLANNER_TYPE_ANASTAR:
             return new anaPlanner(environment, bforwardsearch);
+        case PLANNER_TYPE_AASTAR:
+            printf("Creating AAPlanner\n");
+            return new AAPlanner(environment, bforwardsearch);
 
         //TODO add new planners
-        case PLANNER_TYPE_AASTAR:
         case PLANNER_TYPE_PPCP:
         case PLANNER_TYPE_VI:
-            printf("Unimplemented planner type\n");
-            return nullptr;
-
         default:
             printf("Invalid planner type\n");
+            throw new SBPL_Exception();
+            return nullptr;
+    }
+}
+
+DiscreteSpaceInformation* getSearchSpace(EnvironmentType environmentType){
+    switch(environmentType){
+        case INVALID_ENV_TYPE:
+            printf("ERROR: tried to build an INVALID type environment\n");
+            throw new SBPL_Exception();
+            return nullptr;
+
+        case ENV_TYPE_2D:{
+            auto env = new EnvironmentNAV2D();
+            return env;
+        }
+        case ENV_TYPE_2DUU:
+        case ENV_TYPE_ROBARM:
+        case ENV_TYPE_XYTHETA:
+        case ENV_TYPE_XYTHETAMLEV:
+        default:
+            printf("Environment type not yet exposed\n");
+            throw new SBPL_Exception();
             return nullptr;
     }
 }
@@ -1794,49 +1823,69 @@ void loadEnvironment(DiscreteSpaceInformation *space, char* path){
 
 // Main
 // ====
-
+#include <random>
+// TODO: these options should be set on _parseInput_
 double givenSeconds;
 double givenTime;
+bool backwardSearch = true;
 int main(int argc, char *argv[]) {
 
-    parseInput(argc, argv);
+    if(parseInput(argc, argv))
+        exit(1);
 
-    cout << "Options parsed" << endl;
-    // TODO: list selected options on debug mode
-    exit(0);
+    cout << "Options parsed:" << endl;
 
-    // benchmark
+    cout << "  Environment:         " << EnvironmentTypeToStr(selectedEnvironment) << endl;
+    cout << "  Planner:             " << PlannerTypeToStr(selectedPlanner) << endl;
+    cout << "  Random environments: " << "[" << env_random_start << ", " << env_random_end << ")" << endl;
+    cout << "  Runs:                " << "[" << run_start << ", " << run_end << ")" << endl;
+
+
+    // Benchmark
     // =========
+
+    if(selectedEnvironment == INVALID_ENV_TYPE) {
+        printf("No environment selected\n");
+        exit(2);
+    }
 
     // Random environments
     // -------------------
-    int env_random_end = env_random_start + env_random_count;
-    int run_end = run_start + run_count;
+    for(int env_id=env_random_start; env_id < env_random_end; env_id++){
+        // Initialize environment
+        // TODO: Use _env_settings_
+        printf("Building Environment...");fflush(stdout);
+        DiscreteSpaceInformation *env = getSearchSpace(selectedEnvironment);
+        env->generateRandomEnvironment(env_id);
+        printf("Done!\n");
 
-    if(selectedEnvironment != INVALID_ENV_TYPE)
-        for(int env_id=env_random_start; env_id < env_random_end; env_id++){
-            // Initialize environment
-            DiscreteSpaceInformation *env;
-            env->generateRandomEnvironment(env_id);
+        // Initialize planner (for this environment :/).
+        // TODO: planners should be able to swap environments and cfgs
+        // TODO: Use _planner_settings_
+        printf("Building Planner...");fflush(stdout);
+        SBPLPlanner *planner = getPlanner(selectedPlanner, env, !backwardSearch);
+        printf("Done!\n");
 
-            // Initialize planner (for this environment :/).
-            // TODO: planners should be able to swap environments and cfgs
-            SBPLPlanner *planner = getPlanner(selectedPlanner, env, false);
+        for(int run_id = run_start; run_id<run_end; run_id++){
+            printf("Run %d:\n", run_id);
+            MDPConfig startGoal;
+            if(env->generateRandomProblem(&startGoal, run_id, maxTries)){
+                // Config
+                setStartGoal(planner, &startGoal);
 
-            for(int run_id = run_start; run_id<run_end; run_id++){
-                MDPConfig startGoal;
-                if(env->generateRandomProblem(&startGoal, run_id, maxTries)){
-                    // Config
-                    // ======
-                    setStartGoal(planner, &startGoal);
-
-                    // Planning
-                    // ========
-                    vector<int> pathIDs;
-                    int retCode = planner->replan(givenTime, &pathIDs);
-                }
+                // Planning
+                // TODO: allow testing multiple planner configurations (weight, lookahead, etc..)
+                vector<int> pathIDs;
+                int retCode = planner->replan(givenTime, &pathIDs);
+                printf("%d\n", retCode);
             }
+            else
+                printf("  Skipping run %d. No problem instance could be generated\n",
+                       run_id);
         }
+
+        // TODO: dispose planner and environment resources
+    }
 
     // Given environments
     // ------------------

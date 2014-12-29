@@ -7,8 +7,8 @@ set(SBPL_MINOR_VERSION 2)
 set(SBPL_PATCH_VERSION 0)
 set(SBPL_VERSION ${SBPL_MAJOR_VERSION}.${SBPL_MINOR_VERSION}.${SBPL_PATCH_VERSION})
 
-set(CMAKE_BUILD_TYPE Release)
-# set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type")
+# set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type")
 
 # TODO: some day use more strict flags
 # set(CMAKE_CXX_FLAGS "--pedantic-errors -Wall -Wextra -Werror -ftabstop=4 -march=native -std=gnu++11 -fshow-column -ftabstop=4 -frounding-math -pipe ${FABIO_CXX_FLAGS}")

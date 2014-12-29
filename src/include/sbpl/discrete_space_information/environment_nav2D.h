@@ -45,12 +45,21 @@ class MDPConfig;
 //configuration parameters
 typedef struct ENV_NAV2D_CONFIG
 {
+    // Map width
     int EnvWidth_c;
+    // Map height
     int EnvHeight_c;
+
+    // Default starting x coordinate
     int StartX_c;
+    // Default starting y coordinate
     int StartY_c;
+
+    // Default goal x coordinate
     int EndX_c;
+    // Default goal y coordinate
     int EndY_c;
+
     unsigned char** Grid2D;
     //the value at which and above which cells are obstacles in the maps sent from outside
     //the default is defined above
@@ -364,6 +373,7 @@ protected:
 
     virtual void PrintHashTableHist();
 
+    virtual EnvNAV2DHashEntry_t* safeGetHashEntry(int X, int Y);
     virtual EnvNAV2DHashEntry_t* GetHashEntry(int X, int Y);
 
     virtual EnvNAV2DHashEntry_t* CreateNewHashEntry(int X, int Y);
@@ -375,6 +385,11 @@ protected:
     virtual bool IsValidCell(int X, int Y);
 
     virtual void Computedxy();
+
+
+public:
+    virtual void generateRandomEnvironment(int seed);
+    virtual bool generateRandomProblem(MDPConfig *cfg, int seed, int maxTries);
 };
 
 #endif

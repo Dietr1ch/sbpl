@@ -29,6 +29,7 @@
 #ifndef __AAPLANNER_H_
 #define __AAPLANNER_H_
 
+using namespace std;
 #include <sbpl/planners/planner.h>
 
 #include <time.h>

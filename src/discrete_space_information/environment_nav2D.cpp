@@ -31,6 +31,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <random>
 #include <sbpl/discrete_space_information/environment_nav2D.h>
 #include <sbpl/planners/planner.h>
 #include <sbpl/utils/mdp.h>
@@ -1312,3 +1313,61 @@ void EnvironmentNAV2D::GetRandomPredsatDistance(int TargetStateID, std::vector<i
 }
 
 //------------------------------------------------------------------------------
+
+EnvNAV2DHashEntry_t* EnvironmentNAV2D::safeGetHashEntry(int x, int y){
+    auto HashEntry = GetHashEntry(x, y);
+    if (!HashEntry)
+        HashEntry = CreateNewHashEntry(x, y);
+    return HashEntry;
+}
+
+void EnvironmentNAV2D::generateRandomEnvironment(int seed){
+    // Configuration
+    double obstacleDensity = 0.3;
+
+    // Start random generator engine
+    std::default_random_engine g;
+    g.seed(seed);
+
+    // Define distributions to use
+    std::binomial_distribution<int> obstacle(1, obstacleDensity);
+
+    // TODO: review grid allocation
+
+    // FIXME: EnvNAV2DCfg must be set
+    // Allocate the 2D environment
+    EnvNAV2DCfg.Grid2D = new unsigned char*[EnvNAV2DCfg.EnvWidth_c];
+    for (int x = 0; x < EnvNAV2DCfg.EnvWidth_c; x++)
+        EnvNAV2DCfg.Grid2D[x] = new unsigned char[EnvNAV2DCfg.EnvHeight_c];
+
+    // Fill obstacles
+    for (int y = 0; y < EnvNAV2DCfg.EnvHeight_c; y++)
+        for (int x = 0; x < EnvNAV2DCfg.EnvWidth_c; x++)
+            EnvNAV2DCfg.Grid2D[x][y] = obstacle(g);
+}
+bool EnvironmentNAV2D::generateRandomProblem(MDPConfig *cfg, int seed, int maxTries) {
+    printf("Generating new search instance\n");
+    // Start random generator engine
+    std::default_random_engine g;
+    g.seed(seed);
+
+    // Define distributions to use
+    std::uniform_int_distribution<int> X(0, EnvNAV2DCfg.EnvWidth_c-1);
+    std::uniform_int_distribution<int> Y(0, EnvNAV2DCfg.EnvHeight_c-1);
+
+    for(int t=0; t<maxTries; t++){
+        auto start = safeGetHashEntry(X(g), Y(g));
+        auto goal = safeGetHashEntry(X(g), Y(g));
+        cfg->startstateid = start->stateID;
+        cfg->goalstateid = goal->stateID;
+
+        // TODO: test reachability
+        bool reachable = true;
+        if(reachable)
+            return true;
+    }
+
+    cfg->startstateid = 0;
+    cfg->goalstateid = 0;
+    return false;
+}

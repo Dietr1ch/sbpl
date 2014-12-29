@@ -313,6 +313,7 @@ public:
      * Used to benchmark algorithms
      */
     virtual void generateRandomEnvironment(int seed) {
+        // TODO: this should allocate the resources
         // TODO: this should take more parameters
         SBPL_ERROR("ERROR: generateRandomEnvironment is not implemented for this environment!\n");
         throw new SBPL_Exception();

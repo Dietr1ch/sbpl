@@ -57,6 +57,7 @@ using namespace std;
 
 AAPlanner::AAPlanner(DiscreteSpaceInformation *environment, bool bSearchForward) {
     SBPL_DEBUG("call AAstar constructor_________________________\n");
+    printf("AAPlanner(%p, bool)\n", environment);
 
     bforwardsearch = bSearchForward;
     environment_ = environment;
@@ -77,10 +78,15 @@ AAPlanner::AAPlanner(DiscreteSpaceInformation *environment, bool bSearchForward)
         SBPL_ERROR("ERROR: failed to create the state space\n");
         return;
     }
+    else
+        SBPL_DEBUG("Search Space created\n");
+
     if (InitializeSearchStateSpace(pSearchStateSpace_) != 1) {
         SBPL_ERROR("ERROR: failed to initialise the state space\n");
         return;
     }
+    else
+        SBPL_DEBUG("Search Space initialised\n");
 }
 
 AAPlanner::~AAPlanner() {

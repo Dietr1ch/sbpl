@@ -363,6 +363,7 @@ int AAPlanner::ImprovePath(AASearchStateSpace_t *pSearchStateSpace, double MaxNu
 
 
 
+// ...
 #else // forward search __________________(2)__________________________________________________________________
 
     //Xiaoxun 1: set goal state and get the   (goalkey)
@@ -393,8 +394,8 @@ int AAPlanner::ImprovePath(AASearchStateSpace_t *pSearchStateSpace, double MaxNu
                     state->MDPstate->StateID, state->h, state->g, state->g + (int)(pSearchStateSpace->eps * state->h),
                     state->iterationclosed, state->callnumberaccessed, state->numofexpands, searchgoalstate->g);
 
-//      SBPL_FPRINTF(fDeb, "expanding: ");
-//      PrintSearchState(state, fDeb);
+//        SBPL_FPRINTF(fDeb, "expanding: ");
+//        PrintSearchState(state, fDeb);
         fflush(fDeb);
 #endif
 
@@ -1740,6 +1741,7 @@ void AAPlanner::UpdateSuccs(AAState *state, AASearchStateSpace_t *pSearchStateSp
 
     state->succ_num = (int)SuccIDV.size();
 
+    // REVIEW: state->SuccsIDV seems empty
     for (int i = 0; i < state->succ_num; i++) {
         state->SuccsIDV[i] = SuccIDV[i];
         state->SuccsCostV[i] = CostV[i];

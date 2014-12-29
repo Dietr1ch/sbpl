@@ -1854,17 +1854,17 @@ int main(int argc, char *argv[]) {
     for(int env_id=env_random_start; env_id < env_random_end; env_id++){
         // Initialize environment
         // TODO: Use _env_settings_
-        printf("Building Environment...");fflush(stdout);
+        printf("Building Environment...\n");
         DiscreteSpaceInformation *env = getSearchSpace(selectedEnvironment);
         env->generateRandomEnvironment(env_id);
-        printf("Done!\n");
+        printf("Environment Built!\n");
 
         // Initialize planner (for this environment :/).
         // TODO: planners should be able to swap environments and cfgs
         // TODO: Use _planner_settings_
-        printf("Building Planner...");fflush(stdout);
+        printf("Building Planner...\n");
         SBPLPlanner *planner = getPlanner(selectedPlanner, env, !backwardSearch);
-        printf("Done!\n");
+        printf("Planner Built!\n");
 
         for(int run_id = run_start; run_id<run_end; run_id++){
             printf("Run %d:\n", run_id);

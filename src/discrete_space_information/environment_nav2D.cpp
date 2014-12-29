@@ -1322,7 +1322,31 @@ EnvNAV2DHashEntry_t* EnvironmentNAV2D::safeGetHashEntry(int x, int y){
 }
 
 void EnvironmentNAV2D::generateRandomEnvironment(int seed){
+    //    * InitializeEnv  // Can't be done
+    //       - Load Cfg file
+    //       - ReadConfiguration(fCfg);
+    //       - InitGeneral();
+    //      Alternative:
+    int sizeX = 500;
+    int sizeY = 500;
+    this->InitializeEnv(sizeX, sizeY, 0,  0,0, 0,0, 1);
+    //       * InitializeEnv(size-, mapData, start-, goal-, obsthresh)
+    //          - EnvNAV2DCfg.obsthresh = obsthresh;
+    //          - SetConfiguration(sizeX, sizeY, mapData, startX, startY, goalX, goalY);
+    //             - Set EnvNAV2DCfg EnvWidth_c, EnvHeight_c, Start-_c, End-_c
+    //             - Allocate Environment (EnvNAV2DCfg.Grid2D)
+    //             - Set Environment (EnvNAV2DCfg.Grid2D[x][y])
+    //          - InitGeneral():
+    //              - InitializeEnvConfig();
+    //                  - Commented Aditional config
+    //                  - Compute dxy
+    //              - InitializeEnvironment();  // Creates the hash table
+    //              - ComputeHeuristicValues();  // Precomputes h when necessary
+
+    //    * Initialize MPDCfg  // NOT NEEDED
+    //        Sets start and goal IDs
     // Configuration
+
     double obstacleDensity = 0.3;
 
     // Start random generator engine
@@ -1331,14 +1355,6 @@ void EnvironmentNAV2D::generateRandomEnvironment(int seed){
 
     // Define distributions to use
     std::binomial_distribution<int> obstacle(1, obstacleDensity);
-
-    // TODO: review grid allocation
-
-    // FIXME: EnvNAV2DCfg must be set
-    // Allocate the 2D environment
-    EnvNAV2DCfg.Grid2D = new unsigned char*[EnvNAV2DCfg.EnvWidth_c];
-    for (int x = 0; x < EnvNAV2DCfg.EnvWidth_c; x++)
-        EnvNAV2DCfg.Grid2D[x] = new unsigned char[EnvNAV2DCfg.EnvHeight_c];
 
     // Fill obstacles
     for (int y = 0; y < EnvNAV2DCfg.EnvHeight_c; y++)
@@ -1363,8 +1379,9 @@ bool EnvironmentNAV2D::generateRandomProblem(MDPConfig *cfg, int seed, int maxTr
 
         // TODO: test reachability
         bool reachable = true;
-        if(reachable)
+        if(reachable){
             return true;
+        }
     }
 
     cfg->startstateid = 0;

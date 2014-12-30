@@ -884,7 +884,7 @@ void EnvironmentNAV2D::GetSuccs(int SourceStateID, vector<int>* SuccIDV, vector<
     clock_t currenttime = clock();
 #endif
 
-    //clear the successor array
+    // Clear the successor array
     SuccIDV->clear();
     CostV->clear();
     SuccIDV->reserve(EnvNAV2DCfg.numofdirs);
@@ -896,21 +896,22 @@ void EnvironmentNAV2D::GetSuccs(int SourceStateID, vector<int>* SuccIDV, vector<
     //get X, Y for the state
     EnvNAV2DHashEntry_t* HashEntry = EnvNAV2D.StateID2CoordTable[SourceStateID];
 
-    //iterate through actions
+    // Iterate through actions
     bool bTestBounds = false;
     if (HashEntry->X <= 1 || HashEntry->X >= EnvNAV2DCfg.EnvWidth_c - 2 || HashEntry->Y <= 1 ||
         HashEntry->Y >= EnvNAV2DCfg.EnvHeight_c - 2)
     {
         bTestBounds = true;
     }
+
+
     for (aind = 0; aind < EnvNAV2DCfg.numofdirs; aind++) {
         int newX = HashEntry->X + EnvNAV2DCfg.dx_[aind];
         int newY = HashEntry->Y + EnvNAV2DCfg.dy_[aind];
 
-        //skip the invalid cells
-        if (bTestBounds) {
-            if (!IsValidCell(newX, newY)) continue;
-        }
+        // Skip the invalid cells
+        if (bTestBounds && !IsValidCell(newX, newY))
+            continue;
 
         int costmult = EnvNAV2DCfg.Grid2D[newX][newY];
 
@@ -930,16 +931,15 @@ void EnvironmentNAV2D::GetSuccs(int SourceStateID, vector<int>* SuccIDV, vector<
         }
 
         //check that it is valid
-        if (costmult >= EnvNAV2DCfg.obsthresh) continue;
+        if (costmult >= EnvNAV2DCfg.obsthresh)
+            continue;
 
         //otherwise compute the actual cost
         int cost = (costmult + 1) * EnvNAV2DCfg.dxy_distance_mm_[aind];
 
-        EnvNAV2DHashEntry_t* OutHashEntry;
-        if ((OutHashEntry = GetHashEntry(newX, newY)) == NULL) {
-            //have to create a new entry
+        EnvNAV2DHashEntry_t* OutHashEntry = GetHashEntry(newX, newY);
+        if (!OutHashEntry)
             OutHashEntry = CreateNewHashEntry(newX, newY);
-        }
 
         SuccIDV->push_back(OutHashEntry->stateID);
         CostV->push_back(cost);
@@ -1327,8 +1327,8 @@ void EnvironmentNAV2D::generateRandomEnvironment(int seed){
     //       - ReadConfiguration(fCfg);
     //       - InitGeneral();
     //      Alternative:
-    int sizeX = 500;
-    int sizeY = 500;
+    int sizeX = 80;
+    int sizeY = 80;
     this->InitializeEnv(sizeX, sizeY, 0,  0,0, 0,0, 1);
     //       * InitializeEnv(size-, mapData, start-, goal-, obsthresh)
     //          - EnvNAV2DCfg.obsthresh = obsthresh;
@@ -1372,10 +1372,27 @@ bool EnvironmentNAV2D::generateRandomProblem(MDPConfig *cfg, int seed, int maxTr
     std::uniform_int_distribution<int> Y(0, EnvNAV2DCfg.EnvHeight_c-1);
 
     for(int t=0; t<maxTries; t++){
-        auto start = safeGetHashEntry(X(g), Y(g));
-        auto goal = safeGetHashEntry(X(g), Y(g));
+        // Pick start
+        int sx = X(g);
+        int sy = Y(g);
+        // Pick goal
+        int gx = X(g);
+        int gy = Y(g);
+        auto start = safeGetHashEntry(sx, sy);
+        auto goal = safeGetHashEntry(gx, gy);
         cfg->startstateid = start->stateID;
         cfg->goalstateid = goal->stateID;
+
+        EnvNAV2DCfg.StartX_c = sx;
+        EnvNAV2DCfg.StartY_c = sy;
+
+        EnvNAV2DCfg.EndX_c = gx;
+        EnvNAV2DCfg.EndY_c = gy;
+
+        EnvNAV2D.startstateid = start->stateID;
+        EnvNAV2D.goalstateid = goal->stateID;
+
+
 
         // TODO: test reachability
         bool reachable = true;
@@ -1388,3 +1405,5 @@ bool EnvironmentNAV2D::generateRandomProblem(MDPConfig *cfg, int seed, int maxTr
     cfg->goalstateid = 0;
     return false;
 }
+
+

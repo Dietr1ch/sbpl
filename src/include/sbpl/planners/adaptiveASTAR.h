@@ -41,7 +41,6 @@ using namespace std;
 
 
 
-
 class DiscreteSpaceInformation;
 
 
@@ -62,10 +61,6 @@ class DiscreteSpaceInformation;
 
 
 
-
-
-
-
 class CMDP;
 class CMDPSTATE;
 class CMDPACTION;
@@ -75,12 +70,9 @@ class CList;
 class RList;
 
 
-struct neighborStub{
-    int id;
-    int cost;
-};
-
-//state structure
+/**
+ * Adaptive A* Search State
+ */
 typedef class AASEARCHSTATEDATA : public AbstractSearchState {
     public:
         // MDP State
@@ -118,7 +110,9 @@ typedef class AASEARCHSTATEDATA : public AbstractSearchState {
 
 
 
-//statespace
+/**
+ * Adaptive A* Search Space
+ */
 typedef struct AASEARCHSTATESPACE {
     double eps;
     double eps_satisfied;
@@ -132,9 +126,6 @@ typedef struct AASEARCHSTATESPACE {
 
     unsigned long int hunter_movecost_testcase;  //Xiaoxun added this (13)
     unsigned long int target_movecost_testcase;  //Xiaoxun added this (14)
-
-
-
 
     short unsigned int callnumber;
     CMDPSTATE *searchgoalstate;
@@ -167,7 +158,9 @@ typedef struct AASEARCHSTATESPACE {
 
 
 
-//AA* planner
+/**
+ * Adaptive A* Planner
+ */
 class AAPlanner : public SBPLPlanner {
 
     public:
@@ -198,7 +191,6 @@ class AAPlanner : public SBPLPlanner {
 
         //member variables
         double finitial_eps;
-        MDPConfig *MDPCfg_;
 
         bool bforwardsearch; //if true, then search proceeds forward, otherwise backward
 

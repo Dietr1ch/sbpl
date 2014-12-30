@@ -38,6 +38,12 @@
 class CMDPSTATE;
 struct MDPConfig;
 
+
+struct neighborStub{
+    int id;
+    int cost;
+};
+
 /**
  * \brief base class for environments defining planning graphs
  * 
@@ -185,7 +191,7 @@ public:
       SBPL_ERROR("ERROR: GetLazyPredsWithUniqueIds is not implemented for this environment!\n");
       throw new SBPL_Exception();
     };
-     
+
     /**
      * \brief see comments for GetSuccs functon
      */
@@ -332,7 +338,6 @@ public:
     };
 
     // TODO: Expose Sensor updates
-
 };
 
 #endif

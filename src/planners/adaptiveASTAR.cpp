@@ -123,6 +123,9 @@ CMDPSTATE *AAPlanner::CreateState(int stateID, AASearchStateSpace_t *pSearchStat
 
 #endif
     //adds to the tail a state
+
+    if(stateID==31)
+        printf("What?\n");
     state = pSearchStateSpace->searchMDP.AddState(stateID); // Xiaoxun 2:  searchMDP == vector<CMDPSTATE*> StateArray;
 
     //remember the index of the state
@@ -138,6 +141,7 @@ CMDPSTATE *AAPlanner::CreateState(int stateID, AASearchStateSpace_t *pSearchStat
 #endif
 
     //create search specific info
+    // FIXME: this should create a new AAState, not reuse dirty memory
     state->PlannerSpecificData = (AAState *)malloc(sizeof(AAState));
     Initialize_searchinfo(state, pSearchStateSpace); // Xiaoxun 3:
     MaxMemoryCounter += sizeof(AAState);
@@ -148,6 +152,9 @@ CMDPSTATE *AAPlanner::CreateState(int stateID, AASearchStateSpace_t *pSearchStat
 }
 
 CMDPSTATE *AAPlanner::GetState(int stateID, AASearchStateSpace_t *pSearchStateSpace) {
+
+    if (stateID == 31)
+        printf("WTF happens here\n");
 
     if (stateID >= (int)environment_->StateID2IndexMapping.size()) {
         SBPL_ERROR("ERROR int GetState: stateID %d is invalid\n", stateID);
@@ -373,6 +380,7 @@ int AAPlanner::ImprovePath(AASearchStateSpace_t *pSearchStateSpace, double MaxNu
 
     //set goal key
     goalkey.key[0] = searchgoalstate->g;
+    printf("Goal key: %d\n", goalkey.key[0]);
 #ifdef TIE_LARGE_G
     goalkey.key[1] = searchgoalstate->h;
 #endif
@@ -384,10 +392,10 @@ int AAPlanner::ImprovePath(AASearchStateSpace_t *pSearchStateSpace, double MaxNu
 
     while (!pSearchStateSpace->heap->emptyheap() && minkey.key[0] < INFINITECOST && goalkey > minkey) {
         //Xiaoxun 2: pop out and get the state with the smallest f-value
+        // FIXME: AAState is invalid sometimes
         state = (AAState *)pSearchStateSpace->heap->deleteminheap();
 
 #ifdef XIAOXUN_DEBUG
-
         if (pSearchStateSpace->callnumber == 1)
             SBPL_FPRINTF(fDeb, "expanding state(%4d): h=%d g=%u key=%u iterclosed=%d callnuma=%d expands=%d (g(goal)=%u)\n",
                     state->MDPstate->StateID, state->h, state->g, state->g + (int)(pSearchStateSpace->eps * state->h),
@@ -397,6 +405,11 @@ int AAPlanner::ImprovePath(AASearchStateSpace_t *pSearchStateSpace, double MaxNu
 //        PrintSearchState(state, fDeb);
         fflush(fDeb);
 #endif
+        SBPL_DEBUG("Expanding [%5d] (f:%7.1f) (g:%7.1f) (h:%7.1f)\n",
+                   state->MDPstate->StateID,
+                   (state->g + state->h)/1000.0,
+                   state->g/1000.0,
+                   state->h/1000.0);
 
         state->iterationclosed = pSearchStateSpace->searchiteration;   // expanded_iteration is set here
         expands++;
@@ -1381,19 +1394,9 @@ int AAPlanner::set_goal(int goal_stateID) {
     SBPL_DEBUG("planner: setting goal to %d\n", goal_stateID);
     environment_->PrintState(goal_stateID, true, stdout);
 
-    if (bforwardsearch) { //Xiaoxun 1: if search forward
-        if (SetSearchGoalState(goal_stateID, pSearchStateSpace_) != 1) {
-            SBPL_ERROR("ERROR: failed to set search goal state\n");
-            return 0;
-        }
-    } else { // reverse
-        if (SetSearchGoalState(goal_stateID, pSearchStateSpace_) != 1) {
-            SBPL_ERROR("ERROR: failed to set search goal state\n");
-            return 0;
-        }
-
-//      SBPL_ERROR("___error__AA* can only search forwards____________\n");
-//      exit(0);
+    if (SetSearchGoalState(goal_stateID, pSearchStateSpace_) != 1) {
+        SBPL_ERROR("ERROR: failed to set search goal state\n");
+        return 0;
     }
 
     return 1;
@@ -1409,7 +1412,6 @@ int AAPlanner::set_start(int start_stateID) {
         SBPL_ERROR("ERROR: failed to set search start state\n");
         return 0;
     }
-
 
     return 1;
 }
@@ -1481,7 +1483,7 @@ AAState *AAPlanner::ChooseOneSuccs_for_TargetMove(AAState *state, AASearchStateS
     int successorCount = (int)SuccIDV.size();
 
     state->successors.clear();
-    // state->successors.ensureCapacity(successorCount);
+    state->successors.reserve(successorCount);
     // Populate node successor stubs
     for (int i=0; i<successorCount; i++) {
         neighborStub nS;
@@ -1725,7 +1727,6 @@ int AAPlanner::start_moved(AASearchStateSpace_t *pSearchStateSpace) {
 #endif
 
 
-
     return 1;  // if robot moved 1 step
 }
 
@@ -1733,65 +1734,72 @@ int AAPlanner::start_moved(AASearchStateSpace_t *pSearchStateSpace) {
 //function 8:
 //Xiaoxun optimize this function here
 void AAPlanner::UpdateSuccs(AAState *state, AASearchStateSpace_t *pSearchStateSpace) {
-    CKey key;
-    AAState *succstate;
-    int cost;
 
-
+    if(state->MDPstate->StateID==31){
+        printf("State [%d]\n", state->MDPstate->StateID);
+        printf("State successors: %d\n", state->successors.size());
+        printf("--\n");
+    }
 
     // Get successors from environment
     vector<int> SuccIDV;
     vector<int> CostV;
     environment_->GetSuccs(state->MDPstate->StateID, &SuccIDV, &CostV);
-
-    int successorCount = SuccIDV.size();
-    state->successors.clear();
-    // TODO: state->successors.ensureCapacity(successorCount);
     // REVIEW: this probably can be done faster (at least by changing the env API)
-
+    int successorCount = SuccIDV.size();
+    printf("State node successors: %d\n", state->successors.size());
+    printf("State map  successors: %d\n", successorCount);
+    printf("Updating node successors\n");
+    state->successors.clear();
+    state->successors.reserve(successorCount);
     for(int i=0; i<successorCount; i++) {
         neighborStub nS;
         nS.id = SuccIDV[i];
         nS.cost = CostV[i];
         state->successors.push_back(nS);
     }
+    printf("State node successors: %d\n", state->successors.size());
+    printf("State map  successors: %d\n", successorCount);
 
-
+    // Reach successors
     for(neighborStub nS : state->successors) {
-        CMDPSTATE *SuccMDPState = GetState(nS.id, pSearchStateSpace);
-        succstate = (AAState *)(SuccMDPState->PlannerSpecificData);
-        cost = nS.cost;
+        CMDPSTATE* SuccMDPState = GetState(nS.id, pSearchStateSpace);
+        AAState* succstate = (AAState *)(SuccMDPState->PlannerSpecificData);
+        if(succstate->MDPstate->StateID==31)
+            printf("Exploring [%d]\n", succstate->MDPstate->StateID);
 
         if (succstate->iterationclosed != pSearchStateSpace->searchiteration) {
 #ifdef ADAPTIVE_H // Adaptive A*
             AA_ReInitializeState(succstate, pSearchStateSpace);   // (2)
 #else             // pure A*
-
             if (succstate->generated_iteration != pSearchStateSpace->searchiteration)  // calculate h-value(s) here
                 ReInitializeSearchStateInfo(succstate, pSearchStateSpace);
-
 #endif
 
-            if (succstate->g > state->g + cost) {
-                succstate->g = state->g + cost;
+            int newG = state->g + nS.cost;
+            if (newG < succstate->g) {
+                succstate->g = newG;
                 succstate->bestpredstate = state->MDPstate;   //Xiaoxun 3: ->bestpredstate == (my)->searchtree
 
-                key.key[0] = succstate->g + (int)(succstate->h);
+                CKey key;
+                key.key[0] = succstate->g + succstate->h;
 #ifdef TIE_LARGE_G
                 key.key[1] = succstate->h;
 #endif
 
+                printf("Adding [%d] to the heap\n", succstate->MDPstate->StateID);
+                if(succstate->MDPstate->StateID==31){
+                    printf("--\n");
+                    printf("succesors: %s\n", succstate->successors.size());
+                    printf("predecesors: %s\n", succstate->predecessors.size());
+                }
                 if (succstate->heapindex != 0)
                     pSearchStateSpace->heap->updateheap(succstate, key);
                 else
                     pSearchStateSpace->heap->insertheap(succstate, key);
             }
         }
-    } //for (state->successors)
-
-
-
-    return;
+    }
 }
 
 
@@ -1811,7 +1819,7 @@ void AAPlanner::UpdatePreds(AAState *state, AASearchStateSpace_t *pSearchStateSp
     int predecessorCount = PredIDV.size();
 
     state->predecessors.clear();
-    // TODO: state->predecessors.ensureCapacity(predecessorCount)
+    state->predecessors.reserve(predecessorCount);
 
     for (int i=0; i<predecessorCount; i++) {
         neighborStub nS;
@@ -1833,7 +1841,6 @@ void AAPlanner::UpdatePreds(AAState *state, AASearchStateSpace_t *pSearchStateSp
 
             if (predstate->generated_iteration != pSearchStateSpace->searchiteration)  // calculate h-value(s) here
                 ReInitializeSearchStateInfo(predstate, pSearchStateSpace);
-
 #endif
 
             if (predstate->g > state->g + cost) {

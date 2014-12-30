@@ -1843,13 +1843,13 @@ int main(int argc, char *argv[]) {
     // =========
 
     if(selectedEnvironment == INVALID_ENV_TYPE) {
-        printf("No environment selected\n");
+        printf("Invalid environment selected\n");
         exit(2);
-    }
+     }
 
     // Random environments
     // -------------------
-    for(int env_id=env_random_start; env_id < env_random_end; env_id++){
+    for(int env_id=env_random_start; env_id<env_random_end; env_id++){
         // Initialize environment
         // TODO: Use _env_settings_
         printf("Building Environment...\n");
@@ -1864,7 +1864,7 @@ int main(int argc, char *argv[]) {
         SBPLPlanner *planner = getPlanner(selectedPlanner, env, !backwardSearch);
         printf("Planner Built!\n");
 
-        for(int run_id = run_start; run_id<run_end; run_id++){
+        for(int run_id=run_start; run_id<run_end; run_id++){
             printf("Run %d:\n", run_id);
             MDPConfig startGoal;
             if(env->generateRandomProblem(&startGoal, run_id, maxTries)){
@@ -1878,8 +1878,11 @@ int main(int argc, char *argv[]) {
                 printf("%d\n", retCode);
             }
             else
-                printf("  Skipping run %d. No problem instance could be generated\n",
-                       run_id);
+                printf("  Skipping run %d on random environment %d."
+                       " No problem instance could be generated\n",
+                       run_id,
+                       env_id
+                      );
         }
 
         // TODO: dispose planner and environment resources

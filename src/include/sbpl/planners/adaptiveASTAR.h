@@ -75,16 +75,23 @@ class CList;
 class RList;
 
 
+struct neighborStub{
+    int id;
+    int cost;
+};
+
 //state structure
 typedef class AASEARCHSTATEDATA : public AbstractSearchState {
     public:
-        CMDPSTATE *MDPstate; //the MDP state itself
-        //AA* relevant data
+        // MDP State
+        CMDPSTATE *MDPstate;
+
+        // Adaptive A* data
+        // ----------------
         unsigned int v;
         unsigned int g;
         short unsigned int iterationclosed;
         short unsigned int callnumberaccessed;
-        short unsigned int numofexpands;
         //best predecessor and the action from it, used only in forward searches
         CMDPSTATE *bestpredstate;
         //the next state if executing best action
@@ -92,25 +99,16 @@ typedef class AASEARCHSTATEDATA : public AbstractSearchState {
         unsigned int costtobestnextstate;
         int h;
 
-        //Xiaoxun added this for AA* STATE:  (for optimization)
-        bool succs_ever_generated;
-        bool preds_ever_generated;
+        vector<neighborStub> successors;
+        vector<neighborStub> predecessors;
 
-        vector<int> SuccsIDV;  //Xiaoxun added this (3)
-        vector<int> PredsIDV;  //Xiaoxun added this (4)
-        vector<int> SuccsCostV;  //Xiaoxun added this (5)
-        vector<int> PredsCostV;  //Xiaoxun added this (6)
-        // thanks, but 'git blame' would tell us too..
+#if STATISTICS || 1
+        short unsigned int expansions = 0;
+        int succs_ever_generated;
+        int preds_ever_generated;
+#endif
 
-
-        //int SuccsIDV[MAX_SUCC_NUMBER];  // MAX_SUCC_NUMBER = 15
-        //int PredsIDV[MAX_SUCC_NUMBER];
-        //int SuccsCostV[MAX_SUCC_NUMBER];
-        //int PredsCostV[MAX_SUCC_NUMBER];
-        int succ_num;
-        int pred_num;
         unsigned int generated_iteration;
-
 
     public:
         AASEARCHSTATEDATA() {};

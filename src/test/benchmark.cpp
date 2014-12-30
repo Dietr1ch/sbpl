@@ -1780,10 +1780,8 @@ DiscreteSpaceInformation* getSearchSpace(EnvironmentType environmentType){
             throw new SBPL_Exception();
             return nullptr;
 
-        case ENV_TYPE_2D:{
-            auto env = new EnvironmentNAV2D();
-            return env;
-        }
+        case ENV_TYPE_2D:
+            return new EnvironmentNAV2D();
         case ENV_TYPE_2DUU:
         case ENV_TYPE_ROBARM:
         case ENV_TYPE_XYTHETA:

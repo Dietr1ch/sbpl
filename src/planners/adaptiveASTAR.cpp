@@ -196,7 +196,6 @@ void AAPlanner::InitializeSearchStateInfo(AAState *state, AASearchStateSpace_t *
 /// state->numofexpands = 0;
 
 //Xiaoxun added this:
-    state->succ_num = 0;
     state->callnumberaccessed = pSearchStateSpace->callnumber;
     state->generated_iteration = 0;
 
@@ -839,9 +838,13 @@ void AAPlanner::PrintSearchPath(AASearchStateSpace_t *pSearchStateSpace, FILE *f
 }
 
 void AAPlanner::PrintSearchState(AAState *state, FILE *fOut) {
+    int expansions = -1;
+#if STATISTICS
+    expansions = state->expansions;
+#endif
     SBPL_FPRINTF(fOut, "state %d: h=%d g=%u iterc=%d callnuma=%d expands=%d heapind=%d \n",
             state->MDPstate->StateID, state->h, state->g,
-            state->iterationclosed, state->callnumberaccessed, state->numofexpands, state->heapindex);
+            state->iterationclosed, state->callnumberaccessed, expansions, state->heapindex);
     environment_->PrintState(state->MDPstate->StateID, true, fOut);
 
 }
@@ -1469,43 +1472,44 @@ void AAPlanner::print_searchpath(FILE *fOut) {
 //function 1:
 // state is the oldsearchgoalstate
 AAState *AAPlanner::ChooseOneSuccs_for_TargetMove(AAState *state, AASearchStateSpace_t *pSearchStateSpace) {
+    //CKey key;
+
+    // Get successors from environment
     vector<int> SuccIDV;
     vector<int> CostV;
-//  CKey key;
-    AAState *succstate;
-    int rand_succ;
-    int i;
+    environment_->GetSuccs(state->MDPstate->StateID, &SuccIDV, &CostV);
+    int successorCount = (int)SuccIDV.size();
 
-
-
-    environment_->GetSuccs(state->MDPstate->StateID, &SuccIDV,         &CostV);
-    state->succ_num = (int)SuccIDV.size();
-
-    for (i = 0; i < state->succ_num; i++) {
-        state->SuccsIDV[i] = SuccIDV[i];
-        state->SuccsCostV[i] = CostV[i];
+    state->successors.clear();
+    // state->successors.ensureCapacity(successorCount);
+    // Populate node successor stubs
+    for (int i=0; i<successorCount; i++) {
+        neighborStub nS;
+        nS.id = SuccIDV[i];
+        nS.cost = CostV[i];
+        state->successors.push_back(nS);
     }
 
 //SBPL_DEBUG("2. in Choose_OneSuccs_for_TargetMove,  SuccIDV.size() == %d \n", SuccIDV.size());
 
 
 // 2 generate a random number among all succerssors
-    rand_succ = rand() % ((int)state->succ_num) ;
+    int rand_succ = rand() % successorCount ;
 
 #ifdef XIAOXUN_DEBUG
     SBPL_DEBUG("3. in Choose_OneSuccs_for_TargetMove,  rand_succ == %d \n", rand_succ);
     SBPL_FPRINTF(fDeb, "new goal move cost == %d,    \n", state->SuccsCostV[rand_succ]);
 #endif
 
-    CMDPSTATE *SuccMDPState = GetState(state->SuccsIDV[rand_succ], pSearchStateSpace);
+    CMDPSTATE *SuccMDPState = GetState((state->successors[rand_succ]).id, pSearchStateSpace);
 // 3 succstate will be the next goal state
-    succstate = (AAState *)(SuccMDPState->PlannerSpecificData);
+    AAState *succstate = (AAState *)(SuccMDPState->PlannerSpecificData);
 
 
 
 // post processing for generated empty state
-    for (i = 0; i < state->succ_num; i++) {
-        CMDPSTATE *SuccMDPState2 = GetState(state->SuccsIDV[i], pSearchStateSpace);
+    for(neighborStub nS : state->successors) {
+        CMDPSTATE *SuccMDPState2 = GetState(nS.id, pSearchStateSpace);
         AAState *F_succstate = (AAState *)(SuccMDPState2->PlannerSpecificData);
 
         if (F_succstate->bestpredstate == NULL) {
@@ -1729,29 +1733,34 @@ int AAPlanner::start_moved(AASearchStateSpace_t *pSearchStateSpace) {
 //function 8:
 //Xiaoxun optimize this function here
 void AAPlanner::UpdateSuccs(AAState *state, AASearchStateSpace_t *pSearchStateSpace) {
-    vector<int> SuccIDV;
-    vector<int> CostV;
     CKey key;
     AAState *succstate;
     int cost;
 
 
 
-    environment_->GetSuccs(state->MDPstate->StateID, &SuccIDV,         &CostV);
+    // Get successors from environment
+    vector<int> SuccIDV;
+    vector<int> CostV;
+    environment_->GetSuccs(state->MDPstate->StateID, &SuccIDV, &CostV);
 
-    state->succ_num = (int)SuccIDV.size();
+    int successorCount = SuccIDV.size();
+    state->successors.clear();
+    // TODO: state->successors.ensureCapacity(successorCount);
+    // REVIEW: this probably can be done faster (at least by changing the env API)
 
-    // REVIEW: state->SuccsIDV seems empty
-    for (int i = 0; i < state->succ_num; i++) {
-        state->SuccsIDV[i] = SuccIDV[i];
-        state->SuccsCostV[i] = CostV[i];
+    for(int i=0; i<successorCount; i++) {
+        neighborStub nS;
+        nS.id = SuccIDV[i];
+        nS.cost = CostV[i];
+        state->successors.push_back(nS);
     }
 
 
-    for (int sind = 0; sind < state->succ_num; sind++) {
-        CMDPSTATE *SuccMDPState = GetState(state->SuccsIDV[sind], pSearchStateSpace);
+    for(neighborStub nS : state->successors) {
+        CMDPSTATE *SuccMDPState = GetState(nS.id, pSearchStateSpace);
         succstate = (AAState *)(SuccMDPState->PlannerSpecificData);
-        cost = state->SuccsCostV[sind];
+        cost = nS.cost;
 
         if (succstate->iterationclosed != pSearchStateSpace->searchiteration) {
 #ifdef ADAPTIVE_H // Adaptive A*
@@ -1778,7 +1787,7 @@ void AAPlanner::UpdateSuccs(AAState *state, AASearchStateSpace_t *pSearchStateSp
                     pSearchStateSpace->heap->insertheap(succstate, key);
             }
         }
-    } //for (sind)
+    } //for (state->successors)
 
 
 
@@ -1791,26 +1800,31 @@ void AAPlanner::UpdateSuccs(AAState *state, AASearchStateSpace_t *pSearchStateSp
 void AAPlanner::UpdatePreds(AAState *state, AASearchStateSpace_t *pSearchStateSpace) {
 
 ///////////////    new version    ////////////////////////////////////////////
-    vector<int> PredIDV;
-    vector<int> CostV;
     CKey key;
     AAState *predstate;
-    int cost;
 
 
+    // Get predecessors from environment
+    vector<int> PredIDV;
+    vector<int> CostV;
+    environment_->GetPreds(state->MDPstate->StateID, &PredIDV, &CostV);
+    int predecessorCount = PredIDV.size();
 
-    environment_->GetPreds(state->MDPstate->StateID, &PredIDV,         &CostV);
-    state->pred_num = (int)PredIDV.size();
+    state->predecessors.clear();
+    // TODO: state->predecessors.ensureCapacity(predecessorCount)
 
-    for (int i = 0; i < state->pred_num; i++) {
-        state->PredsIDV[i] = PredIDV[i];
-        state->PredsCostV[i] = CostV[i];
+    for (int i=0; i<predecessorCount; i++) {
+        neighborStub nS;
+        nS.id = PredIDV[i];
+        nS.cost = CostV[i];
+        state->predecessors.push_back(nS);
     }
 
-    for (int sind = 0; sind < state->pred_num; sind++) {
-        CMDPSTATE *PredMDPState = GetState(state->PredsIDV[sind], pSearchStateSpace);
+    int cost;
+    for(neighborStub nS : state->predecessors) {
+        CMDPSTATE *PredMDPState = GetState(nS.id, pSearchStateSpace);
         predstate = (AAState *)(PredMDPState->PlannerSpecificData);
-        cost = state->PredsCostV[sind];
+        cost = nS.cost;
 
         if (predstate->iterationclosed != pSearchStateSpace->searchiteration) {
 #ifdef ADAPTIVE_H // Adaptive A*
@@ -2027,12 +2041,11 @@ int AAPlanner::GetMoveCost(AAState *state, AASearchStateSpace_t *pSearchStateSpa
 
 #else
 
-    for (int sind = 0; sind < state->succ_num; sind++) {
-        if (state->SuccsIDV[sind] == state->bestnextstate->StateID) {
-            actioncost = state->SuccsCostV[sind];
+    for(neighborStub nS : state->successors)
+        if(nS.id == state->bestnextstate->StateID){
+            actioncost = nS.cost;
             break;
         }
-    }// end (sind)
 
 #endif
 
@@ -2046,12 +2059,11 @@ int AAPlanner::GetMoveCost(AAState *state, AASearchStateSpace_t *pSearchStateSpa
 int AAPlanner::GetTargetMoveCost(AAState *state, AAState *state2, AASearchStateSpace_t *pSearchStateSpace) {
     int actioncost;
 
-    for (int sind = 0; sind < state->succ_num; sind++) {
-        if (state->SuccsIDV[sind] == state2->MDPstate->StateID) {
-            actioncost = state->SuccsCostV[sind];
+    for(neighborStub nS : state->successors)
+        if (nS.id == state2->MDPstate->StateID) {
+            actioncost = nS.cost;
             break;
         }
-    }// end (sind)
 
     return actioncost;
 }

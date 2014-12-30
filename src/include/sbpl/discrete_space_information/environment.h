@@ -94,6 +94,9 @@ public:
      */
     virtual int GetStartHeuristic(int stateID) = 0;
 
+
+    // REVIEW: A vector of structs should be used instead of parallel vectors
+
     /** \brief depending on the search used, it may call GetSuccs function
      *         (for forward search) or GetPreds function (for backward search)
      *         or both (for incremental search). At least one of this functions should

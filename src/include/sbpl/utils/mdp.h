@@ -30,6 +30,7 @@
 #ifndef __MDP_H_
 #define __MDP_H_
 
+#include <assert.h>
 #include <cstdio>
 #include <vector>
 #include <sbpl/config.h>
@@ -92,6 +93,7 @@ public:
     //constructors
     CMDPSTATE(int ID)
     {
+        assert(ID);
         StateID = ID;
         PlannerSpecificData = NULL;
     }
@@ -120,16 +122,19 @@ public:
 class CMDP
 {
 public:
-    //data
+    // Data
+    // ----
     std::vector<CMDPSTATE*> StateArray;
 
-    //constructors
+    // Constructors
+    // ------------
     CMDP() { }
     ~CMDP() { }
 
     //functions
     bool empty();
     bool full();
+
     //creates numofstates states. Their ids are their orderings for Original, Thresholded & Search MDPs
     bool Create(int numofstates);
     bool Delete();

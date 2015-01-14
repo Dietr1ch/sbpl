@@ -35,6 +35,36 @@
 #ifndef __CONFIG_H_
 #define __CONFIG_H_
 
+
+
+#define STRONG_TYPE_ID 0
+
+
+#if STRONG_TYPE_ID
+// See https://codereview.stackexchange.com/posts/52550/revisions
+
+template<typename T>
+class ID_t {
+    int id;
+public:
+    ID_t():              id{0}  {};
+    ID_t(int const& ID): id{ID} {};
+    friend bool operator==(ID_t<T> const& i_lhs, ID_t<T> const& i_rhs );
+    operator bool() const { return id!=0; }
+};
+#endif
+
+
+#if STRONG_TYPE_ID
+class state_t;
+typedef ID_t<state_t> stateID;
+#else
+typedef int stateID;
+#endif
+
+typedef unsigned int uint;
+typedef unsigned long ulong;
+
 /**
  * \brief if set, then heuristic is used if available
  */
@@ -79,6 +109,9 @@ int SBPL_PRINTALL(int level, const char* format, ...);
 int SBPL_FPRINTALL(FILE* file, const char* format, ...);
 int SBPL_FFLUSHALL(FILE* file);
 
+
+#define MALLOC(type) (  (type*) malloc(sizeof(type))  )
+
 // Standard Output Logger Macros
 #ifdef ROS
 #define SBPL_DEBUG                  ROS_DEBUG
@@ -95,6 +128,11 @@ int SBPL_FFLUSHALL(FILE* file);
 #define SBPL_WARN(...)              SBPL_PRINTALL(SBPL_LEVEL_WARN, __VA_ARGS__)
 #define SBPL_ERROR(...)             SBPL_PRINTALL(SBPL_LEVEL_ERROR, __VA_ARGS__)
 #define SBPL_FATAL(...)             SBPL_PRINTALL(SBPL_LEVEL_FATAL, __VA_ARGS__)
+// The ## operator removes the last comma when __VA_ARGS__ is empty.
+// Does not work on clang :c, but ("%s", "bla") is good enough
+// http://gcc.gnu.org/onlinedocs/gcc/Variadic-Macros.html
+#define TRACE(fmt,...) fprintf(stderr,"%80s:%4u [%20s]" fmt "\n", __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__ )
+#define QUIT(fmt,...) {TRACE(fmt, ##__VA_ARGS__ ); abort();}
   #else
 #define SBPL_DEBUG(...)
 #define SBPL_DEBUG_NAMED(file, ...)
@@ -102,31 +140,35 @@ int SBPL_FFLUSHALL(FILE* file);
 #define SBPL_WARN(...)
 #define SBPL_ERROR(...)
 #define SBPL_FATAL(...)
+#define TRACE(fmt, ...)
+#define QUIT(fmt,...) {exit(-1);}
   #endif
 #endif
 
+
+
 // File Output Logger Macros
 #ifdef ROS
-#define SBPL_DEBUG_NAMED(a,...)     ROS_DEBUG_NAMED("SBPL_" #a,__VA_ARGS__)
+  #define SBPL_DEBUG_NAMED(a,...)     ROS_DEBUG_NAMED("SBPL_" #a,__VA_ARGS__)
 
-#define SBPL_FOPEN(...)             (FILE*)1
-#define SBPL_FCLOSE(...)
-#define SBPL_PRINTF                 ROS_DEBUG
-#define SBPL_FPRINTF(a,...)         ROS_DEBUG_NAMED("SBPL_" #a,__VA_ARGS__)
-#define SBPL_FFLUSH(...)
+  #define SBPL_FOPEN(...)             (FILE*)1
+  #define SBPL_FCLOSE(...)
+  #define SBPL_PRINTF                 ROS_DEBUG
+  #define SBPL_FPRINTF(a,...)         ROS_DEBUG_NAMED("SBPL_" #a,__VA_ARGS__)
+  #define SBPL_FFLUSH(...)
 #else
   #if DEBUG
-#define SBPL_FOPEN                  fopen
-#define SBPL_FCLOSE                 fclose
-#define SBPL_PRINTF(...)            SBPL_PRINTALL(SBPL_LEVEL_NONE, __VA_ARGS__)
-#define SBPL_FPRINTF(file, ...)     SBPL_FPRINTALL(file, __VA_ARGS__)
-#define SBPL_FFLUSH(file)           SBPL_FFLUSHALL(file)
+    #define SBPL_FOPEN                  fopen
+    #define SBPL_FCLOSE                 fclose
+    #define SBPL_PRINTF(...)            SBPL_PRINTALL(SBPL_LEVEL_NONE, __VA_ARGS__)
+    #define SBPL_FPRINTF(file, ...)     SBPL_FPRINTALL(file, __VA_ARGS__)
+    #define SBPL_FFLUSH(file)           SBPL_FFLUSHALL(file)
   #else
-#define SBPL_FOPEN(file, ...)       (FILE*)1
-#define SBPL_FCLOSE(...)
-#define SBPL_PRINTF(...)
-#define SBPL_FPRINTF(file, ...)
-#define SBPL_FFLUSH(file)
+    #define SBPL_FOPEN(file, ...)       (FILE*)1
+    #define SBPL_FCLOSE(...)
+    #define SBPL_PRINTF(...)
+    #define SBPL_FPRINTF(file, ...)
+    #define SBPL_FFLUSH(file)
   #endif
 #endif
 

@@ -51,6 +51,7 @@
 #include <sbpl/discrete_space_information/environment_robarm.h>
 #include <sbpl/discrete_space_information/environment_XXX.h>
 #include <sbpl/planners/adaptiveASTAR.h>
+#include <sbpl/planners/ASTAR.h>
 #include <sbpl/planners/adplanner.h>
 #include <sbpl/planners/ANAplanner.h>
 #include <sbpl/planners/araplanner.h>

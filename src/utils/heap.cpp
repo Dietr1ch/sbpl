@@ -210,7 +210,9 @@ void CHeap::deleteheap(AbstractSearchState *AbstractSearchState)
 
 void CHeap::updateheap(AbstractSearchState *AbstractSearchState, CKey NewKey)
 {
-    if (AbstractSearchState->heapindex == 0) heaperror("Updateheap: AbstractSearchState is not in heap");
+    if (AbstractSearchState->heapindex == 0)
+        heaperror("Updateheap: AbstractSearchState is not in heap");
+
     if (heap[AbstractSearchState->heapindex].key != NewKey) {
         heap[AbstractSearchState->heapindex].key = NewKey;
         percolateupordown(AbstractSearchState->heapindex, heap[AbstractSearchState->heapindex]);

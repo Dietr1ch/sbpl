@@ -244,7 +244,6 @@ bool CMDP::full()
 //creates numofstates states. Their ids must be initialized elsewhere
 bool CMDP::Create(int numofstates)
 {
-    CMDPSTATE* state;
 
     if (numofstates > MAXSTATESPACESIZE) {
         SBPL_ERROR("ERROR in Create: maximum MDP size is reached\n");
@@ -252,7 +251,7 @@ bool CMDP::Create(int numofstates)
     }
 
     for (int i = 0; i < numofstates; i++) {
-        state = new CMDPSTATE(-1);
+        CMDPSTATE* state = new CMDPSTATE(-1);
 
 #if MEM_CHECK
         DisableMemCheck();
@@ -270,14 +269,13 @@ bool CMDP::Create(int numofstates)
 //Adds a new state The id must be initialized elsewhere
 CMDPSTATE* CMDP::AddState(int StateID)
 {
-    CMDPSTATE* state;
-
     if ((int)StateArray.size() + 1 > MAXSTATESPACESIZE) {
         SBPL_ERROR("ERROR: maximum of states is reached in MDP\n");
         throw new SBPL_Exception();
     }
 
-    state = new CMDPSTATE(StateID);
+    auto state = new CMDPSTATE(StateID);
+    assert(state);
 
 #if MEM_CHECK
     DisableMemCheck();
@@ -292,10 +290,9 @@ CMDPSTATE* CMDP::AddState(int StateID)
 
 bool CMDP::Delete()
 {
-    CMDPSTATE* state;
 
     while ((int)StateArray.size() > 0) {
-        state = StateArray[StateArray.size() - 1];
+        CMDPSTATE* state = StateArray[StateArray.size() - 1];
         StateArray.pop_back();
 
         state->Delete();
@@ -308,19 +305,23 @@ bool CMDP::Delete()
 void CMDP::Print(FILE* fOut)
 {
     SBPL_FPRINTF(fOut, "MDP statespace size=%d\n", (unsigned int)StateArray.size());
-    for (int i = 0; i < (int)StateArray.size(); i++) {
-        SBPL_FPRINTF(fOut, "%d: ", StateArray[i]->StateID);
-        for (int j = 0; j < (int)StateArray[i]->Actions.size(); j++) {
-            CMDPACTION* action = StateArray[i]->Actions[j];
+
+    for(CMDPSTATE *state : StateArray){
+        SBPL_FPRINTF(fOut, "%d: ", state->StateID);
+
+        for(CMDPACTION *action : state->Actions){
             SBPL_FPRINTF(fOut, "[%d", action->ActionID);
+
             for (int outind = 0; outind < (int)action->SuccsID.size(); outind++) {
                 SBPL_FPRINTF(fOut, " %d %d %f", action->SuccsID[outind], action->Costs[outind],
                              action->SuccsProb[outind]);
             }
             SBPL_FPRINTF(fOut, "] ");
         }
+
         SBPL_FPRINTF(fOut, "\n");
     }
+
 }
 
 //--------------------------------------------------------

@@ -235,7 +235,7 @@ int LazyARAPlanner::ImprovePath(){
 
     if(state->v == state->g){
       printf("ERROR: consistent state is being expanded\n");
-      printf("id=%d v=%d g=%d isTrueCost=%d lazyListSize=%u\n",
+      printf("id=%d v=%d g=%d isTrueCost=%d lazyListSize=%lu\n",
               state->id,state->v,state->g,state->isTrueCost,state->lazyList.size());
       throw new SBPL_Exception();
     }
@@ -249,7 +249,7 @@ int LazyARAPlanner::ImprovePath(){
       expands++;
       ExpandState(state);
       if(expands%100000 == 0)
-        printf("expands so far=%u\n", expands);
+        printf("expands so far=%d\n", expands);
     }
     else //otherwise the state needs to be evaluated for its true cost
       EvaluateState(state);

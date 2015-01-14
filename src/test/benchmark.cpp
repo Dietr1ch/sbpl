@@ -53,21 +53,9 @@
 #define ONLY(exp) if(!(exp)) continue;
 
 
-#if defined NDEBUG
-  #define TRACE(format, ...)
-#else
-  //The ## operator removes the last comma when __VA_ARGS__ is empty.
-  //http://gcc.gnu.org/onlinedocs/gcc/Variadic-Macros.html
-  #define TRACE(format, ...) fprintf(stderr, "%s::%s(%d)" format, __FILE__, __FUNCTION__,  __LINE__, ## __VA_ARGS__ )
-#endif
-
-
-
 using namespace std;
 
 #include <sbpl/headers.h>
-
-
 
 
 
@@ -86,6 +74,7 @@ using namespace std;
 #define PLANNER_STR_VI "vi"
 #define PLANNER_STR_ANASTAR "ANA*"
 #define PLANNER_STR_AASTAR "adaptiveA*"
+#define PLANNER_STR_ASTAR "A*"
 
 #define PLANNER_STR_INVALID "invalid"
 
@@ -100,6 +89,7 @@ enum PlannerType {
     PLANNER_TYPE_VI,
     PLANNER_TYPE_ANASTAR,
     PLANNER_TYPE_AASTAR,
+    PLANNER_TYPE_ASTAR,
 
     NUM_PLANNER_TYPES
 };
@@ -122,6 +112,8 @@ string PlannerTypeToStr(PlannerType plannerType) {
             return string(PLANNER_STR_ANASTAR);
         case PLANNER_TYPE_AASTAR:
             return string(PLANNER_STR_AASTAR);
+        case PLANNER_TYPE_ASTAR:
+            return string(PLANNER_STR_ASTAR);
 
         default:
             return string(PLANNER_STR_INVALID);
@@ -144,6 +136,8 @@ PlannerType StrToPlannerType(const char* str) {
         return PLANNER_TYPE_ANASTAR;
     if (!strcmp(str, PLANNER_STR_AASTAR))
         return PLANNER_TYPE_AASTAR;
+    if (!strcmp(str, PLANNER_STR_ASTAR))
+        return PLANNER_TYPE_ASTAR;
 
     return INVALID_PLANNER_TYPE;
 }
@@ -265,7 +259,7 @@ enum MainResultType {
 // Planner
 char *planner_type     = nullptr;
 char *planner_settings = nullptr;
-PlannerType selectedPlanner = PLANNER_TYPE_AASTAR;
+PlannerType selectedPlanner = PLANNER_TYPE_ASTAR;
 // Random environments (defaults to no random environments)
 char *env_type     = nullptr;
 char *env_settings = nullptr;
@@ -1760,8 +1754,12 @@ SBPLPlanner* getPlanner(PlannerType plannerType, DiscreteSpaceInformation* envir
         case PLANNER_TYPE_ANASTAR:
             return new anaPlanner(environment, bforwardsearch);
         case PLANNER_TYPE_AASTAR:
-            printf("Creating AAPlanner\n");
+            printf("Creating Adaptive A* Planner\n");
             return new AAPlanner(environment, bforwardsearch);
+        case PLANNER_TYPE_ASTAR:{
+            bool backwardSearch = !bforwardsearch;
+            return new ASTARPlanner(environment, backwardSearch);
+        }
 
         //TODO add new planners
         case PLANNER_TYPE_PPCP:
@@ -1855,27 +1853,30 @@ int main(int argc, char *argv[]) {
         printf("Building Environment...\n");
         DiscreteSpaceInformation *env = getSearchSpace(selectedEnvironment);
         env->generateRandomEnvironment(env_id);
-        printf("Environment Built!\n");
+        SBPL_DEBUG("Environment Built!");
 
         // Initialize planner (for this environment :/).
         // TODO: planners should be able to swap environments and cfgs
         // TODO: Use _planner_settings_
         printf("Building Planner...\n");
         SBPLPlanner *planner = getPlanner(selectedPlanner, env, !backwardSearch);
-        printf("Planner Built!\n");
+        SBPL_DEBUG("Planner Built!");
 
+        printf("\nTesting runs\n");
         for(int run_id=run_start; run_id<run_end; run_id++){
             printf("Run %d:\n", run_id);
             MDPConfig startGoal;
             if(env->generateRandomProblem(&startGoal, run_id, maxTries)){
                 // Config
+                printf("\nInstance setup\n");
                 setStartGoal(planner, &startGoal);
 
                 // Planning
+                printf("\nInstance solving");
                 // TODO: allow testing multiple planner configurations (weight, lookahead, etc..)
                 vector<int> pathIDs;
                 int retCode = planner->replan(givenTime, &pathIDs);
-                printf("%d\n", retCode);
+                printf("replan status code=%d\n", retCode);
             }
             else
                 printf("  Skipping run %d on random environment %d."

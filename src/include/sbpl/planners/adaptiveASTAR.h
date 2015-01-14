@@ -59,6 +59,8 @@ class DiscreteSpaceInformation;
 //Xiaoxun added this
 #define AA_REMOVE_LIST_ID 0
 
+#define AA_MAGIC 'D'
+
 
 
 class CMDP;
@@ -70,50 +72,71 @@ class CList;
 class RList;
 
 
+class AAState;
+class AASpace;
+class AAPlanner;
+
 /**
  * Adaptive A* Search State
  */
-typedef class AASEARCHSTATEDATA : public AbstractSearchState {
-    public:
-        // MDP State
-        CMDPSTATE *MDPstate;
+class AAState : public AbstractSearchState {
 
-        // Adaptive A* data
-        // ----------------
-        unsigned int v;
-        unsigned int g;
-        short unsigned int iterationclosed;
-        short unsigned int callnumberaccessed;
-        //best predecessor and the action from it, used only in forward searches
-        CMDPSTATE *bestpredstate;
-        //the next state if executing best action
-        CMDPSTATE  *bestnextstate;
-        unsigned int costtobestnextstate;
-        int h;
+public:
+    // MDP State
+    // ---------
+    CMDPSTATE *MDPstate;
 
-        vector<neighborStub> successors;
-        vector<neighborStub> predecessors;
+    // Adaptive A* data
+    // ----------------
+    unsigned int g;
+    unsigned int v;
+    short unsigned int iterationclosed;
+    short unsigned int callnumberaccessed;
 
+    // Best next state
+    // ---------------
+    // REVIEW: use annonymous union {succs, preds}
+    CMDPSTATE *bestSuccState;  // backward searches
+    CMDPSTATE *bestpredstate;  //  forward searches
+    unsigned int costtobestnextstate;
+    int h;
+
+    // Neighbourhood
+    // -------------
+    // REVIEW: use annonymous union {succs, preds}
+    vector<nodeStub> successors;
+    vector<nodeStub> predecessors;
+
+
+    // Statistics
+    // ----------
 #if STATISTICS || 1
-        short unsigned int expansions = 0;
-        int succs_ever_generated;
-        int preds_ever_generated;
+    short unsigned int expansions = 0;
+    int succs_ever_generated;
+    int preds_ever_generated;
 #endif
+    unsigned int generated_iteration;
 
-        unsigned int generated_iteration;
+    char _magic;
 
-    public:
-        AASEARCHSTATEDATA() {};
-        ~AASEARCHSTATEDATA() {};
-} AAState;
+public:
+    AAState(AAPlanner *planner, AASpace* space);
+    ~AAState();
 
+    void reinitialize(AAPlanner *planner, AASpace* space);
+protected:
+    inline void resetSearchInfo();
+    inline void resetStatistics();
+    inline void computeH(AAPlanner* planner, AASpace* space);
+};
 
 
 
 /**
  * Adaptive A* Search Space
  */
-typedef struct AASEARCHSTATESPACE {
+class AASpace {
+public:
     double eps;
     double eps_satisfied;
     CHeap *heap;
@@ -153,8 +176,9 @@ typedef struct AASEARCHSTATESPACE {
     unsigned long int keymodifer;   // Xiaoxun added this (12)
     unsigned long int keymod[MAX_SEARCHES];
 
-
-} AASearchStateSpace_t;
+    AASpace();
+    ~AASpace();
+};
 
 
 
@@ -164,17 +188,20 @@ typedef struct AASEARCHSTATESPACE {
 class AAPlanner : public SBPLPlanner {
 
     public:
-        int replan(double allocated_time_secs, vector<int> *solution_stateIDs_V);
-        int replan(double allocated_time_sec, vector<int> *solution_stateIDs_V, int *solcost);
+        int replan(double givenSeconds, vector<stateID> *solution_stateIDs_V);
+        int replan(double givenSeconds, vector<stateID> *solution_stateIDs_V, int *solcost);
 
-        int set_goal(int goal_stateID);
-        int set_start(int start_stateID);
+        int set_start(int startID);
+        int set_goal(int goalID);
+
         void costs_changed(StateChangeQuery const &stateChange);
         void costs_changed();
         int force_planning_from_scratch();
         int set_search_mode(bool bSearchUntilFirstSolution);
 
-        virtual double get_solution_eps() const {return pSearchStateSpace_->eps_satisfied;};
+        virtual double get_solution_eps() const {
+            return pSearchSpace->eps_satisfied;
+        };
         virtual int get_n_expands() const { return searchexpands; }
         virtual void set_initialsolution_eps(double initialsolution_eps) {finitial_eps = initialsolution_eps;};
 
@@ -196,7 +223,7 @@ class AAPlanner : public SBPLPlanner {
 
         bool bsearchuntilfirstsolution; //if true, then search until first solution only (see planner.h for search modes)
 
-        AASearchStateSpace_t *pSearchStateSpace_;
+        AASpace *pSearchSpace;
 
         unsigned int searchexpands;
         int MaxMemoryCounter;
@@ -208,45 +235,44 @@ class AAPlanner : public SBPLPlanner {
         FILE *fDeb;
 
 
-        //member functions
-        void Initialize_searchinfo(CMDPSTATE *state, AASearchStateSpace_t *pSearchStateSpace);
+        CMDPSTATE *CreateState(int stateID, AASpace *space);
 
-        CMDPSTATE *CreateState(int stateID, AASearchStateSpace_t *pSearchStateSpace);
+        CMDPSTATE *GetState(int stateID, AASpace *space);
 
-        CMDPSTATE *GetState(int stateID, AASearchStateSpace_t *pSearchStateSpace);
-
-        int ComputeHeuristic(CMDPSTATE *MDPstate, AASearchStateSpace_t *pSearchStateSpace);
+public:
+        int ComputeHeuristic(CMDPSTATE *MDPstate, AASpace* space);
+private:
 
         //initialization of a state
-        void InitializeSearchStateInfo(AAState *state, AASearchStateSpace_t *pSearchStateSpace);
+        void InitializeSearchStateInfo(AAState *state, AASpace *space);
 
         //re-initialization of a state
-        void ReInitializeSearchStateInfo(AAState *state, AASearchStateSpace_t *pSearchStateSpace);
+        void ReInitializeSearchStateInfo(AAState *state, AASpace *space);
 
         void DeleteSearchStateData(AAState *state);
 
         //used for backward search
-        void UpdatePreds(AAState *state, AASearchStateSpace_t *pSearchStateSpace);
+        void UpdatePreds(AAState *state, AASpace *space);
 
 
         //used for forward search
-        void UpdateSuccs(AAState *state, AASearchStateSpace_t *pSearchStateSpace);
+        void UpdateSuccs(AAState *state, AASpace *space);
 
-        int GetGVal(int StateID, AASearchStateSpace_t *pSearchStateSpace);
+        int GetGVal(int StateID, AASpace *space);
 
         //returns 1 if the solution is found, 0 if the solution does not exist and 2 if it ran out of time
-        int ImprovePath(AASearchStateSpace_t *pSearchStateSpace, double MaxNumofSecs);
+        int ImprovePath(AASpace *space, double MaxNumofSecs);
 
-        void BuildNewOPENList(AASearchStateSpace_t *pSearchStateSpace);
+        void BuildNewOPENList(AASpace *space);
 
-        void Reevaluatefvals(AASearchStateSpace_t *pSearchStateSpace);
+        void Reevaluatefvals(AASpace *space);
 
         //creates (allocates memory) search state space
         //does not initialize search statespace
-        int CreateSearchStateSpace(AASearchStateSpace_t *pSearchStateSpace);
+        int CreateSearchStateSpace(AASpace *space);
 
         //deallocates memory used by SearchStateSpace
-        void DeleteSearchStateSpace(AASearchStateSpace_t *pSearchStateSpace);
+        void DeleteSearchStateSpace(AASpace *space);
 
         //debugging
         void PrintSearchState(AAState *state, FILE *fOut);
@@ -254,31 +280,31 @@ class AAPlanner : public SBPLPlanner {
 
         //reset properly search state space
         //needs to be done before deleting states
-        int ResetSearchStateSpace(AASearchStateSpace_t *pSearchStateSpace);
+        int ResetSearchStateSpace(AASpace *space);
 
         //initialization before each search
-        void ReInitializeSearchStateSpace(AASearchStateSpace_t *pSearchStateSpace);
+        void ReInitializeSearchStateSpace(AASpace *space);
 
         //very first initialization
-        int InitializeSearchStateSpace(AASearchStateSpace_t *pSearchStateSpace);
+        int InitializeSearchStateSpace(AASpace *space);
 
-        int SetSearchGoalState(int SearchGoalStateID, AASearchStateSpace_t *pSearchStateSpace);
+        int SetSearchGoalState(int SearchGoalStateID, AASpace *space);
 
 
-        int SetSearchStartState(int SearchStartStateID, AASearchStateSpace_t *pSearchStateSpace);
+        int SetSearchStartState(int SearchStartStateID, AASpace *space);
 
         //reconstruct path functions are only relevant for forward search
-        int ReconstructPath(AASearchStateSpace_t *pSearchStateSpace);
+        int ReconstructPath(AASpace *space);
 
 
-        void PrintSearchPath(AASearchStateSpace_t *pSearchStateSpace, FILE *fOut);
+        void PrintSearchPath(AASpace *space, FILE *fOut);
 
-        int getHeurValue(AASearchStateSpace_t *pSearchStateSpace, int StateID);
+        int getHeurValue(AASpace *space, int StateID);
 
         //get path
-        vector<int> GetSearchPath(AASearchStateSpace_t *pSearchStateSpace, int &solcost);
+        vector<int> GetSearchPath(AASpace *space, int &solcost);
 
-        bool Search(AASearchStateSpace_t *pSearchStateSpace, vector<int> &pathIds, int &PathCost, bool bFirstSolution, bool bOptimalSolution, double MaxNumofSecs);
+        bool Search(AASpace *space, vector<int> &pathIds, int &PathCost, bool bFirstSolution, bool bOptimalSolution, double MaxNumofSecs);
 
 
 
@@ -286,28 +312,26 @@ class AAPlanner : public SBPLPlanner {
 
 //Xiaoxun's AA* functions
 //------------------------------------------------------------------------------
-        AAState *ChooseOneSuccs_for_TargetMove(AAState *state, AASearchStateSpace_t *pSearchStateSpace);
+        AAState *ChooseOneSuccs_for_TargetMove(AAState *state, AASpace *space);
 
-        int ReSetSearchGoalState(int SearchGoalStateID, AASearchStateSpace_t *pSearchStateSpace);
+        int ReSetSearchGoalState(int SearchGoalStateID, AASpace *space);
         int reset_goal(int start_stateID);
 // return 1 if target moved off the previous path, return 0 otherwise
-        int goal_moved(AASearchStateSpace_t *pSearchStateSpace);
-        int ReSetSearchStartState(int SearchStartStateID, AASearchStateSpace_t *pSearchStateSpace);
+        int goal_moved(AASpace *space);
+        int ReSetSearchStartState(int SearchStartStateID, AASpace *space);
         int reset_start(int start_stateID);
 // return 1 if robot moved one step
-        int start_moved(AASearchStateSpace_t *pSearchStateSpace);
+        int start_moved(AASpace *space);
 
 
-        void Reset_New_Test_Case(AASearchStateSpace_t *pSearchStateSpace);
-        void ReInitializeNewSearch(AASearchStateSpace_t *pSearchStateSpace);
+        void Reset_New_Test_Case(AASpace *space);
+        void ReInitializeNewSearch(AASpace *space);
 
-        void AA_ReInitializeState(AAState *state, AASearchStateSpace_t *pSearchStateSpace);
+        void AA_ReInitializeState(AAState *state, AASpace *space);
 
-        int GetMoveCost(AAState *state, AASearchStateSpace_t *pSearchStateSpace);
+        int GetMoveCost(AAState *state, AASpace *space);
 //2010.02.28
-        int GetTargetMoveCost(AAState *state, AAState *state2, AASearchStateSpace_t *pSearchStateSpace);
-
-
+        int GetTargetMoveCost(AAState *state, AAState *state2, AASpace *space);
 };
 
 

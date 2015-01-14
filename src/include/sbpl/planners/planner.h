@@ -51,6 +51,8 @@ enum STATEID2IND
 #define RSTARMDP_LSEARCH_STATEID2IND STATEID2IND_SLOT1
 #define anaMDP_STATEID2IND STATEID2IND_SLOT0
 
+#define ASTARMDP_STATEID2IND STATEID2IND_SLOT0
+
 //for example
 //#define YYYPLANNER_STATEID2IND STATEID2IND_SLOT0
 //#define YYYPLANNER_STATEID2IND STATEID2IND_SLOT1
@@ -170,7 +172,9 @@ public:
     AbstractSearchState()
     {
         StateType = ABSTRACT_GENERALSTATE;
-        listelem[0] = listelem[1] = NULL;
+        listelem[0] = listelem[1] = nullptr;
+
+        heapindex = 0;
     }
     ~AbstractSearchState() { }
 };

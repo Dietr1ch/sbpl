@@ -65,6 +65,18 @@ typedef int stateID;
 typedef unsigned int uint;
 typedef unsigned long ulong;
 
+
+
+// Success codes are horrible...
+// Single error code
+#define SBPL_ERR 0
+#define SBPL_OK 1
+// Multiple useless success codes
+#define SBPL_VERY_OK 10
+#define SBPL_MUCH_WOW 100
+
+
+
 /**
  * \brief if set, then heuristic is used if available
  */

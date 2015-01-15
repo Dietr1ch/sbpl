@@ -33,7 +33,10 @@ class ASTARPlanner;
 
 
 /**
- * Adaptive A* Search State
+ * A* Node
+ *
+ * A* node contains the information of the search STATE (!=node)
+ *  along information needed for the planner to search
  */
 class ASTARNode : public AbstractSearchState {
 
@@ -52,6 +55,7 @@ public:
     /** g+h (Non-cached!!)*/
     uint f() const;
 
+    // TODO: set-up replanning
     short unsigned int iterationclosed;
     short unsigned int callnumberaccessed;
 
@@ -90,6 +94,7 @@ public:
 // =========
 public:
     ASTARNode(stateID id, ASTARSpace* space);
+    ASTARNode(stateID id, ASTARSpace* space, int initialH);
     ~ASTARNode();
 
     void print(FILE *fOut);
@@ -111,13 +116,20 @@ protected:
  */
 class ASTARSpace {
 public:
+    // Problem data
     CMDP MDP;
     DiscreteSpaceInformation *problem;
 
-    CHeap *heap;
+    // Instance data
     CMDPSTATE *startState;
     CMDPSTATE *currentState;
     CMDPSTATE *goalState;
+
+    // Data
+    CHeap *open;
+
+    // Configuration
+    bool backwardSearch;  // It should be on the planner, but eases heuristic calculation
 
     bool valid = true;
 
@@ -149,6 +161,7 @@ public:
     ASTARSpace(DiscreteSpaceInformation *problem);
     ~ASTARSpace();
 
+    inline int computeHeuristic(const CMDPSTATE &origin);
 
 
     // Configuration
@@ -162,12 +175,12 @@ public:
     // ====================
 
     /** Inserts or Updates (Upserts) a node in the open list */
-    void upsertOpen(ASTARNode *node, CKey key);
+    void upsertOpen(ASTARNode *node);
 
     /** Inserts or Updates (Upserts) a node in the open list */
-    void insertOpen(ASTARNode *node, CKey key) { upsertOpen(node, key); }
+    void insertOpen(ASTARNode *node) { upsertOpen(node); }
     /** Inserts or Updates (Upserts) a node in the open list */
-    void updateOpen(ASTARNode *node, CKey key) { upsertOpen(node, key); }
+    void updateOpen(ASTARNode *node) { upsertOpen(node); }
 
 
     /** UNSAFE: inserts a node in open, NQA */
@@ -183,24 +196,24 @@ public:
 
 
 
-    // States acquisition
-    // ==================
+    // Nodes acquisition
+    // =================
 
-    /** Get an state */
-    CMDPSTATE* getState(stateID id);
     /** Get a node */
     ASTARNode* getNode(stateID id);
+    /** Get a node having h=0 if it's new
+     *  (set-up hack to avoid computing h) */
+    ASTARNode* getNode0(stateID id);
+
     /** Get a node */
     ASTARNode* getNode(CMDPSTATE *mdpState);
 
-    /** UNSAFE: Get an state */
-    CMDPSTATE* getState_(stateID id);
-    /** UNSAFE: Get an state */
+    /** UNSAFE: Get an node */
     ASTARNode* getNode_(stateID id);
 
-    /** Gets the starting state */
+    /** Gets the starting node */
     ASTARNode* getStart();
-    /** Gets the goal state */
+    /** Gets the goal node */
     ASTARNode* getGoal();
 
 
@@ -208,7 +221,6 @@ public:
     // Statistics
     // ==========
     void resetStatistics();
-
 };
 
 
@@ -226,7 +238,6 @@ protected:
     ASTARSpace *space;
 
     // Configuration
-    bool backwardSearch;
     bool firstSolutionOnly;
 
     /** Statistics */
@@ -249,10 +260,10 @@ public:
     ASTARPlanner(DiscreteSpaceInformation *environment, bool backwardSearch=false);
     ~ASTARPlanner();
 
-    inline int computeHeuristic(const CMDPSTATE &MDPstate);
-
 
 protected:
+    bool Search(vector<stateID> *pathIDs, int *cost, bool bFirstSolution, bool bOptimalSolution, double givenSeconds);
+
     //used for backward search
     inline void updatePredecessors(const ASTARNode &node);
     inline void  reachPredecessor(const ASTARNode &node, const nodeStub &nS);
@@ -260,24 +271,10 @@ protected:
     inline void updateSuccessors(const ASTARNode &node);
     inline void  reachSuccessor(const ASTARNode &node, const nodeStub &nS);
 
-    int GetGVal(int StateID);
-
-    //1:Solution found. 0:No solution exists. 2: Out of time
-    int ImprovePath(double MaxNumofSecs);
-
-    void BuildNewOPENList();
-
-    void Reevaluatefvals();
-
-    int ReconstructPath();
-    void printPath(FILE *fOut=stdout);
-
-    int getHeurValue(int StateID);
-
-    //get path
-    vector<int> GetSearchPath(int &solcost);
-
-    bool Search(vector<stateID> *pathIDs, int *cost, bool bFirstSolution, bool bOptimalSolution, double givenSeconds);
+    //void reevaluateFVals();
+    //int reconstructPath();
+    //void printPath(FILE *fOut=stdout);
+    //vector<int> getSearchPath(int &solcost);
 
 
 

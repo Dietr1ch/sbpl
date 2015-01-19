@@ -123,6 +123,7 @@ int SBPL_FFLUSHALL(FILE* file);
 
 
 #define MALLOC(type) (  (type*) malloc(sizeof(type))  )
+#define DELETE(obj)  { if(obj){delete obj; obj = nullptr;} }
 
 // Standard Output Logger Macros
 #ifdef ROS

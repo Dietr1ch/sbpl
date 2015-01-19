@@ -20,34 +20,41 @@ static SBPL_FFLUSH_TEXT_FP sbpl_fflush_fp = NULL;
 void SET_SBPL_PRINT_TEXT_FP(SBPL_PRINT_TEXT_FP fptr) { sbpl_print_fp = fptr; }
 void SET_SBPL_FFLUSH_TEXT_FP(SBPL_FFLUSH_TEXT_FP fptr) { sbpl_fflush_fp = fptr; }
 
-int SBPL_PRINTALL(int level, const char* format, ...)
-{
-	int retVal = 0;
+
+int SBPL_PRINTALL(int level, const char* format, ...) {
+    // TODO: fix Valgrind's 'Conditional jump or move depends on uninitialised value(s)' report
+
+    int retVal = 0;
     if (sbpl_print_fp) {
         // parse arguments and pass resultant string to configured logger
         va_list args;
         va_start(args, format);
-    	char buffer[SBPL_PRINTF_BUFFER_SIZE] = {0};
+
+
+        char buffer[SBPL_PRINTF_BUFFER_SIZE] = {0};
         retVal = vsnprintf(buffer,SBPL_PRINTF_BUFFER_SIZE - 1, format, args);
-        if (retVal < 0) {
+        if (retVal < 0)
             printf("SBPL_PRINTALL::ERROR, could not complete call to vsnprintf()");
-        }
         else {
-            if (retVal == SBPL_PRINTF_BUFFER_SIZE) {
+            if (retVal == SBPL_PRINTF_BUFFER_SIZE)
                 printf("SBPL_PRINTALL::ERROR, SBPL_PRINTF_BUFFER_SIZE: %d not large enough", SBPL_PRINTF_BUFFER_SIZE);
-            }
-            if(buffer[retVal-1] == '\n') { // Remove newline
+
+            if(buffer[retVal-1] == '\n')  // Remove newline
                 buffer[retVal-1] = '\0';
-            }
+
             sbpl_print_fp(level, &buffer[0]);
         }
-    	va_end(args);
+
+
+        va_end(args);
     }
-	return retVal;
+
+    return retVal;
 }
 
 int SBPL_FPRINTALL(FILE* file, const char* format, ...)
 {
+    // TODO: fix Valgrind's 'Conditional jump or move depends on uninitialised value(s)' report
 	int retVal = 0;
     va_list args;
     va_start(args, format);

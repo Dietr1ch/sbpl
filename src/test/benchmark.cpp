@@ -1887,6 +1887,7 @@ int main(int argc, char *argv[]) {
         }
 
         // TODO: dispose planner and environment resources
+        delete planner;
     }
 
     // Given environments

@@ -30,12 +30,10 @@ ASTARNode::ASTARNode(stateID id, ASTARSpace *space, int initialH) {
     space->problem->StateID2IndexMapping[id][ASTARMDP_STATEID2IND] = statesCount-1;
 
     // Setup
-    g = INFINITECOST;  // Not reached
+    g = INFINITECOST;  // Not reached yet
     h = initialH;
 
-    best = nullptr;
-    bestSuccessor  = nullptr;
-    bestPredecesor = nullptr;  // Just to be clear (only one exists)
+    best = nullptr;  // (==bestSuccessor==bestPredecesor, only one exists)
 
     heapindex = 0;
     iterationclosed = 0;
@@ -44,6 +42,8 @@ ASTARNode::ASTARNode(stateID id, ASTARSpace *space, int initialH) {
 
 }
 ASTARNode::~ASTARNode(){
+    //SBPL_DEBUG("Node at %p will be destroyed\n", this);
+    //SBPL_DEBUG("Node at %p was destroyed\n", this);
 }
 
 // Shortcuts
@@ -74,6 +74,8 @@ ASTARSpace::ASTARSpace(DiscreteSpaceInformation *problemDSI) {
     open = new CHeap;
     problem = problemDSI;
 
+    backwardSearch = false;
+
     startState = nullptr;
     goalState  = nullptr;
 
@@ -83,6 +85,41 @@ ASTARSpace::ASTARSpace(DiscreteSpaceInformation *problemDSI) {
 }
 
 ASTARSpace::~ASTARSpace() {
+    SBPL_DEBUG("Space at %p will be destroyed\n", this);
+
+    // Clear search instance (States and Nodes are cleared with the rest)
+    // ---------------------
+    startState = nullptr;
+    goalState  = nullptr;
+
+
+    // Delete heap (Clearing heap indexes)
+    // -----------
+    DELETE(open);
+
+
+    // Delete states and nodes
+    // -----------------------
+    for(CMDPSTATE *state : MDP.StateArray){
+        // assert(state->PlannerSpecificData->heapindex == 0)
+
+        // Delete Node
+        // REVIEW: heap index clear becomes useless (just here?)
+        delete (ASTARNode*) state->PlannerSpecificData;
+        state->PlannerSpecificData = nullptr;
+
+        // Delete State
+        delete state;
+    }
+    MDP.StateArray.clear();
+
+
+    // Delete problem data
+    // -------------------
+    DELETE(problem);
+
+
+    SBPL_DEBUG("Space at %p was destroyed\n", this);
 }
 
 inline
@@ -109,9 +146,11 @@ ASTARSpace::setStart(stateID startID) {
 
     assert(newStartState);
     if(startState != newStartState){
-        SBPL_DEBUG("Start state changed");
         startState = newStartState;
-        // REVIEW: initialization
+        SBPL_DEBUG("Start state changed");
+
+        // TODO: think
+
         valid = false;
     }
     SBPL_DEBUG("");
@@ -129,16 +168,18 @@ ASTARSpace::setGoal(stateID goalID) {
 
     assert(newGoalState);
     if(goalState != newGoalState){
-        SBPL_DEBUG("Goal  state changed");
         goalState = newGoalState;
+        SBPL_DEBUG("Goal  state changed");
 
-        // REVIEW: initialization
+        // TODO: think
+
         for(CMDPSTATE *state : MDP.StateArray){
             assert(state);
             ASTARNode *node = (ASTARNode*) state->PlannerSpecificData;
             assert(node);
-            node->h = 0;
-            //TODO: recompute h
+            // REVIEW: compute h needed for the whole space?
+            // REVIEW: use invalidation and re-compute on demand
+            node->h = computeHeuristic(*state);
         }
     }
     SBPL_DEBUG("");
@@ -303,10 +344,21 @@ ASTARPlanner::ASTARPlanner(DiscreteSpaceInformation *environment, bool backwardS
     space = new ASTARSpace(environment);
     assert(space);
 
+    dbg = nullptr;
+
     SBPL_DEBUG("Planner created at %p\n", this);
 }
 ASTARPlanner::~ASTARPlanner(){
     SBPL_DEBUG("Planner at %p will be destroyed\n", this);
+    DELETE(space);
+
+    if(dbg){
+        if(fclose(dbg))
+            TRACE("File[%p] was not succesfully closed", (void*)dbg);
+        dbg = nullptr;
+    }
+
+    SBPL_DEBUG("Planner at %p was destroyed\n", this);
 }
 
 
@@ -405,6 +457,8 @@ ASTARPlanner::updateSuccessors(const ASTARNode &node) {
     // Reach each node updating path&cost on improvements
     for(nodeStub nS : *successors)
         reachSuccessor(node, nS);
+
+    delete successors;
 }
 
 inline

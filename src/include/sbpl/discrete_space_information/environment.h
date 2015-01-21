@@ -149,6 +149,35 @@ public:
         return successors;
     };
 
+    virtual vector<nodeStub>* GetPreds(stateID id) {
+        // TODO: this MUST be done on a lower level!
+
+        // Retrieve successors the old way
+        vector<stateID> ids;
+        vector<int> costs;
+        GetPreds(id, &ids, &costs);
+
+        // Copy the data onto a new vector
+        int count = ids.size();
+#if !DEBUG
+        QUIT("OVERHEAD: %d copies and some calls", count);
+#endif
+
+        vector<nodeStub> *predecessors = new vector<nodeStub>(count);
+        assert(predecessors->size() == (size_t)count);
+
+        // Variadic zip operator would be nice :c
+        for(int i=0; i<count; i++) {
+            assert(  ids[i]);
+            assert(costs[i]);
+
+            (*predecessors)[i].id   =   ids[i];
+            (*predecessors)[i].cost = costs[i];
+        }
+
+        // Return the new vector
+        return predecessors;
+    };
     /**
      * \brief This version is used with lazy planners. The environment must tell which successors have
      *        been evaluated fully (and therefore their true cost is being returned) or if it has not been.

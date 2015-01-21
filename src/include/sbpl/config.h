@@ -37,10 +37,14 @@
 
 
 
-#define STRONG_TYPE_ID 0
+// Types
+// =====
+#define STRONG_TYPES 0
 
+typedef unsigned int uint;
+typedef unsigned long ulong;
 
-#if STRONG_TYPE_ID
+#if STRONG_TYPES
 // See https://codereview.stackexchange.com/posts/52550/revisions
 
 template<typename T>
@@ -54,16 +58,14 @@ public:
 };
 #endif
 
-
-#if STRONG_TYPE_ID
+#if STRONG_TYPES
 class state_t;
 typedef ID_t<state_t> stateID;
 #else
 typedef int stateID;
+typedef uint searchID;
 #endif
 
-typedef unsigned int uint;
-typedef unsigned long ulong;
 
 
 

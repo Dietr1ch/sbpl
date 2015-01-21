@@ -14,10 +14,9 @@
 // ========
 ASTARNode::ASTARNode(stateID id, ASTARSpace *space) : ASTARNode(id, space, 0) {
     h = space->computeHeuristic(*MDPstate);
+    lastUpdated = space->iteration;
 }
 ASTARNode::ASTARNode(stateID id, ASTARSpace *space, int initialH) {
-//     SBPL_DEBUG("Creating           A*Node[%p] state[%d]", this, id);
-
     MDPstate = space->MDP.AddState(id);
     assert(MDPstate);
     assert(MDPstate->StateID);
@@ -36,14 +35,13 @@ ASTARNode::ASTARNode(stateID id, ASTARSpace *space, int initialH) {
     best = nullptr;  // (==bestSuccessor==bestPredecesor, only one exists)
 
     heapindex = 0;
-    iterationclosed = 0;
+    lastUpdated = (searchID)0;
+    successors = nullptr;
 
     costToBestState = INFINITECOST;
-
 }
 ASTARNode::~ASTARNode(){
-    //SBPL_DEBUG("Node at %p will be destroyed\n", this);
-    //SBPL_DEBUG("Node at %p was destroyed\n", this);
+    delete successors;
 }
 
 // Shortcuts
@@ -76,6 +74,8 @@ ASTARSpace::ASTARSpace(DiscreteSpaceInformation *problemDSI) {
 
     backwardSearch = false;
 
+    iteration = (searchID) 0;
+
     startState = nullptr;
     goalState  = nullptr;
 
@@ -101,8 +101,6 @@ ASTARSpace::~ASTARSpace() {
     // Delete states and nodes
     // -----------------------
     for(CMDPSTATE *state : MDP.StateArray){
-        // assert(state->PlannerSpecificData->heapindex == 0)
-
         // Delete Node
         // REVIEW: heap index clear becomes useless (just here?)
         delete (ASTARNode*) state->PlannerSpecificData;
@@ -123,6 +121,15 @@ ASTARSpace::~ASTARSpace() {
 }
 
 inline
+void
+ASTARSpace::updateNode(ASTARNode &node) {
+    if(node.lastUpdated!=iteration) {
+        node.h = computeHeuristic(*node.MDPstate);
+        node.lastUpdated = iteration;
+    }
+}
+
+inline
 int
 ASTARSpace::computeHeuristic(const CMDPSTATE &origin){
     auto target = backwardSearch ? startState
@@ -136,9 +143,6 @@ ASTARSpace::computeHeuristic(const CMDPSTATE &origin){
 inline
 void
 ASTARSpace::setStart(stateID startID) {
-    SBPL_DEBUG("");
-    SBPL_DEBUG("Setting start to state[%d]", startID);
-
     // Getting the A* node is an overhead (here), but will be generated later.
     auto newStartNode  = getNode0(startID);
     SBPL_DEBUG(" start = A*Node[%p]", newStartNode);
@@ -147,20 +151,13 @@ ASTARSpace::setStart(stateID startID) {
     assert(newStartState);
     if(startState != newStartState){
         startState = newStartState;
-        SBPL_DEBUG("Start state changed");
 
-        // TODO: think
-
-        valid = false;
+        // Heuristic remains consistent
     }
-    SBPL_DEBUG("");
 }
 inline
 void
 ASTARSpace::setGoal(stateID goalID) {
-    SBPL_DEBUG("");
-    SBPL_DEBUG("Setting goal  to  state[%d]", goalID);
-
     // Getting the A* node is an overhead (here), but will be generated later.
     auto newGoalNode  = getNode0(goalID);
     SBPL_DEBUG("  goal = A*Node[%p]", newGoalNode);
@@ -169,10 +166,8 @@ ASTARSpace::setGoal(stateID goalID) {
     assert(newGoalState);
     if(goalState != newGoalState){
         goalState = newGoalState;
-        SBPL_DEBUG("Goal  state changed");
 
-        // TODO: think
-
+        // TODO: Use lazy update
         for(CMDPSTATE *state : MDP.StateArray){
             assert(state);
             ASTARNode *node = (ASTARNode*) state->PlannerSpecificData;
@@ -182,7 +177,6 @@ ASTARSpace::setGoal(stateID goalID) {
             node->h = computeHeuristic(*state);
         }
     }
-    SBPL_DEBUG("");
 }
 
 
@@ -207,12 +201,13 @@ inline
 void
 ASTARSpace::insertOpen_(ASTARNode *node, CKey key) {
     assert(node);
+    assert(node->lastUpdated==iteration);
 #ifdef DEBUG
-    float f = key.key[0]/1000.0;
-    float h = key.key[1]/1000.0;
-    float g = f-h;
-    TRACE("  open: Inserting  A*Node[%p] state[%4d] {%5.2f + %5.2f = %5.2f}",
-               (void*)node, node->id(), g, h, f);
+    //float f = key.key[0]/1000.0;
+    //float h = key.key[1]/1000.0;
+    //float g = f-h;
+    //SBPL_DEBUG("  open: Inserting  A*Node[%p] state[%4d] {%5.2f + %5.2f = %5.2f}",
+               //(void*)node, node->id(), g, h, f);
 #endif
     open->insertheap(node, key);
 }
@@ -220,12 +215,13 @@ inline
 void
 ASTARSpace::updateOpen_(ASTARNode* node, CKey key) {
     assert(node);
+    assert(node->lastUpdated==iteration);
 #ifdef DEBUG
-    float f = key.key[0]/1000.0;
-    float h = key.key[1]/1000.0;
-    float g = f-h;
-    TRACE("  open: Updating   A*Node[%p] state[%4d] (%5.2f + %5.2f = %5.2f)",
-               (void*)node, node->id(), g, h, f);
+    //float f = key.key[0]/1000.0;
+    //float h = key.key[1]/1000.0;
+    //float g = f-h;
+    //SBPL_DEBUG("  open: Updating   A*Node[%p] state[%4d] (%5.2f + %5.2f = %5.2f)",
+               //(void*)node, node->id(), g, h, f);
 #endif
     open->updateheap(node, key);
 }
@@ -233,7 +229,7 @@ inline
 ASTARNode*
 ASTARSpace::popOpen() {
     auto node = (ASTARNode*) open->deleteminheap();
-//     TRACE("  open: Retrieving A*Node[%p] state[%d]", node, node->id());
+    assert(node);
     return node;
 }
 inline
@@ -280,6 +276,9 @@ ASTARSpace::getNode_(stateID id) {
     CMDPSTATE *cmdpState = MDP.StateArray[index];
     assert(cmdpState);
     auto node = (ASTARNode*) cmdpState->PlannerSpecificData;
+    assert(node);
+
+    updateNode(*node);
 
     return node;
 }
@@ -290,9 +289,9 @@ ASTARSpace::getNode(CMDPSTATE* mdpState) {
     assert(mdpState);
     assert(mdpState->StateID);
     auto node = (ASTARNode*) mdpState->PlannerSpecificData;
+    assert(node);
 
 #ifdef DEBUG
-    assert(node);
     auto nodeFromID = getNode(mdpState->StateID);
     if(node!=nodeFromID)
         QUIT("\nCDMPState[%p] data unconsistent data:\n"
@@ -305,12 +304,27 @@ ASTARSpace::getNode(CMDPSTATE* mdpState) {
               (void*)nodeFromID);
 #endif
 
+
+    updateNode(*node);
+
     return node;
 }
 
 // Shortcuts
-inline ASTARNode* ASTARSpace::getStart()  { return  getNode(startState); }
-inline ASTARNode* ASTARSpace::getGoal()   { return  getNode(goalState);  }
+inline ASTARNode* ASTARSpace::getStart()  {
+    auto startNode = getNode(startState);
+    assert(startNode);
+
+    updateNode(*startNode);
+    return startNode;
+}
+inline ASTARNode* ASTARSpace::getGoal()   {
+    auto goalNode = getNode(goalState);
+    assert(goalNode);
+
+    goalNode->h = 0;
+    return goalNode;
+}
 
 
 
@@ -338,8 +352,8 @@ ASTARSpace::resetStatistics(){
 // Object management
 // -----------------
 ASTARPlanner::ASTARPlanner(DiscreteSpaceInformation *environment, bool backwardSearch) {
-    assert(environment);
     SBPL_DEBUG("Creating planner at %p\n", this);
+    assert(environment);
 
     space = new ASTARSpace(environment);
     assert(space);
@@ -373,10 +387,11 @@ ASTARPlanner::Search(vector<stateID> *pathIDs, int *cost, bool bFirstSolution, b
     assert(space->goalState);
     assert(pathIDs->empty());
 
+    // TODO: allow backwardSearch
 
     // Initialization
     // ==============
-    SBPL_DEBUG("\nPreparing A* loop");
+    SBPL_DEBUG("\n  Preparing A* loop");
 
     // Reset statistics (just in case)
     stats.iteration = 0;
@@ -385,22 +400,18 @@ ASTARPlanner::Search(vector<stateID> *pathIDs, int *cost, bool bFirstSolution, b
 
     // Prepare goal node
     ASTARNode* goalNode = space->getGoal();
-    SBPL_DEBUG("Looking for   A*Node[%p]", (void*)goalNode);
     goalNode->g = INFINITECOST;
-    goalNode->h = 0;
+
 
     // Prepare starting node
     ASTARNode *startNode = space->getStart();
-    SBPL_DEBUG("Starting from A*Node[%p]", (void*)startNode);
     startNode->g = 0;
-    startNode->h = space->computeHeuristic(*startNode->MDPstate);
 
-    space->insertOpen(startNode);
-
+    space->upsertOpen(startNode);
 
     // Expansion
     // =========
-    SBPL_DEBUG("\nStarting A* loop");
+    SBPL_DEBUG("\n  Starting A* loop");
 
     CKey bestKey;
     while(!space->openEmpty()){
@@ -412,38 +423,40 @@ ASTARPlanner::Search(vector<stateID> *pathIDs, int *cost, bool bFirstSolution, b
         if(bestKey.key[0] >= INFINITECOST)         // Best node is not reachable
             break;
 
-        // Check if the (current) best node can't improve the path
-        if(goalNode->g < bestKey.key[0])
+        // Check if the best node can't improve the path
+        if(goalNode->g <= bestKey.key[0])  // Key[0] === f=g+h
             break;
 
         // Expand the best node
-        printf("\n\n");
-        TRACE("Expanding state[%d]", currentNode->id());
+// #if DEBUG
+//         float f = bestKey.key[0]/1000.0;
+//         float h = bestKey.key[1]/1000.0;
+//         float g = f-h;
+//         TRACE("Expanding A*Node[%p] state[%4d] (%5.2f + %5.2f = %5.2f)",
+//                (void*)currentNode, currentNode->id(), g, h, f);
+// #endif
         updateSuccessors(*currentNode);
     }
-    SBPL_DEBUG("\nA*: Finished");
+    SBPL_DEBUG("\n  A*: Finished");
 
 
     // Open list information
     // =====================
     if(space->openEmpty())
-        SBPL_DEBUG("A*: No more nodes to reach");
+        SBPL_DEBUG("    A*: No more nodes to reach");
 
     if(bestKey.key[0] >= INFINITECOST)
-        SBPL_DEBUG("A*: BestKey is infinite, nodes on open are not reachable");
+        SBPL_DEBUG("    Next bestKey is infinite, no more nodes are reachable");
     else
-        SBPL_DEBUG("A*: BestKey (%5.2f, %5.2f)",
-                   bestKey.key[0]/1000.0, bestKey.key[1]/1000.0);
-
-    SBPL_DEBUG("Goal g: %5.2f", goalNode->g);
-
+        SBPL_DEBUG("    Next bestKey is worse than goalKey, no more nodes are worth expanding");
+    SBPL_DEBUG("    Goal g: %5.2f", goalNode->g/1000.0);
 
     return SBPL_OK;
 }
 
 inline
 void
-ASTARPlanner::updateSuccessors(const ASTARNode &node) {
+ASTARPlanner::updateSuccessors(ASTARNode &node) {
     assert(space);
     assert(space->problem);
 
@@ -451,15 +464,15 @@ ASTARPlanner::updateSuccessors(const ASTARNode &node) {
     assert(id);
 
     // Get successors from environment
-    vector<nodeStub> *successors = space->problem->GetSuccs(id);
-    assert(successors);
+    if(!node.successors)
+        node.successors = space->problem->GetSuccs(id);
+    assert(node.successors);
 
     // Reach each node updating path&cost on improvements
-    for(nodeStub nS : *successors)
+    for(nodeStub nS : *node.successors)
         reachSuccessor(node, nS);
-
-    delete successors;
 }
+
 
 inline
 void
@@ -473,9 +486,6 @@ ASTARPlanner::reachSuccessor(const ASTARNode &node, const nodeStub &nS) {
     assert(newG>=0);
 
     if (newG < neigh->g) {                            // A better path was found
-//         SBPL_DEBUG("Path to state[%4d]     was enhanced (%5.2f > %5.2f)",
-//                    nS.id, neigh->g/1000.0, newG/1000.0);
-
         // Use new path
         neigh->g = newG;  //Save new cost
         neigh->bestPredecesor = node.MDPstate;
@@ -483,20 +493,34 @@ ASTARPlanner::reachSuccessor(const ASTARNode &node, const nodeStub &nS) {
         // Update this node on the open list
         space->upsertOpen(neigh);
     }
-//     else
-//         SBPL_DEBUG("Path to state[%4d] not was enhanced (%5.2f < %5.2f)",
-//                    nS.id, neigh->g/1000.0, newG/1000.0);
 }
 
 inline
 void
-ASTARPlanner::updatePredecessors(const ASTARNode &node) {
+ASTARPlanner::updatePredecessors(ASTARNode &node) {
+    //TODO: Reuse updateSuccessors code. Find how to do it w/o performance hits
+    assert(space);
+    assert(space->problem);
+
+    stateID id = node.id();
+    assert(id);
+
+    // Get predecessors from environment
+    if(!node.predecessors)
+        node.predecessors = space->problem->GetPreds(id);
+    assert(node.predecessors);
+
+    // Reach each node updating path&cost on improvements
+    for(nodeStub nS : *node.predecessors)
+        reachPredecessor(node, nS);
+
     QUIT("%s", "Not yet implemented");
 }
 
 inline
 void
 ASTARPlanner::reachPredecessor(const ASTARNode &node, const nodeStub &nS) {
+    //TODO: reach predecessors
     QUIT("%s", "Not yet implemented");
 }
 
@@ -540,7 +564,8 @@ ASTARPlanner::replan(double givenSeconds, vector<stateID> *pathIDs, int *cost) {
     return SBPL_OK;
 }
 int
-ASTARPlanner::replan(vector<int> *pathIDs, ReplanParams params, int *cost) {
+ASTARPlanner::replan(vector<stateID> *pathIDs, ReplanParams params, int *cost) {
+    // TODO: replan with parameters (givenTime, repairTime, epsilon)
     return SBPL_OK;
 }
 
@@ -569,6 +594,7 @@ ASTARPlanner::set_search_mode(bool firstSolutionOnly) {
 inline
 int
 ASTARPlanner::force_planning_from_scratch() {
+    // TODO: Drop search efforts
     return SBPL_OK;
 }
 
@@ -578,4 +604,5 @@ ASTARPlanner::force_planning_from_scratch() {
 inline
 void
 ASTARPlanner::costs_changed(StateChangeQuery const & stateChange) {
+    // TODO: update costs
 }

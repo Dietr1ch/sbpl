@@ -1738,7 +1738,6 @@ int planrobarm(PlannerType plannerType, char* envCfgFilename, bool forwardSearch
 
 SBPLPlanner* getPlanner(PlannerType plannerType, DiscreteSpaceInformation* environment, bool bforwardsearch) {
 
-    printf("Creating Planner\n");
     switch (plannerType) {
         case INVALID_PLANNER_TYPE:
             printf("ERROR: tried to build an INVALID type planner\n");
@@ -1754,7 +1753,6 @@ SBPLPlanner* getPlanner(PlannerType plannerType, DiscreteSpaceInformation* envir
         case PLANNER_TYPE_ANASTAR:
             return new anaPlanner(environment, bforwardsearch);
         case PLANNER_TYPE_AASTAR:
-            printf("Creating Adaptive A* Planner\n");
             return new AAPlanner(environment, bforwardsearch);
         case PLANNER_TYPE_ASTAR:{
             bool backwardSearch = !bforwardsearch;
@@ -1792,6 +1790,7 @@ DiscreteSpaceInformation* getSearchSpace(EnvironmentType environmentType){
 }
 
 int setStartGoal(SBPLPlanner *planner, MDPConfig *startGoal){
+    // TODO: Handle instance change
     if (planner->set_start(startGoal->startstateid) == 0) {
         printf("ERROR: failed to set start state\n");
         throw new SBPL_Exception();
@@ -1853,14 +1852,12 @@ int main(int argc, char *argv[]) {
         printf("Building Environment...\n");
         DiscreteSpaceInformation *env = getSearchSpace(selectedEnvironment);
         env->generateRandomEnvironment(env_id);
-        SBPL_DEBUG("Environment Built!");
 
         // Initialize planner (for this environment :/).
         // TODO: planners should be able to swap environments and cfgs
         // TODO: Use _planner_settings_
         printf("Building Planner...\n");
         SBPLPlanner *planner = getPlanner(selectedPlanner, env, !backwardSearch);
-        SBPL_DEBUG("Planner Built!");
 
         printf("\nTesting runs\n");
         for(int run_id=run_start; run_id<run_end; run_id++){
@@ -1874,7 +1871,7 @@ int main(int argc, char *argv[]) {
                 // Planning
                 printf("\nInstance solving");
                 // TODO: allow testing multiple planner configurations (weight, lookahead, etc..)
-                vector<int> pathIDs;
+                vector<stateID> pathIDs;
                 int retCode = planner->replan(givenTime, &pathIDs);
                 printf("replan status code=%d\n", retCode);
             }

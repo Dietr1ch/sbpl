@@ -47,7 +47,10 @@ CKey InfiniteKey()
     return key;
 }
 
-//---------------------------------normal (multi-priority) CHeap class--------------------------------------------------
+
+
+// normal (multi-priority) CHeap class
+// ===================================
 
 //constructors and destructors
 CHeap::CHeap()
@@ -57,13 +60,11 @@ CHeap::CHeap()
     allocated = HEAPSIZE_INIT;
 
     heap = new heapelement[allocated];
-
 }
 
 CHeap::~CHeap()
 {
-    int i;
-    for (i = 1; i <= currentsize; ++i)
+    for (int i=1; i<=currentsize; ++i)
         heap[i].heapstate->heapindex = 0;
 
     delete[] heap;

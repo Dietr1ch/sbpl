@@ -55,9 +55,10 @@ public:
     /** g+h (Non-cached!!)*/
     uint f() const;
 
-    // TODO: set-up replanning
-    short unsigned int iterationclosed;
-    short unsigned int callnumberaccessed;
+    // Adaptive A* data
+    // ----------------
+    searchID lastUpdated;
+
 
     // Best next state
     // ---------------
@@ -71,8 +72,8 @@ public:
     // Neighbourhood
     // -------------
     union{
-        vector<nodeStub> successors;
-        vector<nodeStub> predecessors;
+        vector<nodeStub> *successors;
+        vector<nodeStub> *predecessors;
     };
 
 
@@ -125,31 +126,30 @@ public:
     CMDPSTATE *currentState;
     CMDPSTATE *goalState;
 
+    // AdaptiveA* data
+    searchID iteration;  // Search iteration identifier
+
     // Data
     CHeap *open;
 
     // Configuration
     bool backwardSearch;  // It should be on the planner, but eases heuristic calculation
 
-    bool valid = true;
 
-    uint searchiteration;             //Xiaoxun added this (2)
-    unsigned long int totalsearchiteration;       //Xiaoxun added this (3)
-    unsigned long int totalmovecost;
+    //unsigned long int totalsearchiteration;       //Xiaoxun added this (3)
+    //unsigned long int totalmovecost;
 
-    short unsigned int callnumber;
-
-    bool bReevaluatefvals;
-    bool bReinitializeSearchStateSpace;
-    bool bNewSearchIteration;
+    //bool bReevaluatefvals;
+    //bool bReinitializeSearchStateSpace;
+    //bool bNewSearchIteration;
 
     /** Statistics */
     struct{
         /** Per-search-episode stuff */
         struct{
             /** Expansions made on this space */
-            std::vector<uint> expansions;
-            std::vector<uint> pathLength;
+            vector<searchID> expansions;
+            vector<searchID> pathLength;
         } perSearch;
     } stats;
 
@@ -161,6 +161,9 @@ public:
     ASTARSpace(DiscreteSpaceInformation *problem);
     ~ASTARSpace();
 
+    /** Ensures Node values are updated up to this search iteration */
+    inline void updateNode(ASTARNode &node);
+    /** Computes the heuristic value from a State to the goal State */
     inline int computeHeuristic(const CMDPSTATE &origin);
 
 
@@ -177,15 +180,10 @@ public:
     /** Inserts or Updates (Upserts) a node in the open list */
     void upsertOpen(ASTARNode *node);
 
-    /** Inserts or Updates (Upserts) a node in the open list */
-    void insertOpen(ASTARNode *node) { upsertOpen(node); }
-    /** Inserts or Updates (Upserts) a node in the open list */
-    void updateOpen(ASTARNode *node) { upsertOpen(node); }
 
-
-    /** UNSAFE: inserts a node in open, NQA */
+    /** UNSAFE: inserts a node in open, No questions asked */
     void insertOpen_(ASTARNode *node, CKey key);
-    /** UNSAFE: updates a node in open, NQA */
+    /** UNSAFE: updates a node in open, No questions asked */
     void updateOpen_(ASTARNode *node, CKey key);
 
     /** gets the best node on the open 'list' */
@@ -199,21 +197,20 @@ public:
     // Nodes acquisition
     // =================
 
-    /** Get a node */
+    /** Get an updated node */
     ASTARNode* getNode(stateID id);
-    /** Get a node having h=0 if it's new
-     *  (set-up hack to avoid computing h) */
+    /** Get a node without updating h (having h=0 if it's new) */
     ASTARNode* getNode0(stateID id);
 
-    /** Get a node */
+    /** Get an updated node */
     ASTARNode* getNode(CMDPSTATE *mdpState);
 
-    /** UNSAFE: Get an node */
+    /** UNSAFE: Get an updated node */
     ASTARNode* getNode_(stateID id);
 
-    /** Gets the starting node */
+    /** Gets the updated starting node */
     ASTARNode* getStart();
-    /** Gets the goal node */
+    /** Gets the updated goal node */
     ASTARNode* getGoal();
 
 
@@ -264,12 +261,15 @@ public:
 protected:
     bool Search(vector<stateID> *pathIDs, int *cost, bool bFirstSolution, bool bOptimalSolution, double givenSeconds);
 
+    typedef vector<nodeStub> (*neighborhoodFunction) (stateID id);
+    typedef void                 (*reachingFunction) (const ASTARNode &node, const nodeStub &nS);
+
     //used for backward search
-    inline void updatePredecessors(const ASTARNode &node);
-    inline void  reachPredecessor(const ASTARNode &node, const nodeStub &nS);
+    inline void updatePredecessors(ASTARNode &node);
+    inline void  reachPredecessor (const ASTARNode &node, const nodeStub &nS);
     //used for forward search
-    inline void updateSuccessors(const ASTARNode &node);
-    inline void  reachSuccessor(const ASTARNode &node, const nodeStub &nS);
+    inline void updateSuccessors(ASTARNode &node);
+    inline void  reachSuccessor (const ASTARNode &node, const nodeStub &nS);
 
     //void reevaluateFVals();
     //int reconstructPath();
@@ -287,7 +287,7 @@ public:
     /** Replan */
     int replan(double givenTime, vector<stateID>* pathIDs, int* cost);
     /** Replan (unimplemented) */
-    int replan(vector<int>* pathIDs, ReplanParams params, int* cost);
+    int replan(vector<stateID>* pathIDs, ReplanParams params, int* cost);
 
     int set_start(int startID);
     int set_goal(int goalID);

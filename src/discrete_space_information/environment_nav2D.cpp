@@ -664,9 +664,7 @@ void EnvironmentNAV2D::GetRandomNeighs(int stateID, std::vector<int>* NeighIDV, 
 void EnvironmentNAV2D::ComputeHeuristicValues()
 {
     //whatever necessary pre-computation of heuristic values is done here 
-    SBPL_PRINTF("Precomputing heuristics...\n");
-
-    SBPL_PRINTF("done\n");
+    SBPL_PRINTF("(Precomputing heuristics)...\n");
 }
 
 //-----------interface with outside functions-----------------------------------

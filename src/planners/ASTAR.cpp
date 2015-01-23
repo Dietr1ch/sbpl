@@ -19,14 +19,15 @@ ASTARNode::ASTARNode(stateID id, ASTARSpace *space) : ASTARNode(id, space, 0) {
 ASTARNode::ASTARNode(stateID id, ASTARSpace *space, int initialH) {
     MDPstate = space->MDP.AddState(id);
     assert(MDPstate);
-    assert(MDPstate->StateID);
+    VALID_STATE(MDPstate->StateID);
 
     // Link state and node data
     MDPstate->PlannerSpecificData = this;
 
     // Register state
     int statesCount = space->MDP.StateArray.size();
-    space->problem->StateID2IndexMapping[id][ASTARMDP_STATEID2IND] = statesCount-1;
+    stateID newStateID = statesCount - 1;
+    space->problem->StateID2IndexMapping[id][ASTARMDP_STATEID2IND] = newStateID;
 
     // Setup
     g = INFINITECOST;  // Not reached yet
@@ -45,16 +46,22 @@ ASTARNode::~ASTARNode(){
 }
 
 // Shortcuts
-inline stateID ASTARNode::id() const {
+inline
+stateID
+ASTARNode::id() const {
 #ifdef DEBUG
     if(!MDPstate)
         QUIT("Node @ %p is corrupted", (void*)this);
 #endif
-    assert(MDPstate->StateID);
 
+    VALID_STATE(MDPstate->StateID);
     return MDPstate->StateID;
 }
-inline    uint ASTARNode::f()  const { return g+h; }
+inline
+uint
+ASTARNode::f()  const {
+    return g+h;
+}
 
 
 
@@ -66,7 +73,7 @@ inline    uint ASTARNode::f()  const { return g+h; }
 // A* Space
 // ========
 ASTARSpace::ASTARSpace(DiscreteSpaceInformation *problemDSI) {
-    TRACE("Creating space with problem[%p]", (void*)problemDSI);
+    SBPL_DEBUG("Creating space with problem[%p]", (void*)problemDSI);
     assert(problemDSI);
 
     open = new CHeap;
@@ -85,7 +92,7 @@ ASTARSpace::ASTARSpace(DiscreteSpaceInformation *problemDSI) {
 }
 
 ASTARSpace::~ASTARSpace() {
-    SBPL_DEBUG("Space at %p will be destroyed\n", this);
+    MEM("Space at %p will be destroyed...", (void*)this);
 
     // Clear search instance (States and Nodes are cleared with the rest)
     // ---------------------
@@ -114,10 +121,9 @@ ASTARSpace::~ASTARSpace() {
 
     // Delete problem data
     // -------------------
-    DELETE(problem);
+    //DELETE(problem);
 
-
-    SBPL_DEBUG("Space at %p was destroyed\n", this);
+    MEM("Space at %p was destroyed", (void*)this);
 }
 
 inline
@@ -145,7 +151,7 @@ void
 ASTARSpace::setStart(stateID startID) {
     // Getting the A* node is an overhead (here), but will be generated later.
     auto newStartNode  = getNode0(startID);
-    SBPL_DEBUG(" start = A*Node[%p]", newStartNode);
+    SBPL_DEBUG(" start = A*Node[%p] (%d)", newStartNode, startID);
     auto newStartState = newStartNode->MDPstate;
 
     assert(newStartState);
@@ -160,7 +166,7 @@ void
 ASTARSpace::setGoal(stateID goalID) {
     // Getting the A* node is an overhead (here), but will be generated later.
     auto newGoalNode  = getNode0(goalID);
-    SBPL_DEBUG("  goal = A*Node[%p]", newGoalNode);
+    SBPL_DEBUG("  goal = A*Node[%p] (%d)", newGoalNode, goalID);
     auto newGoalState = newGoalNode->MDPstate;
 
     assert(newGoalState);
@@ -202,13 +208,7 @@ void
 ASTARSpace::insertOpen_(ASTARNode *node, CKey key) {
     assert(node);
     assert(node->lastUpdated==iteration);
-#ifdef DEBUG
-    //float f = key.key[0]/1000.0;
-    //float h = key.key[1]/1000.0;
-    //float g = f-h;
-    //SBPL_DEBUG("  open: Inserting  A*Node[%p] state[%4d] {%5.2f + %5.2f = %5.2f}",
-               //(void*)node, node->id(), g, h, f);
-#endif
+
     open->insertheap(node, key);
 }
 inline
@@ -216,13 +216,7 @@ void
 ASTARSpace::updateOpen_(ASTARNode* node, CKey key) {
     assert(node);
     assert(node->lastUpdated==iteration);
-#ifdef DEBUG
-    //float f = key.key[0]/1000.0;
-    //float h = key.key[1]/1000.0;
-    //float g = f-h;
-    //SBPL_DEBUG("  open: Updating   A*Node[%p] state[%4d] (%5.2f + %5.2f = %5.2f)",
-               //(void*)node, node->id(), g, h, f);
-#endif
+
     open->updateheap(node, key);
 }
 inline
@@ -246,7 +240,7 @@ ASTARSpace::openEmpty(){
 inline
 ASTARNode*
 ASTARSpace::getNode(stateID id) {
-    assert(id);
+    VALID_STATE(id);
 
     if((size_t)id >= problem->StateID2IndexMapping.size())
         QUIT("State %d is invalid\n", id);
@@ -258,7 +252,7 @@ ASTARSpace::getNode(stateID id) {
 inline
 ASTARNode*
 ASTARSpace::getNode0(stateID id) {
-    assert(id);
+    VALID_STATE(id);
 
     if((size_t)id >= problem->StateID2IndexMapping.size())
         QUIT("State %d is invalid\n", id);
@@ -270,7 +264,7 @@ ASTARSpace::getNode0(stateID id) {
 inline
 ASTARNode*
 ASTARSpace::getNode_(stateID id) {
-    assert(id);
+    VALID_STATE(id);
 
     auto index = problem->StateID2IndexMapping[id][ASTARMDP_STATEID2IND];
     CMDPSTATE *cmdpState = MDP.StateArray[index];
@@ -351,8 +345,10 @@ ASTARSpace::resetStatistics(){
 
 // Object management
 // -----------------
-ASTARPlanner::ASTARPlanner(DiscreteSpaceInformation *environment, bool backwardSearch) {
-    SBPL_DEBUG("Creating planner at %p\n", this);
+ASTARPlanner::ASTARPlanner(DiscreteSpaceInformation *environment,
+                           bool backwardSearch) {
+
+    MEM("Creating planner at %p", (void*)this);
     assert(environment);
 
     space = new ASTARSpace(environment);
@@ -360,10 +356,10 @@ ASTARPlanner::ASTARPlanner(DiscreteSpaceInformation *environment, bool backwardS
 
     dbg = nullptr;
 
-    SBPL_DEBUG("Planner created at %p\n", this);
+    MEM("Planner created at %p", (void*)this);
 }
 ASTARPlanner::~ASTARPlanner(){
-    SBPL_DEBUG("Planner at %p will be destroyed\n", this);
+    MEM("Planner at %p will be destroyed...", (void*)this);
     DELETE(space);
 
     if(dbg){
@@ -372,7 +368,7 @@ ASTARPlanner::~ASTARPlanner(){
         dbg = nullptr;
     }
 
-    SBPL_DEBUG("Planner at %p was destroyed\n", this);
+    MEM("Planner at %p was destroyed", (void*)this);
 }
 
 
@@ -381,7 +377,12 @@ ASTARPlanner::~ASTARPlanner(){
 // Search
 // ------
 bool
-ASTARPlanner::Search(vector<stateID> *pathIDs, int *cost, bool bFirstSolution, bool bOptimalSolution, double givenSeconds) {
+ASTARPlanner::Search(vector<stateID> *pathIDs,
+                     int *cost,
+                     bool bFirstSolution,
+                     bool bOptimalSolution,
+                     double givenSeconds) {
+
     assert(space);  // redundant
     assert(space->startState);
     assert(space->goalState);
@@ -391,53 +392,46 @@ ASTARPlanner::Search(vector<stateID> *pathIDs, int *cost, bool bFirstSolution, b
 
     // Initialization
     // ==============
-    SBPL_DEBUG("\n  Preparing A* loop");
+    SBPL_DEBUG("\n  Running A*...");
 
+    // Get start & goal nodes
+    // ----------------------
+    ASTARNode* goalNode = space->getGoal();
+    ASTARNode *startNode = space->getStart();
     // Reset statistics (just in case)
+    // ----------------
     stats.iteration = 0;
     stats.expansions = 0;
 
-
-    // Prepare goal node
-    ASTARNode* goalNode = space->getGoal();
-    goalNode->g = INFINITECOST;
-
-
-    // Prepare starting node
-    ASTARNode *startNode = space->getStart();
+    // 'Reach' starting node with cost 0
+    // ---------------------------------
     startNode->g = 0;
-
     space->upsertOpen(startNode);
+
 
     // Expansion
     // =========
-    SBPL_DEBUG("\n  Starting A* loop");
 
     CKey bestKey;
     while(!space->openEmpty()){
         // Get the best node
+        // -----------------
         bestKey = space->open->getminkeyheap();
-        ASTARNode *currentNode = space->popOpen();
+        ASTARNode *bestNode = space->popOpen();
 
         // Check the search should go on
+        // -----------------------------
         if(bestKey.key[0] >= INFINITECOST)         // Best node is not reachable
             break;
-
-        // Check if the best node can't improve the path
-        if(goalNode->g <= bestKey.key[0])  // Key[0] === f=g+h
-            break;
+        if(goalNode->g <= bestKey.key[0])    // Best node can't improve the path
+            break;  // <= bestNode.f
 
         // Expand the best node
-// #if DEBUG
-//         float f = bestKey.key[0]/1000.0;
-//         float h = bestKey.key[1]/1000.0;
-//         float g = f-h;
-//         TRACE("Expanding A*Node[%p] state[%4d] (%5.2f + %5.2f = %5.2f)",
-//                (void*)currentNode, currentNode->id(), g, h, f);
-// #endif
-        updateSuccessors(*currentNode);
+        // --------------------
+        updateSuccessors(*bestNode);
     }
-    SBPL_DEBUG("\n  A*: Finished");
+
+    SBPL_DEBUG("  A*: Finished");
 
 
     // Open list information
@@ -445,10 +439,13 @@ ASTARPlanner::Search(vector<stateID> *pathIDs, int *cost, bool bFirstSolution, b
     if(space->openEmpty())
         SBPL_DEBUG("    A*: No more nodes to reach");
 
-    if(bestKey.key[0] >= INFINITECOST)
+    if(bestKey.key[0] >= INFINITECOST) {
         SBPL_DEBUG("    Next bestKey is infinite, no more nodes are reachable");
-    else
-        SBPL_DEBUG("    Next bestKey is worse than goalKey, no more nodes are worth expanding");
+        return SBPL_ERR;
+    }
+
+    SBPL_DEBUG("    Next bestKey is worse than goalKey"
+                    ", no more nodes are worth expanding");
     SBPL_DEBUG("    Goal g: %5.2f", goalNode->g/1000.0);
 
     return SBPL_OK;
@@ -461,7 +458,6 @@ ASTARPlanner::updateSuccessors(ASTARNode &node) {
     assert(space->problem);
 
     stateID id = node.id();
-    assert(id);
 
     // Get successors from environment
     if(!node.successors)
@@ -477,7 +473,7 @@ ASTARPlanner::updateSuccessors(ASTARNode &node) {
 inline
 void
 ASTARPlanner::reachSuccessor(const ASTARNode &node, const nodeStub &nS) {
-    assert(nS.id);
+    VALID_STATE(nS.id);
     assert(nS.cost>=0);
     auto *neigh = space->getNode(nS.id);
 
@@ -503,7 +499,6 @@ ASTARPlanner::updatePredecessors(ASTARNode &node) {
     assert(space->problem);
 
     stateID id = node.id();
-    assert(id);
 
     // Get predecessors from environment
     if(!node.predecessors)

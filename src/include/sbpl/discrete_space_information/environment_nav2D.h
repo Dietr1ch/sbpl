@@ -390,6 +390,8 @@ protected:
 public:
     virtual void generateRandomEnvironment(int seed);
     virtual bool generateRandomProblem(MDPConfig *cfg, int seed, int maxTries);
+    virtual bool generateRandomStart(MDPConfig *cfg, int seed, int maxTries);
+    virtual bool generateRandomGoal(MDPConfig *cfg, int seed, int maxTries);
 };
 
 #endif

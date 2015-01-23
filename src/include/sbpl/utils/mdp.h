@@ -30,6 +30,8 @@
 #ifndef __MDP_H_
 #define __MDP_H_
 
+using namespace std;
+
 #include <assert.h>
 #include <cstdio>
 #include <vector>
@@ -37,6 +39,7 @@
 #include <sbpl/sbpl_exception.h>
 
 #define EPS_ERROR 0.000001
+
 
 //the maximum size of the heap
 #define MAXSTATESPACESIZE 20000000
@@ -47,14 +50,14 @@ class CMDPACTION
 public:
     //data
     int ActionID;
-    int SourceStateID;
-    std::vector<int> SuccsID;
-    std::vector<int> Costs;
-    std::vector<float> SuccsProb;
+    stateID SourceStateID;
+    vector<stateID> SuccsID;
+    vector<int> Costs;
+    vector<float> SuccsProb;
     void* PlannerSpecificData;
 
     //constructors
-    CMDPACTION(int ID, int sourcestateid)
+    CMDPACTION(stateID ID, int sourcestateid)
     {
         ActionID = ID;
         SourceStateID = sourcestateid;
@@ -85,15 +88,15 @@ class CMDPSTATE
 {
 public:
     //data
-    int StateID;
-    std::vector<CMDPACTION*> Actions;
-    std::vector<int> PredsID;
+    stateID StateID;
+    vector<CMDPACTION*> Actions;
+    vector<int> PredsID;
     void* PlannerSpecificData;
 
     //constructors
-    CMDPSTATE(int ID)
+    CMDPSTATE(stateID ID)
     {
-        assert(ID);
+        VALID_STATE(ID);
         StateID = ID;
         PlannerSpecificData = NULL;
     }
@@ -109,9 +112,9 @@ public:
     //functions
     bool Delete();
     CMDPACTION* AddAction(int ID);
-    bool ContainsPred(int stateID);
-    bool AddPred(int stateID);
-    bool RemovePred(int stateID);
+    bool ContainsPred(stateID stateID);
+    bool AddPred(stateID stateID);
+    bool RemovePred(stateID stateID);
     bool RemoveAllActions();
     CMDPACTION* GetAction(int actionID);
 
@@ -124,7 +127,7 @@ class CMDP
 public:
     // Data
     // ----
-    std::vector<CMDPSTATE*> StateArray;
+    vector<CMDPSTATE*> StateArray;
 
     // Constructors
     // ------------
@@ -139,7 +142,7 @@ public:
     bool Create(int numofstates);
     bool Delete();
     void Print(FILE* fOut);
-    CMDPSTATE* AddState(int StateID);
+    CMDPSTATE* AddState(stateID StateID);
 };
 
 #endif

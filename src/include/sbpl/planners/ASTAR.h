@@ -1,7 +1,6 @@
 // TODO: add updated license
 #pragma once
 
-
 using namespace std;
 
 #include <time.h>
@@ -264,17 +263,34 @@ protected:
     typedef vector<nodeStub> (*neighborhoodFunction) (stateID id);
     typedef void                 (*reachingFunction) (const ASTARNode &node, const nodeStub &nS);
 
-    //used for backward search
+    /** Expand Node backwards
+     * An expansion (backward) 'reaches' all the neighbors
+     */
     inline void updatePredecessors(ASTARNode &node);
+    /** Reach Node backwards
+     * A (backwards) 'reach' reviews if a Node can reach the Node specified by
+     *   the neighborStub in a better way than before, recording the improvement
+     *   (if any)
+     */
     inline void  reachPredecessor (const ASTARNode &node, const nodeStub &nS);
-    //used for forward search
+    /** Expand Node forward
+     * An expansion (forward) 'reaches' all the neighbors
+     */
+
     inline void updateSuccessors(ASTARNode &node);
+    /** Reach Node forward
+     * A (forward) 'reach' reviews if a Node can reach the Node specified by
+     *   the neighborStub in a better way than before, recording the improvement
+     *   (if any)
+     */
     inline void  reachSuccessor (const ASTARNode &node, const nodeStub &nS);
 
+
+    // TODO: implement these functions if needed
     //void reevaluateFVals();
     //int reconstructPath();
     //void printPath(FILE *fOut=stdout);
-    //vector<int> getSearchPath(int &solcost);
+    //vector<stateID> getSearchPath(int &solcost);
 
 
 

@@ -58,6 +58,10 @@ public:
 };
 #endif
 
+//TODO: use uints for stateID and leave 0 for invalid IDs
+#define INVALID_STATE_ID (-1)
+#define VALID_STATE(x) assert((x)!= INVALID_STATE_ID)
+
 #if STRONG_TYPES
 class state_t;
 typedef ID_t<state_t> stateID;
@@ -160,6 +164,14 @@ int SBPL_FFLUSHALL(FILE* file);
   #endif
 #endif
 
+
+#define SHOW_MEM 0
+
+#if SHOW_MEM
+  #define MEM(all,...) TRACE("[MEM] " all, ##__VA_ARGS__ )
+#else
+  #define MEM(fmt, ...) {}
+#endif
 
 
 // File Output Logger Macros

@@ -470,6 +470,14 @@ EnvNAV2DHashEntry_t* EnvironmentNAV2D::CreateNewHashEntry(int X, int Y)
     HashEntry->Y = Y;
 
     HashEntry->stateID = EnvNAV2D.StateID2CoordTable.size();
+#if DEBUG
+    if(HashEntry->stateID==INVALID_STATE_ID)
+        QUIT("HashEntry maps (x:%d, y:%d) to %d)",
+            HashEntry->X,
+            HashEntry->Y,
+            HashEntry->stateID
+        );
+#endif
 
     //insert into the tables
     EnvNAV2D.StateID2CoordTable.push_back(HashEntry);
@@ -483,9 +491,8 @@ EnvNAV2DHashEntry_t* EnvironmentNAV2D::CreateNewHashEntry(int X, int Y)
     //insert into and initialize the mappings
     int* entry = new int[NUMOFINDICES_STATEID2IND];
     StateID2IndexMapping.push_back(entry);
-    for (i = 0; i < NUMOFINDICES_STATEID2IND; i++) {
+    for (i = 0; i < NUMOFINDICES_STATEID2IND; i++)
         StateID2IndexMapping[HashEntry->stateID][i] = -1;
-    }
 
     if (HashEntry->stateID != (int)StateID2IndexMapping.size() - 1) {
         SBPL_ERROR("ERROR in Env... function: last state has incorrect stateID\n");
@@ -512,20 +519,23 @@ bool EnvironmentNAV2D::IsWithinMapCell(int X, int Y)
 
 EnvironmentNAV2D::~EnvironmentNAV2D()
 {
-    if (EnvNAV2D.Coord2StateIDHashTable != NULL) {
+    MEM("Environment NAV2D at %p will be destroyed...", (void*)this);
+
+    if (EnvNAV2D.Coord2StateIDHashTable)
         delete[] EnvNAV2D.Coord2StateIDHashTable;
-    }
 
-    for (unsigned int i = 0; i < EnvNAV2D.StateID2CoordTable.size(); ++i) {
-        if (EnvNAV2D.StateID2CoordTable[i] != NULL) delete EnvNAV2D.StateID2CoordTable[i];
-    }
+    for(EnvNAV2DHashEntry_t *e : EnvNAV2D.StateID2CoordTable)
+        if(e)
+            delete e;
 
-    if (EnvNAV2DCfg.Grid2D != NULL) {
-        for (int x = 0; x < EnvNAV2DCfg.EnvWidth_c; x++) {
-            if (EnvNAV2DCfg.Grid2D[x] != NULL) delete[] EnvNAV2DCfg.Grid2D[x];
-        }
+    if (EnvNAV2DCfg.Grid2D) {
+        for (int x = 0; x < EnvNAV2DCfg.EnvWidth_c; x++)
+            if (EnvNAV2DCfg.Grid2D[x])
+                delete[] EnvNAV2DCfg.Grid2D[x];
         delete[] EnvNAV2DCfg.Grid2D;
     }
+
+    MEM("Environment NAV2D at %p was destroyed", (void*)this);
 }
 
 void EnvironmentNAV2D::InitializeEnvironment()
@@ -889,7 +899,8 @@ void EnvironmentNAV2D::GetSuccs(int SourceStateID, vector<int>* SuccIDV, vector<
     CostV->reserve(EnvNAV2DCfg.numofdirs);
 
     //goal state should be absorbing
-    if (SourceStateID == EnvNAV2D.goalstateid) return;
+    if (SourceStateID == EnvNAV2D.goalstateid)
+        return;
 
     //get X, Y for the state
     EnvNAV2DHashEntry_t* HashEntry = EnvNAV2D.StateID2CoordTable[SourceStateID];
@@ -1360,7 +1371,6 @@ void EnvironmentNAV2D::generateRandomEnvironment(int seed){
             EnvNAV2DCfg.Grid2D[x][y] = obstacle(g);
 }
 bool EnvironmentNAV2D::generateRandomProblem(MDPConfig *cfg, int seed, int maxTries) {
-    printf("Generating new search instance\n");
     // Start random generator engine
     std::default_random_engine g;
     g.seed(seed);
@@ -1376,10 +1386,6 @@ bool EnvironmentNAV2D::generateRandomProblem(MDPConfig *cfg, int seed, int maxTr
         // Pick goal
         int gx = X(g);
         int gy = Y(g);
-        auto start = safeGetHashEntry(sx, sy);
-        auto goal = safeGetHashEntry(gx, gy);
-        cfg->startstateid = start->stateID;
-        cfg->goalstateid = goal->stateID;
 
         EnvNAV2DCfg.StartX_c = sx;
         EnvNAV2DCfg.StartY_c = sy;
@@ -1387,8 +1393,13 @@ bool EnvironmentNAV2D::generateRandomProblem(MDPConfig *cfg, int seed, int maxTr
         EnvNAV2DCfg.EndX_c = gx;
         EnvNAV2DCfg.EndY_c = gy;
 
-        EnvNAV2D.startstateid = start->stateID;
-        EnvNAV2D.goalstateid = goal->stateID;
+        stateID startID = safeGetHashEntry(sx, sy)->stateID;
+        EnvNAV2D.startstateid = startID;
+        cfg->startstateid     = startID;
+
+        stateID goalID  = safeGetHashEntry(gx, gy)->stateID;
+        EnvNAV2D.goalstateid  = goalID;
+        cfg->goalstateid      = goalID;
 
 
 
@@ -1403,5 +1414,77 @@ bool EnvironmentNAV2D::generateRandomProblem(MDPConfig *cfg, int seed, int maxTr
     cfg->goalstateid = 0;
     return false;
 }
+bool EnvironmentNAV2D::generateRandomStart(MDPConfig* cfg, int seed, int maxTries)
+{
+    // Start random generator engine
+    std::default_random_engine g;
+    g.seed(seed);
+
+    // Define distributions to use
+    std::uniform_int_distribution<int> X(0, EnvNAV2DCfg.EnvWidth_c-1);
+    std::uniform_int_distribution<int> Y(0, EnvNAV2DCfg.EnvHeight_c-1);
+
+    for(int t=0; t<maxTries; t++){
+        // Pick start
+        int sx = X(g);
+        int sy = Y(g);
+
+        EnvNAV2DCfg.StartX_c = sx;
+        EnvNAV2DCfg.StartY_c = sy;
+
+        stateID id =  safeGetHashEntry(sx, sy)->stateID;
+        EnvNAV2D.startstateid = id;
+        cfg->startstateid     = id;
+
+        // TODO: test reachability
+        bool reachable = true;
+        if(reachable){
+            return true;
+        }
+    }
+
+    cfg->startstateid = 0;
+    return false;
+}
+bool EnvironmentNAV2D::generateRandomGoal(MDPConfig* cfg, int seed, int maxTries)
+{
+    // Start random generator engine
+    std::default_random_engine g;
+    g.seed(seed);
+
+    // Define distributions to use
+    std::uniform_int_distribution<int> X(0, EnvNAV2DCfg.EnvWidth_c-1);
+    std::uniform_int_distribution<int> Y(0, EnvNAV2DCfg.EnvHeight_c-1);
+
+    for(int t=0; t<maxTries; t++){
+        // Pick goal
+        int gx = X(g);
+        int gy = Y(g);
+
+        EnvNAV2DCfg.EndX_c = gx;
+        EnvNAV2DCfg.EndY_c = gy;
+
+        stateID id = safeGetHashEntry(gx, gy)->stateID;
+        EnvNAV2D.goalstateid = id;
+        cfg->goalstateid     = id;
+
+        // TODO: test reachability
+        bool reachable = true;
+        if(reachable){
+            return true;
+        }
+    }
+
+    cfg->goalstateid = 0;
+    return false;
+}
+
+
+
+
+
+
+
+
 
 

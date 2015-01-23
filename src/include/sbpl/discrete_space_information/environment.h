@@ -68,11 +68,13 @@ public:
      * \brief mapping from hashentry stateID (used in environment to contain
      *        the coordinates of a state, say x,y or x,y,theta)
      *        to an array of state indices used in searches.
-     * 
-     * If a single search is done, then it is a single entry.  So
+     *
+     * If a single search is done, then it is a single entry.
+     *
      * StateID2IndexMapping[100][0] = 5 means that hashentry with stateID 100
-     * is mapped onto search index = 5 in search 0 The value of -1 means that
-     * no search state has been created yet for this hashentry
+     * is mapped onto search index = 5 in search 0
+     * The value of -1 means that no search state has been created yet for this
+     * hashentry
      */
     vector<int*> StateID2IndexMapping;
 
@@ -138,8 +140,8 @@ public:
 
         // Variadic zip operator would be nice :c
         for(int i=0; i<successorsCount; i++) {
-            assert(  ids[i]);
-            assert(costs[i]);
+            VALID_STATE( ids[i] );
+            assert( costs[i]>=0 );
 
             (*successors)[i].id   =   ids[i];
             (*successors)[i].cost = costs[i];
@@ -168,8 +170,8 @@ public:
 
         // Variadic zip operator would be nice :c
         for(int i=0; i<count; i++) {
-            assert(  ids[i]);
-            assert(costs[i]);
+            VALID_STATE( ids[i] );
+            assert( costs[i]>=0 );
 
             (*predecessors)[i].id   =   ids[i];
             (*predecessors)[i].cost = costs[i];
@@ -355,11 +357,14 @@ public:
      */
     virtual ~DiscreteSpaceInformation()
     {
-        SBPL_PRINTF("destroying discretespaceinformation\n");
-        for (unsigned int i = 0; i < StateID2IndexMapping.size(); ++i) {
-            if (StateID2IndexMapping[i] != NULL) delete[] StateID2IndexMapping[i];
-        }
+        MEM("DiscreteSpaceInformation at %p will be destroyed...", (void*)this);
+
+        for(auto mapping : StateID2IndexMapping)
+            if(mapping)
+                delete[] mapping;
+
         SBPL_FCLOSE(fDeb);
+        MEM("DiscreteSpaceInformation at %p was destroyed...", (void*)this);
     }
 
     /**
@@ -398,6 +403,23 @@ public:
      * Used to benchmark algorithms
      */
     virtual bool generateRandomProblem(MDPConfig *cfg, int seed, int maxTries) {
+        SBPL_ERROR("ERROR: generateRandomProblem is not implemented for this environment!\n");
+        throw new SBPL_Exception();
+    };
+
+    /**
+     * \brief Generates a random (start, goal) pair cheking for feasibility.
+     * Used to benchmark algorithms
+     */
+    virtual bool generateRandomStart(MDPConfig *cfg, int seed, int maxTries) {
+        SBPL_ERROR("ERROR: generateRandomProblem is not implemented for this environment!\n");
+        throw new SBPL_Exception();
+    };
+    /**
+     * \brief Generates a random (start, goal) pair cheking for feasibility.
+     * Used to benchmark algorithms
+     */
+    virtual bool generateRandomGoal(MDPConfig *cfg, int seed, int maxTries) {
         SBPL_ERROR("ERROR: generateRandomProblem is not implemented for this environment!\n");
         throw new SBPL_Exception();
     };

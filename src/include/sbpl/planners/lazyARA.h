@@ -30,6 +30,7 @@
 #define _LAZY_ARA_PLANNER_H_
 
 #include "../../sbpl/headers.h"
+#include <sbpl/config.h>
 #include <queue>
 
 class LazyListElement;
@@ -68,14 +69,14 @@ class LazyListElement{
 class LazyARAPlanner : public SBPLPlanner{
 
 public:
-	virtual int replan(double allocated_time_secs, std::vector<int>* solution_stateIDs_V);
-	virtual int replan(double allocated_time_sec, std::vector<int>* solution_stateIDs_V, int* solcost);
-  virtual int replan(int start, int goal, std::vector<int>* solution_stateIDs_V, ReplanParams params, int* solcost);
-  virtual int replan(std::vector<int>* solution_stateIDs_V, ReplanParams params);
-  virtual int replan(std::vector<int>* solution_stateIDs_V, ReplanParams params, int* solcost);
+	virtual int replan(double allocated_time_secs, std::vector<stateID> *solution_stateIDs_V);
+	virtual int replan(double allocated_time_sec, std::vector<stateID> *solution_stateIDs_V, int* solcost);
+  virtual int replan(int start, int goal, std::vector<stateID> *solution_stateIDs_V, ReplanParams params, int* solcost);
+  virtual int replan(std::vector<stateID> *solution_stateIDs_V, ReplanParams params);
+  virtual int replan(std::vector<stateID> *solution_stateIDs_V, ReplanParams params, int* solcost);
 
-  virtual int set_goal(int goal_stateID);
-  virtual int set_start(int start_stateID);
+  virtual int set_goal(stateID goal_stateID);
+  virtual int set_start(stateID start_stateID);
 
   virtual void costs_changed(StateChangeQuery const & stateChange){return;};
   virtual void costs_changed(){return;};
@@ -149,7 +150,7 @@ protected:
   double totalPlanTime;
   double reconstructTime;
 
-	virtual LazyARAState* GetState(int id);
+	virtual LazyARAState* GetState(stateID id);
 	virtual void ExpandState(LazyARAState* parent);
 	virtual void EvaluateState(LazyARAState* parent);
   void getNextLazyElement(LazyARAState* state);
@@ -158,12 +159,12 @@ protected:
 
 	virtual int ImprovePath();
 
-	virtual std::vector<int> GetSearchPath(int& solcost);
+	virtual std::vector<stateID> GetSearchPath(int& solcost);
 
   virtual bool outOfTime();
   virtual void initializeSearch();
   virtual void prepareNextSearchIteration();
-	virtual bool Search(std::vector<int>& pathIds, int & PathCost);
+	virtual bool Search(std::vector<stateID>& pathIds, int & PathCost);
 
 };
 

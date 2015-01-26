@@ -109,23 +109,23 @@ public:
     /**
      * \brief replan a path within the allocated time, return the solution in the vector
      */
-    int replan(double allocated_time_secs, std::vector<int>* solution_stateIDs_V);
+    int replan(double allocated_time_secs, std::vector<stateID> *solution_stateIDs_V);
 
     /**
      * \brief replan a path within the allocated time, return the solution in
      *        the vector, also returns solution cost
      */
-    int replan(double allocated_time_sec, std::vector<int>* solution_stateIDs_V, int* solcost);
+    int replan(double allocated_time_sec, std::vector<stateID> *solution_stateIDs_V, int* solcost);
 
     /**
      * \brief set the goal state
      */
-    int set_goal(int goal_stateID);
+    int set_goal(stateID goal_stateID);
 
     /**
      * \brief set the start state
      */
-    int set_start(int start_stateID);
+    int set_start(stateID start_stateID);
 
     /**
      * \brief inform the search about the new edge costs
@@ -262,9 +262,9 @@ private:
     int getHeurValue(anaSearchStateSpace_t* pSearchStateSpace, int StateID);
 
     //get path
-    std::vector<int> GetSearchPath(anaSearchStateSpace_t* pSearchStateSpace, int& solcost);
+    std::vector<stateID> GetSearchPath(anaSearchStateSpace_t* pSearchStateSpace, int& solcost);
 
-    bool Search(anaSearchStateSpace_t* pSearchStateSpace, std::vector<int>& pathIds, int & PathCost, bool bFirstSolution,
+    bool Search(anaSearchStateSpace_t* pSearchStateSpace, std::vector<stateID>& pathIds, int & PathCost, bool bFirstSolution,
                 bool bOptimalSolution, double MaxNumofSecs);
 };
 

@@ -418,7 +418,7 @@ void EnvironmentNAV2DUU::ComputeHeuristicValues()
 
 //-----------------Printing Routines--------------------------------------------
 
-void EnvironmentNAV2DUU::PrintState(int stateID, bool bVerbose, FILE* fOut /*=NULL*/)
+void EnvironmentNAV2DUU::PrintState(stateID stateID, bool bVerbose, FILE* fOut /*=NULL*/)
 {
 #if DEBUG
     if (stateID >= this->EnvNAV2DUUCfg.EnvWidth_c*this->EnvNAV2DUUCfg.EnvHeight_c) {
@@ -504,7 +504,7 @@ bool EnvironmentNAV2DUU::InitializeMDPCfg(MDPConfig *MDPCfg)
     return true;
 }
 
-int EnvironmentNAV2DUU::GetFromToHeuristic(int FromStateID, int ToStateID)
+int EnvironmentNAV2DUU::GetFromToHeuristic(stateID FromStateID, stateID ToStateID)
 {
 #if USE_HEUR==0
     return 0;
@@ -518,7 +518,7 @@ int EnvironmentNAV2DUU::GetFromToHeuristic(int FromStateID, int ToStateID)
     return 0;
 }
 
-int EnvironmentNAV2DUU::GetGoalHeuristic(int stateID)
+int EnvironmentNAV2DUU::GetGoalHeuristic(stateID stateID)
 {
 #if USE_HEUR==0
     return 0;
@@ -530,7 +530,7 @@ int EnvironmentNAV2DUU::GetGoalHeuristic(int stateID)
     throw new SBPL_Exception();
 }
 
-int EnvironmentNAV2DUU::GetStartHeuristic(int stateID)
+int EnvironmentNAV2DUU::GetStartHeuristic(stateID stateID)
 {
 #if USE_HEUR==0
     return 0;
@@ -544,7 +544,7 @@ int EnvironmentNAV2DUU::GetStartHeuristic(int stateID)
     return 0;
 }
 
-void EnvironmentNAV2DUU::GetPreds(int stateID, const vector<sbpl_BinaryHiddenVar_t>* updatedhvaluesV,
+void EnvironmentNAV2DUU::GetPreds(stateID stateID, const vector<sbpl_BinaryHiddenVar_t>* updatedhvaluesV,
                                   vector<CMDPACTION>* IncomingDetActionV, vector<CMDPACTION>* IncomingStochActionV,
                                   vector<sbpl_BinaryHiddenVar_t>* StochActionNonpreferredOutcomeV)
 {

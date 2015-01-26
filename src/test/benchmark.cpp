@@ -412,6 +412,8 @@ parseInput(int argc, char **argv){
                 env_settings = optarg;
                 break;
 
+
+            // Random Environments
             case 'n':
                 env_random_count = strtol(optarg, &tail, 0);
                 env_random_count = MAX(env_random_count, 0);
@@ -419,7 +421,6 @@ parseInput(int argc, char **argv){
             case 'N':
                 env_random_start = strtol(optarg, &tail, 0);
                 break;
-
 
             // Runs to test on each environment
             case 'r':
@@ -469,7 +470,7 @@ parseInput(int argc, char **argv){
     // ============
     env_random_end = env_random_start + env_random_count;
     run_end = run_start + run_count;
-
+    it_end = it_start + it_count;
 
     return 0;
 }
@@ -523,7 +524,7 @@ plan2d(PlannerType plannerType, char* envCfgFilename, bool forwardSearch) {
     }
 
     // plan a path
-    vector<int> solution_stateIDs_V;
+    vector<stateID> solution_stateIDs_V;
 
     SBPLPlanner* planner = NULL;
     switch (plannerType) {
@@ -718,7 +719,7 @@ planxythetalat(PlannerType plannerType, char* envCfgFilename, char* motPrimFilen
     }
 
     // plan a path
-    vector<int> solution_stateIDs_V;
+    vector<stateID> solution_stateIDs_V;
 
     SBPLPlanner* planner = NULL;
     switch (plannerType) {
@@ -928,7 +929,7 @@ planxythetamlevlat(PlannerType plannerType, char* envCfgFilename, char* motPrimF
     }
 
     //plan a path
-    vector<int> solution_stateIDs_V;
+    vector<stateID> solution_stateIDs_V;
 
     SBPLPlanner* planner = NULL;
     switch (plannerType) {
@@ -1037,7 +1038,7 @@ planandnavigate2d(PlannerType plannerType, char* envCfgFilename) {
     //int dy[8] = {-1,  0,  1, -1,  1, -1,  0,  1};
     bool bPrint = false;
     int x, y;
-    vector<int> preds_of_changededgesIDV;
+    vector<stateID> preds_of_changededgesIDV;
     vector<nav2dcell_t> changedcellsV;
     nav2dcell_t nav2dcell;
     unsigned char obsthresh = 0;
@@ -1086,7 +1087,7 @@ planandnavigate2d(PlannerType plannerType, char* envCfgFilename) {
     }
 
     //create a planner
-    vector<int> solution_stateIDs_V;
+    vector<stateID> solution_stateIDs_V;
     bool bforwardsearch = false;
 
     SBPLPlanner* planner = NULL;
@@ -1424,7 +1425,7 @@ planandnavigatexythetalat(PlannerType plannerType, char* envCfgFilename, char* m
     }
 
     // create a planner
-    vector<int> solution_stateIDs_V;
+    vector<stateID> solution_stateIDs_V;
 
     SBPLPlanner* planner = NULL;
     switch (plannerType) {
@@ -1504,7 +1505,7 @@ planandnavigatexythetalat(PlannerType plannerType, char* envCfgFilename, char* m
     int goaltheta_c = ContTheta2Disc(goaltheta, num_thetas);
     printf("goal_c: %d %d %d\n", goalx_c, goaly_c, goaltheta_c);
 
-    vector<int> preds_of_changededgesIDV;
+    vector<stateID> preds_of_changededgesIDV;
     vector<nav2dcell_t> changedcellsV;
     nav2dcell_t nav2dcell;
     vector<sbpl_xy_theta_pt_t> xythetaPath;
@@ -1709,7 +1710,7 @@ planrobarm(PlannerType plannerType, char* envCfgFilename, bool forwardSearch) {
     //srand(1);
 
     //plan a path
-    vector<int> solution_stateIDs_V;
+    vector<stateID> solution_stateIDs_V;
 
     SBPLPlanner* planner = NULL;
     switch (plannerType) {
@@ -1864,9 +1865,13 @@ void loadEnvironment(DiscreteSpaceInformation *space, char* path){
 
 
 
+/**
+ * Generates a randomized seed based on run and iteration numbers
+ * \note The generation of random numbers is too important to be left to chance
+ */
 int runItseed(){
     int n;
-    n = it_id;
+    n = env_id;
 
     n += n<<7;
     n ^= n<<11;
@@ -1876,7 +1881,10 @@ int runItseed(){
     n ^= n<<5;
     n += n<<3;
 
-//     printf("(%d, %d) -> %d\n", it_id, run_end, n);
+    n += it_id;
+
+    n ^= n<<15;
+    n += n<<2;
     return n;
 }
 
@@ -1896,8 +1904,8 @@ testEnvironment() {
 
         // Compute first plan
         // ------------------
-        printf("\n\n\n\n\n");
-        printf("\nInstance solving (%d, %d)->(%d)", it_id, run_id, seed);
+        printf("\n\nInstance solving (Env:%d, Run:%d, It:%d)->(%d)",
+               env_id, run_id, it_id, seed);
         printf("\n================\n");
         // Set instance
         setStartGoal(instancePair);
@@ -1906,12 +1914,12 @@ testEnvironment() {
         int retCode = planner->replan(givenTime, &pathIDs);
 //         printf("plan status code=%d\n", retCode);
 
-        for(it_id=it_start+1; it_id<=it_count; it_id++){
+        for(it_id=it_start+1; it_id<=it_end; it_id++){
             // Replanning
             // ----------
             seed = runItseed();
-            printf("\n\n");
-            printf("\nReplanning setup (%d, %d)->(%d)", it_id, run_id, seed);
+            printf("\nReplanning setup (Env:%d, Run:%d, It:%d)->(%d)",
+                   env_id, run_id, it_id, seed);
             printf("\n----------------\n");
             if(environment->generateRandomStart(&instancePair, seed, maxTries)){
                 // Modify the start
@@ -1970,6 +1978,7 @@ int main(int argc, char *argv[]) {
     // Random environments
     // -------------------
     for(env_id=env_random_start; env_id<env_random_end; env_id++){
+        printf("\n\n\n\n\n");
         // Initialize environment
         // ----------------------
         // TODO: Use _env_settings_
@@ -1988,7 +1997,8 @@ int main(int argc, char *argv[]) {
         planner = getPlanner(selectedPlanner);
         assert(planner);
 
-        testEnvironment();
+        for(run_id=run_start; run_id<run_end; run_id++)
+            testEnvironment();
 
         DELETE(planner);
         DELETE(environment);

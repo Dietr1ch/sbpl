@@ -191,18 +191,18 @@ public:
      *        forced to replan from scratch) takes in the time available for planner
      *        and returns a sequence of stateIDs that corresponds to the solution
      */
-    virtual int replan(double allocated_time_sec, std::vector<int>* solution_stateIDs_V) = 0;
+    virtual int replan(double allocated_time_sec, std::vector<stateID> *solution_stateIDs_V) = 0;
 
     /**
      * \brief works same as replan function with two parameters, but also returns the cost of the solution
      */
-    virtual int replan(double allocated_time_sec, std::vector<int>* solution_stateIDs_V, int* solcost) = 0;
+    virtual int replan(double allocated_time_sec, std::vector<stateID> *solution_stateIDs_V, int* solcost) = 0;
 
     /**
      * \brief works same as replan function with time and solution states, but
      *        it let's you fill out all the parameters for the search
      */
-    virtual int replan(std::vector<int>* solution_stateIDs_V, ReplanParams params)
+    virtual int replan(std::vector<stateID> *solution_stateIDs_V, ReplanParams params)
     {
         SBPL_ERROR("replan using ReplanParams is unimplemented for this planner\n");
         return 0;
@@ -212,7 +212,7 @@ public:
      * \brief works same as replan function with time, solution states, and
      *        cost, but it let's you fill out all the parameters for the search
      */
-    virtual int replan(std::vector<int>* solution_stateIDs_V, ReplanParams params, int* solcost)
+    virtual int replan(std::vector<stateID> *solution_stateIDs_V, ReplanParams params, int* solcost)
     {
         SBPL_ERROR("replan using ReplanParams is unimplemented for this planner\n");
         return 0;
@@ -221,12 +221,12 @@ public:
     /**
      * \brief sets the goal of search (planner will automatically decide whether it needs to replan from scratch)
      */
-    virtual int set_goal(int goal_stateID) = 0;
+    virtual int set_goal(stateID goal_stateID) = 0;
 
     /**
      * \brief sets the start of search (planner will automatically decide whether it needs to replan from scratch)
      */
-    virtual int set_start(int start_stateID) = 0;
+    virtual int set_start(stateID start_stateID) = 0;
 
     /**
      * \brief forgets previous planning efforts and starts planning from scratch next time replan is called

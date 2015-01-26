@@ -390,13 +390,13 @@ void EnvironmentXXX::SetAllPreds(CMDPSTATE* state)
     throw new SBPL_Exception();
 }
 
-void EnvironmentXXX::GetSuccs(int SourceStateID, vector<int>* SuccIDV, vector<int>* CostV)
+void EnvironmentXXX::GetSuccs(stateID SourceStateID, vector<stateID>* SuccIDV, vector<int>* CostV)
 {
     SBPL_ERROR("ERROR in EnvXXX... function: GetSuccs is undefined\n");
     throw new SBPL_Exception();
 }
 
-void EnvironmentXXX::GetPreds(int TargetStateID, vector<int>* PredIDV, vector<int>* CostV)
+void EnvironmentXXX::GetPreds(stateID TargetStateID, vector<stateID>* PredIDV, vector<int>* CostV)
 {
     SBPL_ERROR("ERROR in EnvXXX... function: GetPreds is undefined\n");
     throw new SBPL_Exception();

@@ -191,8 +191,8 @@ class AAPlanner : public SBPLPlanner {
         int replan(double givenSeconds, vector<stateID> *solution_stateIDs_V);
         int replan(double givenSeconds, vector<stateID> *solution_stateIDs_V, int *solcost);
 
-        int set_start(int startID);
-        int set_goal(int goalID);
+        int set_start(stateID startID);
+        int set_goal(stateID goalID);
 
         void costs_changed(StateChangeQuery const &stateChange);
         void costs_changed();
@@ -302,9 +302,9 @@ private:
         int getHeurValue(AASpace *space, int StateID);
 
         //get path
-        vector<int> GetSearchPath(AASpace *space, int &solcost);
+        vector<stateID> GetSearchPath(AASpace *space, int &solcost);
 
-        bool Search(AASpace *space, vector<int> &pathIds, int &PathCost, bool bFirstSolution, bool bOptimalSolution, double MaxNumofSecs);
+        bool Search(AASpace *space, vector<stateID> &pathIds, int &PathCost, bool bFirstSolution, bool bOptimalSolution, double MaxNumofSecs);
 
 
 

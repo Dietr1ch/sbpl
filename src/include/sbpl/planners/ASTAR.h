@@ -305,8 +305,8 @@ public:
     /** Replan (unimplemented) */
     int replan(vector<stateID>* pathIDs, ReplanParams params, int* cost);
 
-    int set_start(int startID);
-    int set_goal(int goalID);
+    int set_start(stateID startID);
+    int set_goal(stateID goalID);
 
     int force_planning_from_scratch();
     int set_search_mode(bool bSearchUntilFirstSolution);

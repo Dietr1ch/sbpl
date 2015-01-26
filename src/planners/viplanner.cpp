@@ -54,7 +54,7 @@ void VIPlanner::Initialize_vidata(CMDPSTATE* state)
     vi_data->v = (float)environment_->GetGoalHeuristic(state->StateID);
 }
 
-CMDPSTATE* VIPlanner::CreateState(int stateID)
+CMDPSTATE* VIPlanner::CreateState(stateID stateID)
 {
     CMDPSTATE* state = NULL;
 
@@ -85,7 +85,7 @@ CMDPSTATE* VIPlanner::CreateState(int stateID)
     return state;
 }
 
-CMDPSTATE* VIPlanner::GetState(int stateID)
+CMDPSTATE* VIPlanner::GetState(stateID stateID)
 {
     if (stateID >= (int)environment_->StateID2IndexMapping.size()) {
         SBPL_ERROR("ERROR int GetState: stateID is invalid\n");
@@ -368,7 +368,7 @@ void VIPlanner::InitializePlanner()
 
 //the planning entry point
 //returns 1 if path is found, 0 otherwise
-int VIPlanner::replan(double allocatedtime, vector<int>* solution_stateIDs_V)
+int VIPlanner::replan(double allocatedtime, vector<stateID>* solution_stateIDs_V)
 {
 #ifndef ROS
     const char* policy = "policy.txt";

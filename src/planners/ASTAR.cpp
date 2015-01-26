@@ -73,7 +73,7 @@ ASTARNode::f()  const {
 // A* Space
 // ========
 ASTARSpace::ASTARSpace(DiscreteSpaceInformation *problemDSI) {
-    SBPL_DEBUG("Creating space with problem[%p]", (void*)problemDSI);
+    MEM("Creating space with problem[%p]", (void*)problemDSI);
     assert(problemDSI);
 
     open = new CHeap;
@@ -151,11 +151,14 @@ void
 ASTARSpace::setStart(stateID startID) {
     // Getting the A* node is an overhead (here), but will be generated later.
     auto newStartNode  = getNode0(startID);
-    SBPL_DEBUG(" start = A*Node[%p] (%d)", newStartNode, startID);
     auto newStartState = newStartNode->MDPstate;
 
     assert(newStartState);
     if(startState != newStartState){
+    SBPL_DEBUG(" start = A*Node[%p] {%s}",
+               newStartNode,
+               problem->toString(startID)
+              );
         startState = newStartState;
 
         // Heuristic remains consistent
@@ -166,11 +169,15 @@ void
 ASTARSpace::setGoal(stateID goalID) {
     // Getting the A* node is an overhead (here), but will be generated later.
     auto newGoalNode  = getNode0(goalID);
-    SBPL_DEBUG("  goal = A*Node[%p] (%d)", newGoalNode, goalID);
     auto newGoalState = newGoalNode->MDPstate;
+    newGoalNode->g = INFINITECOST;
 
     assert(newGoalState);
     if(goalState != newGoalState){
+    SBPL_DEBUG("  goal = A*Node[%p] {%s}",
+               newGoalNode,
+               problem->toString(goalID)
+              );
         goalState = newGoalState;
 
         // TODO: Use lazy update
@@ -392,7 +399,7 @@ ASTARPlanner::Search(vector<stateID> *pathIDs,
 
     // Initialization
     // ==============
-    SBPL_DEBUG("\n  Running A*...");
+//     SBPL_DEBUG("\n  Running A*...");
 
     // Get start & goal nodes
     // ----------------------
@@ -431,7 +438,7 @@ ASTARPlanner::Search(vector<stateID> *pathIDs,
         updateSuccessors(*bestNode);
     }
 
-    SBPL_DEBUG("  A*: Finished");
+//     SBPL_DEBUG("  A*: Finished");
 
 
     // Open list information
@@ -444,8 +451,8 @@ ASTARPlanner::Search(vector<stateID> *pathIDs,
         return SBPL_ERR;
     }
 
-    SBPL_DEBUG("    Next bestKey is worse than goalKey"
-                    ", no more nodes are worth expanding");
+//     SBPL_DEBUG("    Next bestKey is worse than goalKey"
+//                     ", no more nodes are worth expanding");
     SBPL_DEBUG("    Goal g: %5.2f", goalNode->g/1000.0);
 
     return SBPL_OK;
@@ -527,7 +534,7 @@ ASTARPlanner::reachPredecessor(const ASTARNode &node, const nodeStub &nS) {
 // -----------------
 inline
 int
-ASTARPlanner::replan(double givenSeconds, vector<int> *pathIDs) {
+ASTARPlanner::replan(double givenSeconds, vector<stateID> *pathIDs) {
     assert(space);
     assert(space->problem);
     int cost;  // Drop the cost value

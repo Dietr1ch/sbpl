@@ -103,7 +103,7 @@ void RSTARPlanner::Initialize_searchinfo(CMDPSTATE* state)
     InitializeSearchStateInfo(searchstateinfo);
 }
 
-CMDPSTATE* RSTARPlanner::CreateState(int stateID)
+CMDPSTATE* RSTARPlanner::CreateState(stateID stateID)
 {
     CMDPSTATE* state = NULL;
 
@@ -139,7 +139,7 @@ CMDPSTATE* RSTARPlanner::CreateState(int stateID)
     return state;
 }
 
-CMDPSTATE* RSTARPlanner::GetState(int stateID)
+CMDPSTATE* RSTARPlanner::GetState(stateID stateID)
 {
     if (stateID >= (int)environment_->StateID2IndexMapping.size()) {
         SBPL_ERROR("ERROR int GetState: stateID %d is invalid\n", stateID);
@@ -173,7 +173,7 @@ void RSTARPlanner::Initialize_rstarlsearchdata(CMDPSTATE* state)
     rstarlsearch_data->MDPstate = state;
 }
 
-CMDPSTATE* RSTARPlanner::CreateLSearchState(int stateID)
+CMDPSTATE* RSTARPlanner::CreateLSearchState(stateID stateID)
 {
     CMDPSTATE* state = NULL;
 
@@ -207,17 +207,17 @@ CMDPSTATE* RSTARPlanner::CreateLSearchState(int stateID)
     return state;
 }
 
-CMDPSTATE* RSTARPlanner::GetLSearchState(int stateID)
+CMDPSTATE* RSTARPlanner::GetLSearchState(stateID id)
 {
-    if (stateID >= (int)environment_->StateID2IndexMapping.size()) {
+    if (id >= (int)environment_->StateID2IndexMapping.size()) {
         SBPL_ERROR("ERROR int GetLSearchState: stateID is invalid\n");
         throw new SBPL_Exception();
     }
 
-    if (environment_->StateID2IndexMapping[stateID][RSTARMDP_LSEARCH_STATEID2IND] == -1)
-        return CreateLSearchState(stateID);
+    if (environment_->StateID2IndexMapping[id][RSTARMDP_LSEARCH_STATEID2IND] == -1)
+        return CreateLSearchState(id);
     else
-        return pLSearchStateSpace->MDP.StateArray[environment_->StateID2IndexMapping[stateID][RSTARMDP_LSEARCH_STATEID2IND]];
+        return pLSearchStateSpace->MDP.StateArray[environment_->StateID2IndexMapping[id][RSTARMDP_LSEARCH_STATEID2IND]];
 }
 
 CKey RSTARPlanner::LocalSearchComputeKey(RSTARLSearchState* rstarlsearchState)
@@ -237,10 +237,10 @@ CKey RSTARPlanner::LocalSearchComputeKey(RSTARLSearchState* rstarlsearchState)
     return retkey;
 }
 
-bool RSTARPlanner::ComputeLocalPath(int StartStateID, int GoalStateID, int maxc, int maxe, int *pCost, int *pCostLow,
-                                    int *pExp, vector<int>* pPathIDs, int* pNewGoalStateID, double maxnumofsecs)
+bool RSTARPlanner::ComputeLocalPath(stateID StartStateID, stateID GoalStateID, int maxc, int maxe, int *pCost, int *pCostLow,
+                                    int *pExp, vector<stateID>* pPathIDs, int* pNewGoalStateID, double maxnumofsecs)
 {
-    vector<int> SuccIDV;
+    vector<stateID> SuccIDV;
     vector<int> CostV;
 
     if (pLSearchStateSpace->OPEN == NULL) pLSearchStateSpace->OPEN = new CHeap;
@@ -344,7 +344,7 @@ bool RSTARPlanner::ComputeLocalPath(int StartStateID, int GoalStateID, int maxc,
     SBPL_FPRINTF(fDeb, "local search: expands=%d\n", local_expands);
 
     //set the return path and other path related variables
-    vector<int> tempPathID;
+    vector<stateID> tempPathID;
     pPathIDs->clear();
     if (rstarlsearchgoalstate->g < INFINITECOST) {
         int pathcost = 0;
@@ -584,7 +584,7 @@ int RSTARPlanner::ImprovePath(double MaxNumofSecs)
     CKey key, minkey;
     CKey goalkey;
 
-    vector<int> SuccIDV;
+    vector<stateID> SuccIDV;
     vector<int> CLowV;
     int highlevelexpands = 0;
 
@@ -1043,7 +1043,7 @@ int RSTARPlanner::InitializeSearchStateSpace()
     return 1;
 }
 
-int RSTARPlanner::SetSearchGoalState(int SearchGoalStateID)
+int RSTARPlanner::SetSearchGoalState(stateID SearchGoalStateID)
 {
     if (pSearchStateSpace->searchgoalstate == NULL ||
         pSearchStateSpace->searchgoalstate->StateID != SearchGoalStateID)
@@ -1071,7 +1071,7 @@ int RSTARPlanner::SetSearchGoalState(int SearchGoalStateID)
     return 1;
 }
 
-int RSTARPlanner::SetSearchStartState(int SearchStartStateID)
+int RSTARPlanner::SetSearchStartState(stateID SearchStartStateID)
 {
     CMDPSTATE* MDPstate = GetState(SearchStartStateID);
 
@@ -1098,9 +1098,9 @@ int RSTARPlanner::getHeurValue(int StateID)
     return searchstateinfo->h;
 }
 
-vector<int> RSTARPlanner::GetSearchPath(int& solcost)
+vector<stateID> RSTARPlanner::GetSearchPath(int& solcost)
 {
-    vector<int> wholePathIds;
+    vector<stateID> wholePathIds;
     RSTARState* rstargoalstate = (RSTARState*)pSearchStateSpace->searchgoalstate->PlannerSpecificData;
 
     //set the return path and other path related variables
@@ -1195,7 +1195,7 @@ vector<int> RSTARPlanner::GetSearchPath(int& solcost)
 
 void RSTARPlanner::PrintSearchPath(FILE* fOut)
 {
-    vector<int> pathIds;
+    vector<stateID> pathIds;
     int solcost;
 
     pathIds = GetSearchPath(solcost);
@@ -1206,7 +1206,7 @@ void RSTARPlanner::PrintSearchPath(FILE* fOut)
     }
 }
 
-bool RSTARPlanner::Search(vector<int>& pathIds, int & PathCost, bool bFirstSolution, bool bOptimalSolution,
+bool RSTARPlanner::Search(vector<stateID>& pathIds, int & PathCost, bool bFirstSolution, bool bOptimalSolution,
                           double MaxNumofSecs)
 {
     CKey key;
@@ -1303,7 +1303,7 @@ bool RSTARPlanner::Search(vector<int>& pathIds, int & PathCost, bool bFirstSolut
         prevexpands = highlevel_searchexpands;
 
         //keep track of the best solution so far
-        vector<int> CurrentPathIds;
+        vector<stateID> CurrentPathIds;
         int CurrentPathCost = ((RSTARState*)pSearchStateSpace->searchgoalstate->PlannerSpecificData)->g;
         if (CurrentPathCost == INFINITECOST ||
             ((RSTARACTIONDATA*)((RSTARState*)pSearchStateSpace->searchgoalstate->PlannerSpecificData)->bestpredaction->PlannerSpecificData)->pathIDs.size() == 0)
@@ -1356,7 +1356,7 @@ bool RSTARPlanner::Search(vector<int>& pathIds, int & PathCost, bool bFirstSolut
 
 //-----------------------------Interface function-----------------------------------------------------
 //returns 1 if found a solution, and 0 otherwise
-int RSTARPlanner::replan(double allocated_time_secs, vector<int>* solution_stateIDs_V)
+int RSTARPlanner::replan(double allocated_time_secs, vector<stateID>* solution_stateIDs_V)
 {
     int solcost;
 
@@ -1364,9 +1364,9 @@ int RSTARPlanner::replan(double allocated_time_secs, vector<int>* solution_state
 }
 
 //returns 1 if found a solution, and 0 otherwise
-int RSTARPlanner::replan(double allocated_time_secs, vector<int>* solution_stateIDs_V, int* psolcost)
+int RSTARPlanner::replan(double allocated_time_secs, vector<stateID>* solution_stateIDs_V, int* psolcost)
 {
-    vector<int> pathIds;
+    vector<stateID> pathIds;
     bool bFound = false;
     int PathCost;
     bool bFirstSolution = this->bsearchuntilfirstsolution;
@@ -1387,7 +1387,7 @@ int RSTARPlanner::replan(double allocated_time_secs, vector<int>* solution_state
     return (int)bFound;
 }
 
-int RSTARPlanner::set_goal(int goal_stateID)
+int RSTARPlanner::set_goal(stateID goal_stateID)
 {
     SBPL_PRINTF("planner: setting goal to %d\n", goal_stateID);
     environment_->PrintState(goal_stateID, true, stdout);
@@ -1408,7 +1408,7 @@ int RSTARPlanner::set_goal(int goal_stateID)
     return 1;
 }
 
-int RSTARPlanner::set_start(int start_stateID)
+int RSTARPlanner::set_start(stateID start_stateID)
 {
     SBPL_PRINTF("planner: setting start to %d\n", start_stateID);
     environment_->PrintState(start_stateID, true, stdout);

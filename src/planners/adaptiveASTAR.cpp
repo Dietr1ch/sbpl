@@ -928,11 +928,11 @@ AAPlanner::getHeurValue(AASpace *pSearchStateSpace, int StateID) {
 }
 
 //Xiaoxun 0: this is to get the <STATE_ID> of all cells along the path
-vector<int>
+vector<stateID>
 AAPlanner::GetSearchPath(AASpace *space, int &solcost) {
-    vector<int> SuccIDV;
+    vector<stateID> SuccIDV;
     vector<int> CostV;
-    vector<int> wholePathIds;
+    vector<stateID> wholePathIds;
     AAState *searchstateinfo;
     CMDPSTATE *state = NULL;
     CMDPSTATE *goalstate = NULL;
@@ -1040,7 +1040,7 @@ AAPlanner::GetSearchPath(AASpace *space, int &solcost) {
 
 //Xiaoxun 0:     Search() == ComputeShortestPath()...... however, it contains function IMPROVE_PATH() inside.
 bool
-AAPlanner::Search(AASpace *space, vector<int> &pathIds, int &PathCost, bool bFirstSolution, bool bOptimalSolution, double MaxNumofSecs) {
+AAPlanner::Search(AASpace *space, vector<stateID> &pathIds, int &PathCost, bool bFirstSolution, bool bOptimalSolution, double MaxNumofSecs) {
     CKey key;
     TimeStarted = clock();
     searchexpands = 0;
@@ -1169,7 +1169,7 @@ AAPlanner::Search(AASpace *space, vector<int> &pathIds, int &PathCost, bool bFir
 // ===================
 
 //returns 1 if found a solution, and 0 otherwise
-int AAPlanner::replan(double allocated_time_secs, vector<int> *solution_stateIDs_V) {
+int AAPlanner::replan(double allocated_time_secs, vector<stateID> *solution_stateIDs_V) {
     int solcost;
     return replan(allocated_time_secs, solution_stateIDs_V, &solcost);
 }
@@ -1178,8 +1178,8 @@ int AAPlanner::replan(double allocated_time_secs, vector<int> *solution_stateIDs
 //Xiaoxun 0: return 1 if found a solution, and 0 otherwise
 //           re-plan is to do multiple searches until the goal is caught
 int
-AAPlanner::replan(double allocated_time_secs, vector<int> *solution_stateIDs_V, int *psolcost) {
-    vector<int> pathIds;
+AAPlanner::replan(double allocated_time_secs, vector<stateID> *solution_stateIDs_V, int *psolcost) {
+    vector<stateID> pathIds;
     bool bFound = false;
     int PathCost;
     bool bFirstSolution = this->bsearchuntilfirstsolution;
@@ -1448,7 +1448,7 @@ AAPlanner::replan(double allocated_time_secs, vector<int> *solution_stateIDs_V, 
 
 
 int
-AAPlanner::set_goal(int goal_stateID) {
+AAPlanner::set_goal(stateID goal_stateID) {
 
     SBPL_DEBUG("planner: setting goal to %d\n", goal_stateID);
     environment_->PrintState(goal_stateID, true, stdout);
@@ -1463,7 +1463,7 @@ AAPlanner::set_goal(int goal_stateID) {
 
 //Xiaoxun: set the start_state
 int
-AAPlanner::set_start(int start_stateID) {
+AAPlanner::set_start(stateID start_stateID) {
     SBPL_DEBUG("AA planner: setting start to %d\n", start_stateID);
     environment_->PrintState(start_stateID, true, stdout);
 
@@ -1537,7 +1537,7 @@ AAPlanner::ChooseOneSuccs_for_TargetMove(AAState *state, AASpace *pSearchStateSp
     //CKey key;
 
     // Get successors from environment
-    vector<int> SuccIDV;
+    vector<stateID> SuccIDV;
     vector<int> CostV;
     environment_->GetSuccs(state->MDPstate->StateID, &SuccIDV, &CostV);
     int successorCount = (int)SuccIDV.size();
@@ -1801,7 +1801,7 @@ AAPlanner::UpdateSuccs(AAState *state, AASpace *space) {
     TRACE("Expanding [%d]", state->MDPstate->StateID);
 
     // Get successors from environment
-    vector<int> SuccIDV;
+    vector<stateID> SuccIDV;
     vector<int> CostV;
     environment_->GetSuccs(state->MDPstate->StateID, &SuccIDV, &CostV);
     // REVIEW: this probably can be done faster (at least by changing the env API)
@@ -1870,7 +1870,7 @@ AAPlanner::UpdatePreds(AAState *state, AASpace *space) {
 
 
     // Get predecessors from environment
-    vector<int> PredIDV;
+    vector<stateID> PredIDV;
     vector<int> CostV;
     environment_->GetPreds(state->MDPstate->StateID, &PredIDV, &CostV);
     int predecessorCount = PredIDV.size();

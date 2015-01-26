@@ -94,7 +94,7 @@ public:
      * \brief incremental planning not supported
      */
     virtual void GetPredsofChangedEdges(std::vector<nav2dcell_t> const * changedcellsV,
-                                        std::vector<int> *preds_of_changededgesIDV)
+                                        std::vector<stateID> *preds_of_changededgesIDV)
     {
         SBPL_ERROR("ERROR: GetPredsofChangedEdges function not supported\n");
         throw new SBPL_Exception();
@@ -104,7 +104,7 @@ public:
      * \brief incremental planning not supported
      */
     virtual void GetSuccsofChangedEdges(std::vector<nav2dcell_t> const * changedcellsV,
-                                        std::vector<int> *succs_of_changededgesIDV)
+                                        std::vector<stateID> *succs_of_changededgesIDV)
     {
         SBPL_ERROR("ERROR: GetSuccsofChangedEdges function not supported\n");
         throw new SBPL_Exception();

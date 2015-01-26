@@ -151,22 +151,22 @@ public:
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual int GetFromToHeuristic(int FromStateID, int ToStateID);
+    virtual int GetFromToHeuristic(stateID FromStateID, stateID ToStateID);
 
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual int GetGoalHeuristic(int stateID);
+    virtual int GetGoalHeuristic(stateID id);
 
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual int GetStartHeuristic(int stateID);
+    virtual int GetStartHeuristic(stateID id);
 
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual void PrintState(int stateID, bool bVerbose, FILE* fOut = NULL);
+    virtual void PrintState(stateID id, bool bVerbose, FILE* fOut = NULL);
 
     /**
      * \brief see comments on the same function in the parent class
@@ -182,7 +182,7 @@ public:
     /**
      * \brief not fully implemented yet
      */
-    virtual void GetPreds(int stateID, const std::vector<sbpl_BinaryHiddenVar_t>* updatedhvaluesV,
+    virtual void GetPreds(stateID stateID, const std::vector<sbpl_BinaryHiddenVar_t>* updatedhvaluesV,
                           std::vector<CMDPACTION>* IncomingDetActionV, std::vector<CMDPACTION>* IncomingStochActionV,
                           std::vector<sbpl_BinaryHiddenVar_t>* StochActionNonpreferredOutcomeV);
 
@@ -207,7 +207,7 @@ public:
     /**
      * \brief not fully implemented yet
      */
-    virtual void GetSuccs(int SourceStateID, std::vector<int>* SuccIDV, std::vector<int>* CostV)
+    virtual void GetSuccs(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV)
     {
         SBPL_ERROR("ERROR: GetSuccs not supported in NAV2D UNDER UNCERTAINTY\n");
         throw new SBPL_Exception();
@@ -216,7 +216,7 @@ public:
     /**
      * \brief not fully implemented yet
      */
-    virtual void GetPreds(int TargetStateID, std::vector<int>* PredIDV, std::vector<int>* CostV)
+    virtual void GetPreds(stateID TargetStateID, std::vector<stateID>* PredIDV, std::vector<int>* CostV)
     {
         SBPL_ERROR("ERROR: GetPreds not supported in NAV2D UNDER UNCERTAINTY\n");
         throw new SBPL_Exception();

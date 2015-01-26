@@ -205,7 +205,7 @@ bool CMDPSTATE::RemoveAllActions()
     return true;
 }
 
-bool CMDPSTATE::ContainsPred(int stateID)
+bool CMDPSTATE::ContainsPred(stateID stateID)
 {
     for (int i = 0; i < (int)PredsID.size(); i++) {
         if (PredsID[i] == stateID) return true;

@@ -127,17 +127,17 @@ public:
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual int GetFromToHeuristic(int FromStateID, int ToStateID);
+    virtual int GetFromToHeuristic(stateID FromStateID, stateID ToStateID);
 
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual int GetGoalHeuristic(int stateID);
+    virtual int GetGoalHeuristic(stateID stateID);
 
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual int GetStartHeuristic(int stateID);
+    virtual int GetStartHeuristic(stateID stateID);
 
     /**
      * \brief see comments on the same function in the parent class
@@ -152,12 +152,12 @@ public:
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual void GetSuccs(int SourceStateID, std::vector<int>* SuccIDV, std::vector<int>* CostV);
+    virtual void GetSuccs(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV);
 
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual void GetPreds(int TargetStateID, std::vector<int>* PredIDV, std::vector<int>* CostV);
+    virtual void GetPreds(stateID TargetStateID, std::vector<stateID>* PredIDV, std::vector<int>* CostV);
 
     /**
      * \brief see comments on the same function in the parent class
@@ -167,7 +167,7 @@ public:
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual void PrintState(int stateID, bool bVerbose, FILE* fOut = NULL);
+    virtual void PrintState(stateID stateID, bool bVerbose, FILE* fOut = NULL);
 
     /**
      * \brief see comments on the same function in the parent class
@@ -198,7 +198,7 @@ protected:
     virtual void ContXY2Cell(double x, double y, short unsigned int* pX, short unsigned int *pY);
     virtual int IsValidLineSegment(double x0, double y0, double x1, double y1, char **Grid2D,
                                    std::vector<CELLV>* pTestedCells);
-    virtual void GetRandomSuccsatDistance(int SourceStateID, std::vector<int>* SuccIDV, std::vector<int>* CLowV);
+    virtual void GetRandomSuccsatDistance(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CLowV);
     virtual unsigned int GetHeurBasedonCoord(short unsigned int coord[NUMOFLINKS]);
     virtual void PrintHeader(FILE* fOut);
     virtual int cost(short unsigned int state1coord[], short unsigned int state2coord[]);
@@ -220,11 +220,11 @@ protected:
 
     virtual void ComputeHeuristicValues();
 
-    virtual int GetEdgeCost(int FromStateID, int ToStateID);
+    virtual int GetEdgeCost(stateID FromStateID, stateID ToStateID);
     virtual int GetRandomState();
-    virtual bool AreEquivalent(int State1ID, int State2ID);
+    virtual bool AreEquivalent(stateID State1ID, stateID State2ID);
 
-    virtual void PrintSuccGoal(int SourceStateID, int costtogoal, bool bVerbose, bool bLocal /*=false*/,
+    virtual void PrintSuccGoal(stateID SourceStateID, int costtogoal, bool bVerbose, bool bLocal /*=false*/,
                                FILE* fOut /*=NULL*/);
 };
 

@@ -1711,17 +1711,17 @@ void EnvironmentNAVXYTHETALATTICE::SetAllPreds(CMDPSTATE* state)
     throw new SBPL_Exception();
 }
 
-void EnvironmentNAVXYTHETALATTICE::GetSuccs(int SourceStateID, vector<int>* SuccIDV, vector<int>* CostV)
+void EnvironmentNAVXYTHETALATTICE::GetSuccs(stateID SourceStateID, vector<stateID>* SuccIDV, vector<int>* CostV)
 {
     GetSuccs(SourceStateID, SuccIDV, CostV, NULL);
 }
-void EnvironmentNAVXYTHETALATTICE::GetLazySuccs(int SourceStateID, std::vector<int>* SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost){
+void EnvironmentNAVXYTHETALATTICE::GetLazySuccs(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost){
     GetLazySuccs(SourceStateID, SuccIDV, CostV, isTrueCost, NULL);
 }
-void EnvironmentNAVXYTHETALATTICE::GetSuccsWithUniqueIds(int SourceStateID, std::vector<int>* SuccIDV, std::vector<int>* CostV){
+void EnvironmentNAVXYTHETALATTICE::GetSuccsWithUniqueIds(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV){
     GetSuccsWithUniqueIds(SourceStateID, SuccIDV, CostV, NULL);
 }
-void EnvironmentNAVXYTHETALATTICE::GetLazySuccsWithUniqueIds(int SourceStateID, std::vector<int>* SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost){
+void EnvironmentNAVXYTHETALATTICE::GetLazySuccsWithUniqueIds(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost){
     GetLazySuccsWithUniqueIds(SourceStateID, SuccIDV, CostV, isTrueCost, NULL);
 }
 
@@ -1927,7 +1927,7 @@ EnvironmentNAVXYTHETALAT::~EnvironmentNAVXYTHETALAT()
     }
 }
 
-void EnvironmentNAVXYTHETALAT::GetCoordFromState(int stateID, int& x, int& y, int& theta) const
+void EnvironmentNAVXYTHETALAT::GetCoordFromState(stateID stateID, int& x, int& y, int& theta) const
 {
     EnvNAVXYTHETALATHashEntry_t* HashEntry = StateID2CoordTable[stateID];
     x = HashEntry->X;
@@ -1945,12 +1945,12 @@ int EnvironmentNAVXYTHETALAT::GetStateFromCoord(int x, int y, int theta)
     return OutHashEntry->stateID;
 }
 
-void EnvironmentNAVXYTHETALAT::ConvertStateIDPathintoXYThetaPath(vector<int>* stateIDPath,
+void EnvironmentNAVXYTHETALAT::ConvertStateIDPathintoXYThetaPath(vector<stateID>* stateIDPath,
                                                                  vector<sbpl_xy_theta_pt_t>* xythetaPath)
 {
     vector<EnvNAVXYTHETALATAction_t*> actionV;
     vector<int> CostV;
-    vector<int> SuccIDV;
+    vector<stateID> SuccIDV;
     int targetx_c, targety_c, targettheta_c;
     int sourcex_c, sourcey_c, sourcetheta_c;
 
@@ -2116,7 +2116,7 @@ int EnvironmentNAVXYTHETALAT::SetStart(double x_m, double y_m, double theta_rad)
     return EnvNAVXYTHETALAT.startstateid;
 }
 
-void EnvironmentNAVXYTHETALAT::PrintState(int stateID, bool bVerbose, FILE* fOut /*=NULL*/)
+void EnvironmentNAVXYTHETALAT::PrintState(stateID stateID, bool bVerbose, FILE* fOut /*=NULL*/)
 {
 #if DEBUG
     if(stateID >= (int)StateID2CoordTable.size())
@@ -2283,7 +2283,7 @@ EnvNAVXYTHETALATHashEntry_t* EnvironmentNAVXYTHETALAT::CreateNewHashEntry_hash(i
     return HashEntry;
 }
 
-void EnvironmentNAVXYTHETALAT::GetSuccs(int SourceStateID, vector<int>* SuccIDV, vector<int>* CostV, vector<
+void EnvironmentNAVXYTHETALAT::GetSuccs(stateID SourceStateID, vector<stateID>* SuccIDV, vector<int>* CostV, vector<
     EnvNAVXYTHETALATAction_t*>* actionV /*=NULL*/)
 {
     int aind;
@@ -2338,7 +2338,7 @@ void EnvironmentNAVXYTHETALAT::GetSuccs(int SourceStateID, vector<int>* SuccIDV,
 #endif
 }
 
-void EnvironmentNAVXYTHETALAT::GetPreds(int TargetStateID, vector<int>* PredIDV, vector<int>* CostV)
+void EnvironmentNAVXYTHETALAT::GetPreds(stateID TargetStateID, vector<stateID>* PredIDV, vector<int>* CostV)
 {
     //TODO- to support tolerance, need:
     // a) generate preds for goal state based on all possible goal state variable settings,
@@ -2451,7 +2451,7 @@ void EnvironmentNAVXYTHETALAT::SetAllActionsandAllOutcomes(CMDPSTATE* state)
 }
 
 void EnvironmentNAVXYTHETALAT::GetPredsofChangedEdges(vector<nav2dcell_t> const * changedcellsV,
-                                                      vector<int> *preds_of_changededgesIDV)
+                                                      vector<stateID> *preds_of_changededgesIDV)
 {
     nav2dcell_t cell;
     sbpl_xy_theta_cell_t affectedcell;
@@ -2482,7 +2482,7 @@ void EnvironmentNAVXYTHETALAT::GetPredsofChangedEdges(vector<nav2dcell_t> const 
 }
 
 void EnvironmentNAVXYTHETALAT::GetSuccsofChangedEdges(vector<nav2dcell_t> const * changedcellsV,
-                                                      vector<int> *succs_of_changededgesIDV)
+                                                      vector<stateID> *succs_of_changededgesIDV)
 {
     nav2dcell_t cell;
     sbpl_xy_theta_cell_t affectedcell;
@@ -2605,7 +2605,7 @@ void EnvironmentNAVXYTHETALAT::PrintHashTableHist(FILE* fOut)
                  s100, s200, s300, slarge);
 }
 
-int EnvironmentNAVXYTHETALAT::GetFromToHeuristic(int FromStateID, int ToStateID)
+int EnvironmentNAVXYTHETALAT::GetFromToHeuristic(stateID FromStateID, stateID ToStateID)
 {
 #if USE_HEUR==0
     return 0;
@@ -2632,7 +2632,7 @@ int EnvironmentNAVXYTHETALAT::GetFromToHeuristic(int FromStateID, int ToStateID)
 
 }
 
-int EnvironmentNAVXYTHETALAT::GetGoalHeuristic(int stateID)
+int EnvironmentNAVXYTHETALAT::GetGoalHeuristic(stateID stateID)
 {
 #if USE_HEUR==0
     return 0;
@@ -2656,7 +2656,7 @@ int EnvironmentNAVXYTHETALAT::GetGoalHeuristic(int stateID)
     return (int)(((double)__max(h2D, hEuclid)) / EnvNAVXYTHETALATCfg.nominalvel_mpersecs);
 }
 
-int EnvironmentNAVXYTHETALAT::GetStartHeuristic(int stateID)
+int EnvironmentNAVXYTHETALAT::GetStartHeuristic(stateID stateID)
 {
 #if USE_HEUR==0
     return 0;
@@ -2687,7 +2687,7 @@ int EnvironmentNAVXYTHETALAT::SizeofCreatedEnv()
 //------------------------------------------------------------------------------
 
 
-void EnvironmentNAVXYTHETALAT::GetLazySuccs(int SourceStateID, std::vector<int>* SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost,
+void EnvironmentNAVXYTHETALAT::GetLazySuccs(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost,
                                         std::vector<EnvNAVXYTHETALATAction_t*>* actionV /*=NULL*/)
 {
     int aind;
@@ -2754,7 +2754,7 @@ void EnvironmentNAVXYTHETALAT::GetLazySuccs(int SourceStateID, std::vector<int>*
 #endif
 }
 
-int EnvironmentNAVXYTHETALAT::GetTrueCost(int parentID, int childID){
+int EnvironmentNAVXYTHETALAT::GetTrueCost(stateID parentID, stateID childID){
   EnvNAVXYTHETALATHashEntry_t* fromHash = StateID2CoordTable[parentID];
   EnvNAVXYTHETALATHashEntry_t* toHash = StateID2CoordTable[childID];
 
@@ -2786,12 +2786,12 @@ int EnvironmentNAVXYTHETALAT::GetTrueCost(int parentID, int childID){
   return -1;
 }
 
-void EnvironmentNAVXYTHETALAT::GetSuccsWithUniqueIds(int SourceStateID, std::vector<int>* SuccIDV, std::vector<int>* CostV,
+void EnvironmentNAVXYTHETALAT::GetSuccsWithUniqueIds(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV,
                                                      std::vector<EnvNAVXYTHETALATAction_t*>* actionV /*=NULL*/){
   GetSuccs(SourceStateID, SuccIDV, CostV, actionV);
 }
 
-void EnvironmentNAVXYTHETALAT::GetLazySuccsWithUniqueIds(int SourceStateID, std::vector<int>* SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost,
+void EnvironmentNAVXYTHETALAT::GetLazySuccsWithUniqueIds(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost,
                                                      std::vector<EnvNAVXYTHETALATAction_t*>* actionV /*=NULL*/){
   GetLazySuccs(SourceStateID, SuccIDV, CostV, isTrueCost, actionV);
 }
@@ -2800,7 +2800,7 @@ bool EnvironmentNAVXYTHETALAT::isGoal(int id){
   return EnvNAVXYTHETALAT.goalstateid == id;
 }
 
-//void EnvironmentNAVXYTHETALAT::GetPreds(int TargetStateID, std::vector<int>* PredIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost);
-//void EnvironmentNAVXYTHETALAT::GetPredsWithUniqueIds(int TargetStateID, std::vector<int>* PredIDV, std::vector<int>* CostV);
-//void EnvironmentNAVXYTHETALAT::GetPredsWithUniqueIds(int TargetStateID, std::vector<int>* PredIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost);
+//void EnvironmentNAVXYTHETALAT::GetPreds(stateID TargetStateID, std::vector<stateID>* PredIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost);
+//void EnvironmentNAVXYTHETALAT::GetPredsWithUniqueIds(stateID TargetStateID, std::vector<stateID>* PredIDV, std::vector<int>* CostV);
+//void EnvironmentNAVXYTHETALAT::GetPredsWithUniqueIds(stateID TargetStateID, std::vector<stateID>* PredIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost);
 

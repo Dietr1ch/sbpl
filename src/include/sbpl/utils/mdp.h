@@ -75,9 +75,9 @@ public:
     //functions
     bool Delete();
     bool IsValid();
-    void AddOutcome(int OutcomeStateID, int OutcomeCost, float OutcomeProb);
+    void AddOutcome(stateID OutcomeStateID, int OutcomeCost, float OutcomeProb);
     int GetIndofMostLikelyOutcome();
-    int GetIndofOutcome(int OutcomeID);
+    int GetIndofOutcome(stateID OutcomeID);
     bool DeleteAllOutcomes();
 
     //operators
@@ -90,7 +90,7 @@ public:
     //data
     stateID StateID;
     vector<CMDPACTION*> Actions;
-    vector<int> PredsID;
+    vector<stateID> PredsID;
     void* PlannerSpecificData;
 
     //constructors

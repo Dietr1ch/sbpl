@@ -134,35 +134,35 @@ public:
     /**
      * \brief replan a path within the allocated time, return the solution in the vector
      */
-    virtual int replan(double allocated_time_secs, std::vector<int>* solution_stateIDs_V);
+    virtual int replan(double allocated_time_secs, std::vector<stateID> *solution_stateIDs_V);
 
     /**
      * \brief replan a path within the allocated time, return the solution in
      *        the vector, also returns solution cost
      */
-    virtual int replan(double allocated_time_secs, std::vector<int>* solution_stateIDs_V, int* solcost);
+    virtual int replan(double allocated_time_secs, std::vector<stateID> *solution_stateIDs_V, int* solcost);
 
     /**
      * \brief works same as replan function with time and solution states, but
      *        it let's you fill out all the parameters for the search
      */
-    virtual int replan(std::vector<int>* solution_stateIDs_V, ReplanParams params);
+    virtual int replan(std::vector<stateID> *solution_stateIDs_V, ReplanParams params);
 
     /**
      * \brief works same as replan function with time, solution states, and
      *        cost, but it let's you fill out all the parameters for the search
      */
-    virtual int replan(std::vector<int>* solution_stateIDs_V, ReplanParams params, int* solcost);
+    virtual int replan(std::vector<stateID> *solution_stateIDs_V, ReplanParams params, int* solcost);
 
     /**
      * \brief set the goal state
      */
-    virtual int set_goal(int goal_stateID);
+    virtual int set_goal(stateID goal_stateID);
 
     /**
      * \brief set the start state
      */
-    virtual int set_start(int start_stateID);
+    virtual int set_start(stateID start_stateID);
 
     /**
      * \brief set a flag to get rid of the previous search efforts, and
@@ -192,7 +192,7 @@ public:
      * \param succsIDV array of successors of changed edges
      * \note this is used when the search is run forwards
      */
-    virtual void update_succs_of_changededges(std::vector<int>* succsIDV);
+    virtual void update_succs_of_changededges(std::vector<stateID>* succsIDV);
 
     /**
      * \brief direct form of informing the search about the new edge costs
@@ -200,7 +200,7 @@ public:
      * \param predsIDV array of predecessors of changed edges
      * \note this is used when the search is run backwards
      */
-    virtual void update_preds_of_changededges(std::vector<int>* predsIDV);
+    virtual void update_preds_of_changededges(std::vector<stateID>* predsIDV);
 
     /**
      * \brief returns the suboptimality bound on the currently found solution
@@ -342,17 +342,17 @@ protected:
     virtual void PrintSearchState(ADState* searchstateinfo, FILE* fOut);
     virtual void PrintSearchPath(ADSearchStateSpace_t* pSearchStateSpace, FILE* fOut);
 
-    virtual int getHeurValue(ADSearchStateSpace_t* pSearchStateSpace, int StateID);
+    virtual int getHeurValue(ADSearchStateSpace_t* pSearchStateSpace, stateID StateID);
 
     //get path
-    virtual std::vector<int> GetSearchPath(ADSearchStateSpace_t* pSearchStateSpace, int& solcost);
+    virtual std::vector<stateID> GetSearchPath(ADSearchStateSpace_t* pSearchStateSpace, int& solcost);
 
-    virtual bool Search(ADSearchStateSpace_t* pSearchStateSpace, std::vector<int>& pathIds, int & PathCost,
+    virtual bool Search(ADSearchStateSpace_t* pSearchStateSpace, std::vector<stateID>& pathIds, int & PathCost,
                         bool bFirstSolution, bool bOptimalSolution, double MaxNumofSecs);
 
     virtual CKey ComputeKey(ADState* state);
 
-    virtual void Update_SearchSuccs_of_ChangedEdges(std::vector<int> const * statesIDV);
+    virtual void Update_SearchSuccs_of_ChangedEdges(std::vector<stateID> const * statesIDV);
 };
 
 /**
@@ -363,8 +363,8 @@ class StateChangeQuery
 {
 public:
     virtual ~StateChangeQuery() { }
-    virtual std::vector<int> const * getPredecessors() const = 0;
-    virtual std::vector<int> const * getSuccessors() const = 0;
+    virtual std::vector<stateID> const * getPredecessors() const = 0;
+    virtual std::vector<stateID> const * getSuccessors() const = 0;
 };
 
 #endif

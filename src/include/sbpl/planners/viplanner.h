@@ -84,7 +84,7 @@ public:
     /**
      * \brief replan a path within the allocated time, return the policy in the solution vector
      */
-    virtual int replan(double allocated_time_secs, std::vector<int>* solution_stateIDs_V);
+    virtual int replan(double allocated_time_secs, std::vector<stateID>* solution_stateIDs_V);
 
     /**
      * \brief constructors
@@ -107,9 +107,9 @@ protected:
 
     virtual void Initialize_vidata(CMDPSTATE* state);
 
-    virtual CMDPSTATE* CreateState(int stateID);
+    virtual CMDPSTATE* CreateState(stateID stateID);
 
-    virtual CMDPSTATE* GetState(int stateID);
+    virtual CMDPSTATE* GetState(stateID stateID);
 
     virtual void PrintVIData();
 

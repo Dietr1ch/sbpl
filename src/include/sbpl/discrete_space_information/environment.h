@@ -32,6 +32,7 @@
 
 #include <cstdio>
 #include <vector>
+#include <string>
 #include <assert.h>
 
 #include <sbpl/config.h>
@@ -42,6 +43,7 @@ struct MDPConfig;
 
 
 using std::vector;
+using std::string;
 
 
 struct nodeStub {
@@ -119,7 +121,7 @@ public:
      *         keep the pointers to successors (predecessors) but most searches do not
      *         require this, so it is not necessary to support this
      */
-    virtual void GetSuccs(stateID id, vector<int>* SuccIDV, vector<int>* CostV) = 0;
+    virtual void GetSuccs(stateID id, vector<stateID>* SuccIDV, vector<int>* CostV) = 0;
 
     virtual vector<nodeStub>* GetSuccs(stateID id) {
         // TODO: this MUST be done on a lower level!
@@ -185,7 +187,7 @@ public:
      *        been evaluated fully (and therefore their true cost is being returned) or if it has not been.
      *        If a successor's cost is not true, then the cost must not overestimate the true cost.
      */
-    virtual void GetLazySuccs(stateID id, vector<int>* SuccIDV, vector<int>* CostV, vector<bool>* isTrueCost){
+    virtual void GetLazySuccs(stateID id, vector<stateID>* SuccIDV, vector<int>* CostV, vector<bool>* isTrueCost){
       SBPL_ERROR("ERROR: GetLazySuccs is not implemented for this environment!\n");
       throw new SBPL_Exception();
     };
@@ -198,7 +200,7 @@ public:
      *        in sbpl use a single goal id number to identify the goal). This function is used 
      *        in conjunction with isGoal.
      */
-    virtual void GetSuccsWithUniqueIds(stateID id, vector<int>* SuccIDV, vector<int>* CostV){
+    virtual void GetSuccsWithUniqueIds(stateID id, vector<stateID>* SuccIDV, vector<int>* CostV){
       SBPL_ERROR("ERROR: GetSuccsWithUniqueIds is not implemented for this environment!\n");
       throw new SBPL_Exception();
     };
@@ -206,7 +208,7 @@ public:
     /**
      * \brief The lazy version of GetSuccsUniqueIds.
      */
-    virtual void GetLazySuccsWithUniqueIds(stateID id, vector<int>* SuccIDV, vector<int>* CostV, vector<bool>* isTrueCost){
+    virtual void GetLazySuccsWithUniqueIds(stateID id, vector<stateID>* SuccIDV, vector<int>* CostV, vector<bool>* isTrueCost){
       SBPL_ERROR("ERROR: GetLazySuccsWithUniqueIds (lazy) is not implemented for this environment!\n");
       throw new SBPL_Exception();
     };
@@ -425,6 +427,10 @@ public:
     };
 
     // TODO: Expose Sensor updates
+
+    virtual char* toString(stateID id){
+        return nullptr;
+    };
 };
 
 #endif

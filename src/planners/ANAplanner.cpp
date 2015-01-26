@@ -232,7 +232,7 @@ double anaPlanner::get_e_value(anaSearchStateSpace_t* pSearchStateSpace, int sta
 //used for backward search
 void anaPlanner::UpdatePreds(anaState* state, anaSearchStateSpace_t* pSearchStateSpace)
 {
-    vector<int> PredIDV;
+    vector<stateID> PredIDV;
     vector<int> CostV;
     CKey key;
     anaState *p;
@@ -266,7 +266,7 @@ void anaPlanner::UpdatePreds(anaState* state, anaSearchStateSpace_t* pSearchStat
 //used for forward search
 void anaPlanner::UpdateSuccs(anaState* state, anaSearchStateSpace_t* pSearchStateSpace)
 {
-    vector<int> SuccIDV;
+    vector<stateID> SuccIDV;
     vector<int> CostV;
     CKey key;
     anaState *n;
@@ -775,11 +775,11 @@ int anaPlanner::getHeurValue(anaSearchStateSpace_t* pSearchStateSpace, int State
     return searchstateinfo->h;
 }
 
-vector<int> anaPlanner::GetSearchPath(anaSearchStateSpace_t* pSearchStateSpace, int& solcost)
+vector<stateID> anaPlanner::GetSearchPath(anaSearchStateSpace_t* pSearchStateSpace, int& solcost)
 {
-    vector<int> SuccIDV;
+    vector<stateID> SuccIDV;
     vector<int> CostV;
-    vector<int> wholePathIds;
+    vector<stateID> wholePathIds;
     anaState* searchstateinfo;
     CMDPSTATE* state = NULL;
     CMDPSTATE* goalstate = NULL;
@@ -857,7 +857,7 @@ vector<int> anaPlanner::GetSearchPath(anaSearchStateSpace_t* pSearchStateSpace, 
     return wholePathIds;
 }
 
-bool anaPlanner::Search(anaSearchStateSpace_t* pSearchStateSpace, vector<int>& pathIds, int & PathCost,
+bool anaPlanner::Search(anaSearchStateSpace_t* pSearchStateSpace, vector<stateID>& pathIds, int & PathCost,
                         bool bFirstSolution, bool bOptimalSolution, double MaxNumofSecs)
 {
     CKey key;
@@ -1008,7 +1008,7 @@ bool anaPlanner::Search(anaSearchStateSpace_t* pSearchStateSpace, vector<int>& p
 //-----------------------------Interface function-----------------------------------------------------
 
 //returns 1 if found a solution, and 0 otherwise
-int anaPlanner::replan(double allocated_time_secs, vector<int>* solution_stateIDs_V)
+int anaPlanner::replan(double allocated_time_secs, vector<stateID> *solution_stateIDs_V)
 {
     int solcost;
 
@@ -1016,9 +1016,9 @@ int anaPlanner::replan(double allocated_time_secs, vector<int>* solution_stateID
 }
 
 //returns 1 if found a solution, and 0 otherwise
-int anaPlanner::replan(double allocated_time_secs, vector<int>* solution_stateIDs_V, int* psolcost)
+int anaPlanner::replan(double allocated_time_secs, vector<stateID>* solution_stateIDs_V, int* psolcost)
 {
-    vector<int> pathIds;
+    vector<stateID> pathIds;
     bool bFound = false;
     int PathCost;
     //bool bFirstSolution = true;
@@ -1043,7 +1043,7 @@ int anaPlanner::replan(double allocated_time_secs, vector<int>* solution_stateID
 
 }
 
-int anaPlanner::set_goal(int goal_stateID)
+int anaPlanner::set_goal(stateID goal_stateID)
 {
     printf("planner: setting goal to %d\n", goal_stateID);
     environment_->PrintState(goal_stateID, true, stdout);
@@ -1064,7 +1064,7 @@ int anaPlanner::set_goal(int goal_stateID)
     return 1;
 }
 
-int anaPlanner::set_start(int start_stateID)
+int anaPlanner::set_start(stateID start_stateID)
 {
     printf("planner: setting start to %d\n", start_stateID);
     environment_->PrintState(start_stateID, true, stdout);

@@ -66,7 +66,7 @@ public:
 class state_t;
 typedef ID_t<state_t> stateID;
 #else
-typedef int stateID;
+typedef std::size_t stateID;
 typedef uint searchID;
 #endif
 

@@ -286,7 +286,7 @@ void ADPlanner::UpdateSetMembership(ADState* state)
 
 void ADPlanner::Recomputegval(ADState* state)
 {
-    vector<int> searchpredsIDV; //these are predecessors if search is done forward and successors otherwise
+    vector<stateID> searchpredsIDV; //these are predecessors if search is done forward and successors otherwise
     vector<int> costV;
     CKey key;
     ADState *searchpredstate;
@@ -325,7 +325,7 @@ void ADPlanner::Recomputegval(ADState* state)
 //used for backward search
 void ADPlanner::UpdatePredsofOverconsState(ADState* state, ADSearchStateSpace_t* pSearchStateSpace)
 {
-    vector<int> PredIDV;
+    vector<stateID> PredIDV;
     vector<int> CostV;
     CKey key;
     ADState *predstate;
@@ -371,7 +371,7 @@ void ADPlanner::UpdatePredsofOverconsState(ADState* state, ADSearchStateSpace_t*
 //used for forward search
 void ADPlanner::UpdateSuccsofOverconsState(ADState* state, ADSearchStateSpace_t* pSearchStateSpace)
 {
-    vector<int> SuccIDV;
+    vector<stateID> SuccIDV;
     vector<int> CostV;
     CKey key;
     ADState *succstate;
@@ -403,7 +403,7 @@ void ADPlanner::UpdateSuccsofOverconsState(ADState* state, ADSearchStateSpace_t*
 //used for backward search
 void ADPlanner::UpdatePredsofUnderconsState(ADState* state, ADSearchStateSpace_t* pSearchStateSpace)
 {
-    vector<int> PredIDV;
+    vector<stateID> PredIDV;
     vector<int> CostV;
     CKey key;
     ADState *predstate;
@@ -438,7 +438,7 @@ void ADPlanner::UpdatePredsofUnderconsState(ADState* state, ADSearchStateSpace_t
 //used for forward search
 void ADPlanner::UpdateSuccsofUnderconsState(ADState* state, ADSearchStateSpace_t* pSearchStateSpace)
 {
-    vector<int> SuccIDV;
+    vector<stateID> SuccIDV;
     vector<int> CostV;
     CKey key;
     ADState *succstate;
@@ -989,18 +989,18 @@ void ADPlanner::PrintSearchPath(ADSearchStateSpace_t* pSearchStateSpace, FILE* f
     }
 }
 
-int ADPlanner::getHeurValue(ADSearchStateSpace_t* pSearchStateSpace, int StateID)
+int ADPlanner::getHeurValue(ADSearchStateSpace_t* pSearchStateSpace, stateID StateID)
 {
     CMDPSTATE* MDPstate = GetState(StateID, pSearchStateSpace);
     ADState* searchstateinfo = (ADState*)MDPstate->PlannerSpecificData;
     return searchstateinfo->h;
 }
 
-vector<int> ADPlanner::GetSearchPath(ADSearchStateSpace_t* pSearchStateSpace, int& solcost)
+vector<stateID> ADPlanner::GetSearchPath(ADSearchStateSpace_t* pSearchStateSpace, int& solcost)
 {
-    vector<int> SuccIDV;
+    vector<stateID> SuccIDV;
     vector<int> CostV;
-    vector<int> wholePathIds;
+    vector<stateID> wholePathIds;
     ADState* searchstateinfo;
     CMDPSTATE* state = NULL;
     CMDPSTATE* goalstate = NULL;
@@ -1095,7 +1095,7 @@ vector<int> ADPlanner::GetSearchPath(ADSearchStateSpace_t* pSearchStateSpace, in
     return wholePathIds;
 }
 
-bool ADPlanner::Search(ADSearchStateSpace_t* pSearchStateSpace, vector<int>& pathIds, int & PathCost,
+bool ADPlanner::Search(ADSearchStateSpace_t* pSearchStateSpace, vector<stateID>& pathIds, int & PathCost,
                        bool bFirstSolution, bool bOptimalSolution, double MaxNumofSecs)
 {
     CKey key;
@@ -1232,7 +1232,7 @@ bool ADPlanner::Search(ADSearchStateSpace_t* pSearchStateSpace, vector<int>& pat
 
 }
 
-void ADPlanner::Update_SearchSuccs_of_ChangedEdges(vector<int> const * statesIDV)
+void ADPlanner::Update_SearchSuccs_of_ChangedEdges(vector<stateID> const * statesIDV)
 {
     SBPL_PRINTF("updating %d affected states\n", (unsigned int)statesIDV->size());
 
@@ -1302,13 +1302,13 @@ void ADPlanner::Update_SearchSuccs_of_ChangedEdges(vector<int> const * statesIDV
 
 //-----------------------------Interface function-----------------------------------------------------
 
-int ADPlanner::replan(vector<int>* solution_stateIDs_V, ReplanParams params)
+int ADPlanner::replan(vector<stateID> *solution_stateIDs_V, ReplanParams params)
 {
     int solcost;
     return replan(solution_stateIDs_V, params, &solcost);
 }
 
-int ADPlanner::replan(vector<int>* solution_stateIDs_V, ReplanParams params, int* solcost)
+int ADPlanner::replan(vector<stateID> *solution_stateIDs_V, ReplanParams params, int* solcost)
 {
     finitial_eps = params.initial_eps;
     final_epsilon = params.final_eps;
@@ -1320,7 +1320,7 @@ int ADPlanner::replan(vector<int>* solution_stateIDs_V, ReplanParams params, int
 }
 
 //returns 1 if found a solution, and 0 otherwise
-int ADPlanner::replan(double allocated_time_secs, vector<int>* solution_stateIDs_V)
+int ADPlanner::replan(double allocated_time_secs, vector<stateID>* solution_stateIDs_V)
 {
     int solcost;
 
@@ -1328,9 +1328,9 @@ int ADPlanner::replan(double allocated_time_secs, vector<int>* solution_stateIDs
 }
 
 //returns 1 if found a solution, and 0 otherwise
-int ADPlanner::replan(double allocated_time_secs, vector<int>* solution_stateIDs_V, int* psolcost)
+int ADPlanner::replan(double allocated_time_secs, vector<stateID>* solution_stateIDs_V, int* psolcost)
 {
-    vector<int> pathIds;
+    vector<stateID> pathIds;
     int PathCost = 0;
     bool bFound = false;
     *psolcost = 0;
@@ -1351,7 +1351,7 @@ int ADPlanner::replan(double allocated_time_secs, vector<int>* solution_stateIDs
     return (int)bFound;
 }
 
-int ADPlanner::set_goal(int goal_stateID)
+int ADPlanner::set_goal(stateID goal_stateID)
 {
     SBPL_PRINTF("planner: setting goal to %d\n", goal_stateID);
     environment_->PrintState(goal_stateID, true, stdout);
@@ -1372,7 +1372,7 @@ int ADPlanner::set_goal(int goal_stateID)
     return 1;
 }
 
-int ADPlanner::set_start(int start_stateID)
+int ADPlanner::set_start(stateID start_stateID)
 {
     SBPL_PRINTF("planner: setting start to %d\n", start_stateID);
     environment_->PrintState(start_stateID, true, stdout);
@@ -1393,14 +1393,14 @@ int ADPlanner::set_start(int start_stateID)
     return 1;
 }
 
-void ADPlanner::update_succs_of_changededges(vector<int>* succstatesIDV)
+void ADPlanner::update_succs_of_changededges(vector<stateID>* succstatesIDV)
 {
     SBPL_PRINTF("UpdateSuccs called on %d succs\n", (unsigned int)succstatesIDV->size());
 
     Update_SearchSuccs_of_ChangedEdges(succstatesIDV);
 }
 
-void ADPlanner::update_preds_of_changededges(vector<int>* predstatesIDV)
+void ADPlanner::update_preds_of_changededges(vector<stateID>* predstatesIDV)
 {
     SBPL_PRINTF("UpdatePreds called on %d preds\n", (unsigned int)predstatesIDV->size());
 

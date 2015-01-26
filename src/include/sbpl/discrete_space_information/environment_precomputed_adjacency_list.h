@@ -76,15 +76,15 @@ public:
     // Inherited DiscreteSpaceInformation ops
     bool InitializeEnv(const char* sEnvFile);
     bool InitializeMDPCfg(MDPConfig *MDPCfg);
-    int GetFromToHeuristic(int FromStateID, int ToStateID);
-    int GetGoalHeuristic(int stateID);
-    int GetStartHeuristic(int stateID);
+    int GetFromToHeuristic(stateID FromStateID, stateID ToStateID);
+    int GetGoalHeuristic(stateID id);
+    int GetStartHeuristic(stateID id);
     void SetAllActionsandAllOutcomes(CMDPSTATE* state);
     void SetAllPreds(CMDPSTATE* state);
-    void GetSuccs(int SourceStateID, std::vector<int>* SuccIDV, std::vector<int>* CostV);
-    void GetPreds(int TargetStateID, std::vector<int>* PredIDV, std::vector<int>* CostV);
+    void GetSuccs(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV);
+    void GetPreds(stateID TargetStateID, std::vector<stateID>* PredIDV, std::vector<int>* CostV);
     int SizeofCreatedEnv();
-    void PrintState(int stateID, bool bVerbose, FILE* fOut = NULL);
+    void PrintState(stateID id, bool bVerbose, FILE* fOut = NULL);
     void PrintEnv_Config(FILE* fOut);
 
 private:
@@ -246,28 +246,28 @@ bool AdjacencyListSBPLEnv<Coords>::InitializeMDPCfg(MDPConfig *MDPCfg)
 }
 
 template<class Coords>
-int AdjacencyListSBPLEnv<Coords>::GetFromToHeuristic(int FromStateID, int ToStateID)
+int AdjacencyListSBPLEnv<Coords>::GetFromToHeuristic(stateID FromStateID, stateID ToStateID)
 {
     return points_[FromStateID].heuristicDistanceTo(points_[ToStateID]);
 }
 
 template<class Coords>
-int AdjacencyListSBPLEnv<Coords>::GetGoalHeuristic(int stateID)
+int AdjacencyListSBPLEnv<Coords>::GetGoalHeuristic(stateID id)
 {
-    return GetFromToHeuristic(stateID, goalStateId_);
+    return GetFromToHeuristic(id, goalStateId_);
 }
 
 template<class Coords>
-int AdjacencyListSBPLEnv<Coords>::GetStartHeuristic(int stateID)
+int AdjacencyListSBPLEnv<Coords>::GetStartHeuristic(stateID id)
 {
-    return GetFromToHeuristic(startStateId_, stateID);
+    return GetFromToHeuristic(startStateId_, id);
 }
 
 template<class Coords>
-void AdjacencyListSBPLEnv<Coords>::PrintState(int stateID, bool bVerbose, FILE* fOut)
+void AdjacencyListSBPLEnv<Coords>::PrintState(stateID id, bool bVerbose, FILE* fOut)
 {
     // Note we're ignoring the fOut argument
-    std::cout << points_[stateID] << endl;
+    std::cout << points_[id] << endl;
 }
 
 template<class Coords>
@@ -316,7 +316,7 @@ void AdjacencyListSBPLEnv<Coords>::SetAllPreds(CMDPSTATE* state)
 }
 
 template<class Coords>
-void AdjacencyListSBPLEnv<Coords>::GetSuccs(int SourceStateID, std::vector<int>* SuccIDV, std::vector<int>* CostV)
+void AdjacencyListSBPLEnv<Coords>::GetSuccs(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV)
 {
     SuccIDV->clear();
     CostV->clear();
@@ -333,7 +333,7 @@ void AdjacencyListSBPLEnv<Coords>::GetSuccs(int SourceStateID, std::vector<int>*
 }
 
 template<class Coords>
-void AdjacencyListSBPLEnv<Coords>::GetPreds(int TargetStateID, std::vector<int>* PredIDV, std::vector<int>* CostV)
+void AdjacencyListSBPLEnv<Coords>::GetPreds(stateID TargetStateID, std::vector<stateID>* PredIDV, std::vector<int>* CostV)
 {
     std::cout << "Error: GetPreds not currently implemented for adjacency list";
     throw new SBPL_Exception();
@@ -347,7 +347,7 @@ std::vector<Coords> AdjacencyListSBPLEnv<Coords>::findOptimalPath(int* solution_
     p.set_start(startStateId_);
     p.set_goal(goalStateId_);
     p.set_initialsolution_eps(1.0);
-    std::vector<int> solution;
+    std::vector<stateID> solution;
     p.replan(1.0, &solution, solution_cost);
 
     std::vector<Coords> solutionPoints;

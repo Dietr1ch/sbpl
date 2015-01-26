@@ -248,7 +248,7 @@ void ARAPlanner::DeleteSearchStateData(ARAState* state)
 //used for backward search
 void ARAPlanner::UpdatePreds(ARAState* state, ARASearchStateSpace_t* pSearchStateSpace)
 {
-    vector<int> PredIDV;
+    vector<stateID> PredIDV;
     vector<int> CostV;
     CKey key;
     ARAState *predstate;
@@ -289,7 +289,7 @@ void ARAPlanner::UpdatePreds(ARAState* state, ARASearchStateSpace_t* pSearchStat
 //used for forward search
 void ARAPlanner::UpdateSuccs(ARAState* state, ARASearchStateSpace_t* pSearchStateSpace)
 {
-    vector<int> SuccIDV;
+    vector<stateID> SuccIDV;
     vector<int> CostV;
     CKey key;
     ARAState *succstate;
@@ -731,7 +731,7 @@ void ARAPlanner::PrintSearchPath(ARASearchStateSpace_t* pSearchStateSpace, FILE*
 {
     ARAState* searchstateinfo;
     CMDPSTATE* state;
-    int goalID;
+    stateID goalID;
     int PathCost;
 
     if (bforwardsearch) {
@@ -802,18 +802,18 @@ void ARAPlanner::PrintSearchState(ARAState* state, FILE* fOut)
     environment_->PrintState(state->MDPstate->StateID, true, fOut);
 }
 
-int ARAPlanner::getHeurValue(ARASearchStateSpace_t* pSearchStateSpace, int StateID)
+int ARAPlanner::getHeurValue(ARASearchStateSpace_t* pSearchStateSpace, stateID StateID)
 {
     CMDPSTATE* MDPstate = GetState(StateID, pSearchStateSpace);
     ARAState* searchstateinfo = (ARAState*)MDPstate->PlannerSpecificData;
     return searchstateinfo->h;
 }
 
-vector<int> ARAPlanner::GetSearchPath(ARASearchStateSpace_t* pSearchStateSpace, int& solcost)
+vector<stateID> ARAPlanner::GetSearchPath(ARASearchStateSpace_t* pSearchStateSpace, int& solcost)
 {
-    vector<int> SuccIDV;
+    vector<stateID> SuccIDV;
     vector<int> CostV;
-    vector<int> wholePathIds;
+    vector<stateID> wholePathIds;
     ARAState* searchstateinfo;
     CMDPSTATE* state = NULL;
     CMDPSTATE* goalstate = NULL;
@@ -896,7 +896,7 @@ vector<int> ARAPlanner::GetSearchPath(ARASearchStateSpace_t* pSearchStateSpace, 
     return wholePathIds;
 }
 
-bool ARAPlanner::Search(ARASearchStateSpace_t* pSearchStateSpace, vector<int>& pathIds, int & PathCost,
+bool ARAPlanner::Search(ARASearchStateSpace_t* pSearchStateSpace, vector<stateID>& pathIds, int & PathCost,
                         bool bFirstSolution, bool bOptimalSolution, double MaxNumofSecs)
 {
     CKey key;
@@ -1041,13 +1041,13 @@ bool ARAPlanner::Search(ARASearchStateSpace_t* pSearchStateSpace, vector<int>& p
 
 //-----------------------------Interface function-----------------------------------------------------
 
-int ARAPlanner::replan(vector<int>* solution_stateIDs_V, ReplanParams params)
+int ARAPlanner::replan(vector<stateID> *solution_stateIDs_V, ReplanParams params)
 {
     int solcost;
     return replan(solution_stateIDs_V, params, &solcost);
 }
 
-int ARAPlanner::replan(vector<int>* solution_stateIDs_V, ReplanParams params, int* solcost)
+int ARAPlanner::replan(vector<stateID> *solution_stateIDs_V, ReplanParams params, int* solcost)
 {
     finitial_eps = params.initial_eps;
     final_epsilon = params.final_eps;
@@ -1059,7 +1059,7 @@ int ARAPlanner::replan(vector<int>* solution_stateIDs_V, ReplanParams params, in
 }
 
 //returns 1 if found a solution, and 0 otherwise
-int ARAPlanner::replan(double allocated_time_secs, vector<int>* solution_stateIDs_V)
+int ARAPlanner::replan(double allocated_time_secs, vector<stateID> *solution_stateIDs_V)
 {
     int solcost;
 
@@ -1067,9 +1067,9 @@ int ARAPlanner::replan(double allocated_time_secs, vector<int>* solution_stateID
 }
 
 //returns 1 if found a solution, and 0 otherwise
-int ARAPlanner::replan(double allocated_time_secs, vector<int>* solution_stateIDs_V, int* psolcost)
+int ARAPlanner::replan(double allocated_time_secs, vector<stateID> *solution_stateIDs_V, int* psolcost)
 {
-    vector<int> pathIds;
+    vector<stateID> pathIds;
     bool bFound = false;
     int PathCost;
     bool bFirstSolution = this->bsearchuntilfirstsolution;
@@ -1092,7 +1092,7 @@ int ARAPlanner::replan(double allocated_time_secs, vector<int>* solution_stateID
     return (int)bFound;
 }
 
-int ARAPlanner::set_goal(int goal_stateID)
+int ARAPlanner::set_goal(stateID goal_stateID)
 {
     SBPL_PRINTF("planner: setting goal to %d\n", goal_stateID);
     environment_->PrintState(goal_stateID, true, stdout);
@@ -1113,7 +1113,7 @@ int ARAPlanner::set_goal(int goal_stateID)
     return 1;
 }
 
-int ARAPlanner::set_start(int start_stateID)
+int ARAPlanner::set_start(stateID start_stateID)
 {
     SBPL_PRINTF("planner: setting start to %d\n", start_stateID);
     environment_->PrintState(start_stateID, true, stdout);

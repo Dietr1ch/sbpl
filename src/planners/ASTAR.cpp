@@ -36,7 +36,7 @@ ASTARNode::ASTARNode(StateID id, ASTARSpace *space, int initialH) {
     best = nullptr;  // (==bestSuccessor==bestPredecesor, only one exists)
 
     heapindex = 0;
-    lastUpdated = (searchID)0;
+    lastUpdated = (SearchID)0;
     successors = nullptr;
 
     costToBestState = INFINITECOST;
@@ -81,7 +81,7 @@ ASTARSpace::ASTARSpace(DiscreteSpaceInformation *problemDSI) {
 
     backwardSearch = false;
 
-    iteration = (searchID) 0;
+    iteration = (SearchID) 0;
 
     startState = nullptr;
     goalState  = nullptr;
@@ -384,11 +384,7 @@ ASTARPlanner::~ASTARPlanner(){
 // Search
 // ------
 bool
-ASTARPlanner::Search(Path *pathIDs,
-                     int *cost,
-                     bool bFirstSolution,
-                     bool bOptimalSolution,
-                     double givenSeconds) {
+ASTARPlanner::Search(Path *pathIDs, int *cost, bool bFirstSolution, bool bOptimalSolution, double givenSeconds) {
 
     assert(space);  // redundant
     assert(space->startState);
@@ -403,7 +399,7 @@ ASTARPlanner::Search(Path *pathIDs,
 
     // Get start & goal nodes
     // ----------------------
-    ASTARNode* goalNode = space->getGoal();
+    ASTARNode *goalNode = space->getGoal();
     ASTARNode *startNode = space->getStart();
     // Reset statistics (just in case)
     // ----------------
@@ -443,6 +439,8 @@ ASTARPlanner::Search(Path *pathIDs,
 
     // Open list information
     // =====================
+    SBPL_DEBUG("    Goal g: %5.2f", goalNode->g/1000.0);
+
     if(space->openEmpty())
         SBPL_DEBUG("    A*: No more nodes to reach");
 
@@ -453,7 +451,6 @@ ASTARPlanner::Search(Path *pathIDs,
 
 //     SBPL_DEBUG("    Next bestKey is worse than goalKey"
 //                     ", no more nodes are worth expanding");
-    SBPL_DEBUG("    Goal g: %5.2f", goalNode->g/1000.0);
 
     return SBPL_OK;
 }

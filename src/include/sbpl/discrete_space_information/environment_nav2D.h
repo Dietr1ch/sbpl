@@ -33,6 +33,7 @@
 #include <cstdio>
 #include <vector>
 #include <sbpl/discrete_space_information/environment.h>
+#include <sbpl/config.h>
 #include <sbpl/utils/utils.h>
 
 #define ENVNAV2D_COSTMULT 1000
@@ -49,6 +50,11 @@ typedef struct ENV_NAV2D_CONFIG
     int EnvWidth_c;
     // Map height
     int EnvHeight_c;
+
+    struct{
+        uint obstacles;
+        uint freeBlocks;
+    } random;
 
     // Default starting x coordinate
     int StartX_c;
@@ -389,10 +395,11 @@ protected:
 
 public:
     virtual bool isObstacle(int x, int y);
-    virtual void generateRandomEnvironment(int seed);
-    virtual bool generateRandomProblem(MDPConfig *cfg, int seed, int maxTries);
-    virtual bool generateRandomStart(MDPConfig *cfg, int seed, int maxTries);
-    virtual bool generateRandomGoal(MDPConfig *cfg, int seed, int maxTries);
+    virtual void generateRandomEnvironment(Seed seed);
+    virtual void modifyEnvironment(Seed seed, Percentage changes);
+    virtual bool generateRandomProblem(MDPConfig *cfg, Seed seed, int maxTries);
+    virtual bool generateRandomStart(MDPConfig *cfg, Seed seed, int maxTries);
+    virtual bool generateRandomGoal(MDPConfig *cfg, Seed seed, int maxTries);
 
     virtual char* toString(StateID id);
 };

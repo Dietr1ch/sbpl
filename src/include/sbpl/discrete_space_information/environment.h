@@ -310,7 +310,7 @@ public:
      *         position unless overwritten in a child class, this function is not
      *         implemented
      */
-    virtual bool AreEquivalent(StateID StateID1, StateID StateID2)
+    virtual bool AreEquivalent(StateID state1, StateID state2)
     {
         SBPL_ERROR("ERROR: environment does not support calls to AreEquivalent function\n");
         throw new SBPL_Exception();
@@ -324,7 +324,7 @@ public:
      *         states (or vice versa for preds function) unless overwritten in a child
      *         class, this function is not implemented
      */
-    virtual void GetRandomSuccsatDistance(StateID SourceStateID, Path* SuccIDV, vector<int>* CLowV)
+    virtual void GetRandomSuccsatDistance(StateID SourceStateID, Path *SuccIDV, vector<int>* CLowV)
     {
         SBPL_ERROR("ERROR: environment does not support calls to GetRandomSuccsatDistance function\n");
         throw new SBPL_Exception();
@@ -393,18 +393,27 @@ public:
      * \brief Generates a random environment.
      * Used to benchmark algorithms
      */
-    virtual void generateRandomEnvironment(int seed) {
+    virtual void generateRandomEnvironment(Seed seed) {
         // TODO: this should allocate the resources
         // TODO: this should take more parameters
         SBPL_ERROR("ERROR: generateRandomEnvironment is not implemented for this environment!\n");
         throw new SBPL_Exception();
     };
+    /**
+     * \brief Generates a random environment.
+     * Used to benchmark algorithms
+     */
+    virtual void modifyEnvironment(Seed seed, Percentage changes) {
+        // TODO: this should take more parameters and return something?
+        SBPL_ERROR("ERROR: modifyEnvironment is not implemented for this environment!\n");
+        throw new SBPL_Exception();
+    };
 
     /**
      * \brief Generates a random (start, goal) pair cheking for feasibility.
      * Used to benchmark algorithms
      */
-    virtual bool generateRandomProblem(MDPConfig *cfg, int seed, int maxTries) {
+    virtual bool generateRandomProblem(MDPConfig *cfg, Seed seed, int maxTries) {
         SBPL_ERROR("ERROR: generateRandomProblem is not implemented for this environment!\n");
         throw new SBPL_Exception();
     };
@@ -413,7 +422,7 @@ public:
      * \brief Generates a random (start, goal) pair cheking for feasibility.
      * Used to benchmark algorithms
      */
-    virtual bool generateRandomStart(MDPConfig *cfg, int seed, int maxTries) {
+    virtual bool generateRandomStart(MDPConfig *cfg, Seed seed, int maxTries) {
         SBPL_ERROR("ERROR: generateRandomProblem is not implemented for this environment!\n");
         throw new SBPL_Exception();
     };
@@ -421,7 +430,7 @@ public:
      * \brief Generates a random (start, goal) pair cheking for feasibility.
      * Used to benchmark algorithms
      */
-    virtual bool generateRandomGoal(MDPConfig *cfg, int seed, int maxTries) {
+    virtual bool generateRandomGoal(MDPConfig *cfg, Seed seed, int maxTries) {
         SBPL_ERROR("ERROR: generateRandomProblem is not implemented for this environment!\n");
         throw new SBPL_Exception();
     };

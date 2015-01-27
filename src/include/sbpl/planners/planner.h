@@ -66,11 +66,17 @@ class DiscreteSpaceInformation;
  * would be violated if we just included that here.
 
  * At the moment, ADPlanner is the only one who really uses the
- * detailed information provided by ChangedCellsGetter, so we define
- * that class in sbpl/src/planners/ADStar/adplanner.h (to be moved up
- * the hierarchy when we generalize).
+ * detailed information provided by ChangedCellsGetter.
+ *
+ * This is currently being moved up here to generalize.
  */
-class StateChangeQuery;
+class StateChangeQuery
+{
+public:
+    virtual ~StateChangeQuery() { }
+    virtual Path const * getPredecessors() const = 0;
+    virtual Path const * getSuccessors() const = 0;
+};
 
 /**
  * \brief a parameter class for planners

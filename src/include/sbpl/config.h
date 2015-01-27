@@ -40,7 +40,6 @@
 // Types
 // =====
 #define STRONG_TYPES 0
-
 typedef unsigned int uint;
 typedef unsigned long ulong;
 
@@ -68,9 +67,12 @@ class state_t;
 typedef ID_t<state_t> StateID;
 #else
 typedef std::size_t StateID;
-typedef std::vector<StateID> Path;
-typedef uint searchID;
 #endif
+typedef std::vector<StateID> Path;
+typedef uint Seed;
+typedef uint SearchID;
+typedef double Probability;
+typedef double Percentage;
 
 
 

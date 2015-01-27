@@ -56,7 +56,7 @@ public:
 
     // Adaptive A* data
     // ----------------
-    searchID lastUpdated;
+    SearchID lastUpdated;
 
 
     // Best next state
@@ -125,8 +125,11 @@ public:
     CMDPSTATE *currentState;
     CMDPSTATE *goalState;
 
-    // AdaptiveA* data
-    searchID iteration;  // Search iteration identifier
+    // Iterative Planner information
+    // -----------------------------
+
+    // Current search Iteration
+    SearchID iteration;  // Search iteration identifier
 
     // Data
     CHeap *open;
@@ -147,8 +150,8 @@ public:
         /** Per-search-episode stuff */
         struct{
             /** Expansions made on this space */
-            vector<searchID> expansions;
-            vector<searchID> pathLength;
+            vector<uint> expansions;
+            vector<uint> pathLength;
         } perSearch;
     } stats;
 

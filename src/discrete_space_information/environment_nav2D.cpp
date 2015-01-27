@@ -1331,7 +1331,7 @@ EnvNAV2DHashEntry_t* EnvironmentNAV2D::safeGetHashEntry(int x, int y){
     return HashEntry;
 }
 
-void EnvironmentNAV2D::generateRandomEnvironment(int seed){
+void EnvironmentNAV2D::generateRandomEnvironment(Seed seed){
     //    * InitializeEnv  // Can't be done
     //       - Load Cfg file
     //       - ReadConfiguration(fCfg);
@@ -1361,17 +1361,20 @@ void EnvironmentNAV2D::generateRandomEnvironment(int seed){
 
     // Start random generator engine
     std::default_random_engine g;
-    g.seed(seed+1);
+    g.seed(seed);
 
     // Define distributions to use
     std::binomial_distribution<int> obstacle(1, obstacleDensity);
 
+    EnvNAV2DCfg.random.obstacles=0;
     assert(EnvNAV2DCfg.obsthresh>0);
     // Fill obstacles
     for (int y = 0; y < EnvNAV2DCfg.EnvHeight_c; y++)
         for (int x = 0; x < EnvNAV2DCfg.EnvWidth_c; x++)
-            if(obstacle(g))
+            if(obstacle(g)){
                 EnvNAV2DCfg.Grid2D[x][y] = EnvNAV2DCfg.obsthresh;
+                EnvNAV2DCfg.random.obstacles++;
+            }
 
 #if PRINT_MAP
     printf("Map [%d]\n", seed);
@@ -1388,13 +1391,55 @@ void EnvironmentNAV2D::generateRandomEnvironment(int seed){
 #endif
 }
 
+void
+EnvironmentNAV2D::modifyEnvironment(Seed seed, Percentage changes){
+
+    //TODO: generate Change Query
+
+    // Start random generator engine
+    std::default_random_engine g;
+    g.seed(seed);
+
+    // Define distributions to use
+    std::uniform_int_distribution<int> X(0, EnvNAV2DCfg.EnvWidth_c-1);
+    std::uniform_int_distribution<int> Y(0, EnvNAV2DCfg.EnvHeight_c-1);
+
+
+    uint totalBlocksToMove = EnvNAV2DCfg.random.obstacles * changes;
+    uint blocksToMove = totalBlocksToMove;
+
+    int maxIterations = 10*blocksToMove;
+    for(int i; i<maxIterations && blocksToMove; i++) {
+        uint x1 = X(g);
+        uint y1 = Y(g);
+
+        uint x2 = X(g);
+        uint y2 = Y(g);
+        if (isObstacle(x1, y2) != isObstacle(x2, y2)){
+            auto c1 = EnvNAV2DCfg.Grid2D[x1][y1];
+            auto c2 = EnvNAV2DCfg.Grid2D[x2][y2];
+
+            EnvNAV2DCfg.Grid2D[x1][y1] = c2;
+            EnvNAV2DCfg.Grid2D[x2][y2] = c1;
+            blocksToMove--;
+        }
+    }
+    if(blocksToMove)
+        SBPL_WARN("Not enough blocks were moved, %u/%u",
+            blocksToMove,
+            totalBlocksToMove
+        );
+    else
+        SBPL_DEBUG("%u blocks were moved", totalBlocksToMove);
+}
+
 inline
 bool
 EnvironmentNAV2D::isObstacle(int x, int y){
     return EnvNAV2DCfg.Grid2D[x][y] >= EnvNAV2DCfg.obsthresh;
 }
 
-bool EnvironmentNAV2D::generateRandomProblem(MDPConfig *cfg, int seed, int maxTries) {
+bool EnvironmentNAV2D::generateRandomProblem(MDPConfig *cfg, Seed seed, int maxTries) {
     // Start random generator engine
     std::default_random_engine g;
     g.seed(seed);
@@ -1440,7 +1485,7 @@ bool EnvironmentNAV2D::generateRandomProblem(MDPConfig *cfg, int seed, int maxTr
     cfg->goalstateid = 0;
     return false;
 }
-bool EnvironmentNAV2D::generateRandomStart(MDPConfig* cfg, int seed, int maxTries)
+bool EnvironmentNAV2D::generateRandomStart(MDPConfig* cfg, Seed seed, int maxTries)
 {
     // Start random generator engine
     std::default_random_engine g;
@@ -1473,7 +1518,7 @@ bool EnvironmentNAV2D::generateRandomStart(MDPConfig* cfg, int seed, int maxTrie
     cfg->startstateid = 0;
     return false;
 }
-bool EnvironmentNAV2D::generateRandomGoal(MDPConfig* cfg, int seed, int maxTries)
+bool EnvironmentNAV2D::generateRandomGoal(MDPConfig* cfg, Seed seed, int maxTries)
 {
     // Start random generator engine
     std::default_random_engine g(seed);

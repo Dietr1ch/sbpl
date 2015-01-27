@@ -1869,19 +1869,19 @@ void loadEnvironment(DiscreteSpaceInformation *space, char* path){
  * Generates a randomized seed based on run and iteration numbers
  * \note The generation of random numbers is too important to be left to chance
  */
-int runItseed(){
-    int n;
-    n = env_id;
+Seed runItseed(){
+    Seed n;
+    n = (Seed) env_id;
 
     n += n<<7;
     n ^= n<<11;
 
-    n += run_id;
+    n += (Seed) run_id;
 
     n ^= n<<5;
     n += n<<3;
 
-    n += it_id;
+    n += (Seed) it_id;
 
     n ^= n<<15;
     n += n<<2;
@@ -1897,36 +1897,39 @@ testEnvironment() {
 
     MDPConfig instancePair;
     it_id = it_start;
-    int seed = runItseed();
+    Seed seed = runItseed();
     if(environment->generateRandomProblem(&instancePair, seed, maxTries)){
         // Config
         // TODO: allow testing multiple planner configurations (weight, lookahead, etc..)
 
         // Compute first plan
         // ------------------
-        printf("\n\nInstance solving (Env:%d, Run:%d, It:%d)->(%d)",
+        printf("\n\nInstance solving (Env:%d, Run:%d, It:%d)->(%u)",
                env_id, run_id, it_id, seed);
         printf("\n================\n");
         // Set instance
         setStartGoal(instancePair);
         // Plan (1st time)
-        Path pathIDs;
-        int retCode = planner->replan(givenTime, &pathIDs);
+        Path path;
+        planner->replan(givenTime, &path);
+//         int retCode = planner->replan(givenTime, &pathIDs);
 //         printf("plan status code=%d\n", retCode);
 
-        for(it_id=it_start+1; it_id<=it_end; it_id++){
+        for(it_id=it_start; it_id<=it_end; it_id++){
             // Replanning
             // ----------
             seed = runItseed();
-            printf("\nReplanning setup (Env:%d, Run:%d, It:%d)->(%d)",
+            printf("\nReplanning setup (Env:%d, Run:%d, It:%d)->(%u)",
                    env_id, run_id, it_id, seed);
             printf("\n----------------\n");
             if(environment->generateRandomStart(&instancePair, seed, maxTries)){
                 // Modify the start
                 setStartGoal(instancePair);
+                environment->modifyEnvironment(seed, 0.1);
                 // Replan
-                retCode = planner->replan(givenTime, &pathIDs);
-                //printf("replan status code=%d\n", retCode);
+                planner->replan(givenTime, &path);
+//                 retCode = planner->replan(givenTime, &pathIDs);
+//                 printf("replan status code=%d\n", retCode);
             }
             else{
                 // Stop at this iteration
@@ -1986,7 +1989,7 @@ int main(int argc, char *argv[]) {
         assert(!environment);
         environment = getSearchSpace(selectedEnvironment);
         assert(environment);
-        environment->generateRandomEnvironment(env_id);
+        environment->generateRandomEnvironment((Seed)env_id);
 
         // Initialize planner (for this environment :/).
         // ------------------

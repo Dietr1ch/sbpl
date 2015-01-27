@@ -355,17 +355,5 @@ protected:
     virtual void Update_SearchSuccs_of_ChangedEdges(Path const * statesIDV);
 };
 
-/**
- * \brief See comments in sbpl/src/planners/planner.h about the what and why of
- *        this class.
- */
-class StateChangeQuery
-{
-public:
-    virtual ~StateChangeQuery() { }
-    virtual Path const * getPredecessors() const = 0;
-    virtual Path const * getSuccessors() const = 0;
-};
-
 #endif
 

@@ -99,27 +99,27 @@ void ARAPlanner::Initialize_searchinfo(CMDPSTATE* state, ARASearchStateSpace_t* 
     InitializeSearchStateInfo(searchstateinfo, pSearchStateSpace);
 }
 
-CMDPSTATE* ARAPlanner::CreateState(int stateID, ARASearchStateSpace_t* pSearchStateSpace)
+CMDPSTATE* ARAPlanner::CreateState(StateID id, ARASearchStateSpace_t* pSearchStateSpace)
 {
     CMDPSTATE* state = NULL;
 
 #if DEBUG
-    if (environment_->StateID2IndexMapping[stateID][ARAMDP_STATEID2IND] != -1) {
+    if (environment_->StateID2IndexMapping[id][ARAMDP_STATEID2IND] != -1) {
         SBPL_ERROR("ERROR in CreateState: state already created\n");
         throw new SBPL_Exception();
     }
 #endif
 
     //adds to the tail a state
-    state = pSearchStateSpace->searchMDP.AddState(stateID);
+    state = pSearchStateSpace->searchMDP.AddState(id);
 
     //remember the index of the state
-    environment_->StateID2IndexMapping[stateID][ARAMDP_STATEID2IND] =
+    environment_->StateID2IndexMapping[id][ARAMDP_STATEID2IND] =
             pSearchStateSpace->searchMDP.StateArray.size() - 1;
 
 #if DEBUG
     if(state !=
-       pSearchStateSpace->searchMDP.StateArray[environment_->StateID2IndexMapping[stateID][ARAMDP_STATEID2IND]])
+       pSearchStateSpace->searchMDP.StateArray[environment_->StateID2IndexMapping[id][ARAMDP_STATEID2IND]])
     {
         SBPL_ERROR("ERROR in CreateState: invalid state index\n");
         throw new SBPL_Exception();
@@ -134,17 +134,17 @@ CMDPSTATE* ARAPlanner::CreateState(int stateID, ARASearchStateSpace_t* pSearchSt
     return state;
 }
 
-CMDPSTATE* ARAPlanner::GetState(int stateID, ARASearchStateSpace_t* pSearchStateSpace)
+CMDPSTATE* ARAPlanner::GetState(StateID id, ARASearchStateSpace_t* pSearchStateSpace)
 {
-    if (stateID >= (int)environment_->StateID2IndexMapping.size()) {
-        SBPL_ERROR("ERROR int GetState: stateID %d is invalid\n", stateID);
+    if (id >= (StateID) environment_->StateID2IndexMapping.size()) {
+        SBPL_ERROR("ERROR int GetState: stateID %d is invalid\n", id);
         throw new SBPL_Exception();
     }
 
-    if (environment_->StateID2IndexMapping[stateID][ARAMDP_STATEID2IND] == -1)
-        return CreateState(stateID, pSearchStateSpace);
+    if (environment_->StateID2IndexMapping[id][ARAMDP_STATEID2IND] == -1)
+        return CreateState(id, pSearchStateSpace);
     else
-        return pSearchStateSpace->searchMDP.StateArray[environment_->StateID2IndexMapping[stateID][ARAMDP_STATEID2IND]];
+        return pSearchStateSpace->searchMDP.StateArray[environment_->StateID2IndexMapping[id][ARAMDP_STATEID2IND]];
 }
 
 //-----------------------------------------------------------------------------------------------------
@@ -160,7 +160,7 @@ int ARAPlanner::ComputeHeuristic(CMDPSTATE* MDPstate, ARASearchStateSpace_t* pSe
 #endif
 
         //forward search: heur = distance from state to searchgoal which is Goal ARAState
-        int retv = environment_->GetGoalHeuristic(MDPstate->StateID);
+        int retv = environment_->GetGoalHeuristic(MDPstate->id);
 
 #if MEM_CHECK == 1
         //if (WasEn)
@@ -172,7 +172,7 @@ int ARAPlanner::ComputeHeuristic(CMDPSTATE* MDPstate, ARASearchStateSpace_t* pSe
     }
     else {
         //backward search: heur = distance from searchgoal to state
-        return environment_->GetStartHeuristic(MDPstate->StateID);
+        return environment_->GetStartHeuristic(MDPstate->id);
     }
 }
 
@@ -248,12 +248,12 @@ void ARAPlanner::DeleteSearchStateData(ARAState* state)
 //used for backward search
 void ARAPlanner::UpdatePreds(ARAState* state, ARASearchStateSpace_t* pSearchStateSpace)
 {
-    vector<stateID> PredIDV;
+    Path PredIDV;
     vector<int> CostV;
     CKey key;
     ARAState *predstate;
 
-    environment_->GetPreds(state->MDPstate->StateID, &PredIDV, &CostV);
+    environment_->GetPreds(state->MDPstate->id, &PredIDV, &CostV);
 
     //iterate through predecessors of s
     for (int pind = 0; pind < (int)PredIDV.size(); pind++) {
@@ -289,12 +289,12 @@ void ARAPlanner::UpdatePreds(ARAState* state, ARASearchStateSpace_t* pSearchStat
 //used for forward search
 void ARAPlanner::UpdateSuccs(ARAState* state, ARASearchStateSpace_t* pSearchStateSpace)
 {
-    vector<stateID> SuccIDV;
+    Path SuccIDV;
     vector<int> CostV;
     CKey key;
     ARAState *succstate;
 
-    environment_->GetSuccs(state->MDPstate->StateID, &SuccIDV, &CostV);
+    environment_->GetSuccs(state->MDPstate->id, &SuccIDV, &CostV);
 
     //iterate through predecessors of s
     for (int sind = 0; sind < (int)SuccIDV.size(); sind++) {
@@ -378,7 +378,7 @@ int ARAPlanner::ImprovePath(ARASearchStateSpace_t* pSearchStateSpace, double Max
 
 #if DEBUG
         SBPL_FPRINTF(fDeb, "expanding state(%d): h=%d g=%u key=%u v=%u iterc=%d callnuma=%d expands=%d (g(goal)=%u)\n",
-                     state->MDPstate->StateID, state->h, state->g, state->g+(int)(pSearchStateSpace->eps*state->h),
+                     state->MDPstate->id, state->h, state->g, state->g+(int)(pSearchStateSpace->eps*state->h),
                      state->v, state->iterationclosed, state->callnumberaccessed, state->numofexpands,
                      searchgoalstate->g);
         SBPL_FPRINTF(fDeb, "expanding: ");
@@ -643,10 +643,10 @@ int ARAPlanner::InitializeSearchStateSpace(ARASearchStateSpace_t* pSearchStateSp
     return 1;
 }
 
-int ARAPlanner::SetSearchGoalState(int SearchGoalStateID, ARASearchStateSpace_t* pSearchStateSpace)
+int ARAPlanner::SetSearchGoalState(StateID SearchGoalStateID, ARASearchStateSpace_t* pSearchStateSpace)
 {
     if (pSearchStateSpace->searchgoalstate == NULL ||
-        pSearchStateSpace->searchgoalstate->StateID != SearchGoalStateID)
+        pSearchStateSpace->searchgoalstate->id != SearchGoalStateID)
     {
         pSearchStateSpace->searchgoalstate = GetState(SearchGoalStateID, pSearchStateSpace);
 
@@ -664,7 +664,7 @@ int ARAPlanner::SetSearchGoalState(int SearchGoalStateID, ARASearchStateSpace_t*
     return 1;
 }
 
-int ARAPlanner::SetSearchStartState(int SearchStartStateID, ARASearchStateSpace_t* pSearchStateSpace)
+int ARAPlanner::SetSearchStartState(StateID SearchStartStateID, ARASearchStateSpace_t* pSearchStateSpace)
 {
     CMDPSTATE* MDPstate = GetState(SearchStartStateID, pSearchStateSpace);
 
@@ -731,30 +731,30 @@ void ARAPlanner::PrintSearchPath(ARASearchStateSpace_t* pSearchStateSpace, FILE*
 {
     ARAState* searchstateinfo;
     CMDPSTATE* state;
-    stateID goalID;
+    StateID goalID;
     int PathCost;
 
     if (bforwardsearch) {
         state = pSearchStateSpace->searchstartstate;
-        goalID = pSearchStateSpace->searchgoalstate->StateID;
+        goalID = pSearchStateSpace->searchgoalstate->id;
     }
     else {
         state = pSearchStateSpace->searchgoalstate;
-        goalID = pSearchStateSpace->searchstartstate->StateID;
+        goalID = pSearchStateSpace->searchstartstate->id;
     }
     if (fOut == NULL) fOut = stdout;
 
     PathCost = ((ARAState*)pSearchStateSpace->searchgoalstate->PlannerSpecificData)->g;
 
-    SBPL_FPRINTF(fOut, "Printing a path from state %d to the goal state %d\n", state->StateID,
-                 pSearchStateSpace->searchgoalstate->StateID);
+    SBPL_FPRINTF(fOut, "Printing a path from state %d to the goal state %d\n", state->id,
+                 pSearchStateSpace->searchgoalstate->id);
     SBPL_FPRINTF(fOut, "Path cost = %d:\n", PathCost);
 
-    environment_->PrintState(state->StateID, false, fOut);
+    environment_->PrintState(state->id, false, fOut);
 
     int costFromStart = 0;
-    while (state->StateID != goalID) {
-        SBPL_FPRINTF(fOut, "state %d ", state->StateID);
+    while (state->id != goalID) {
+        SBPL_FPRINTF(fOut, "state %d ", state->id);
 
         if (state->PlannerSpecificData == NULL) {
             SBPL_FPRINTF(fOut, "path does not exist since search data does not exist\n");
@@ -779,11 +779,11 @@ void ARAPlanner::PrintSearchPath(ARASearchStateSpace_t* pSearchStateSpace, FILE*
         costFromStart += transcost;
 
         SBPL_FPRINTF(fOut, "g=%d-->state %d, h = %d ctg = %d  ", searchstateinfo->g,
-                     searchstateinfo->bestnextstate->StateID, searchstateinfo->h, costToGoal);
+                     searchstateinfo->bestnextstate->id, searchstateinfo->h, costToGoal);
 
         state = searchstateinfo->bestnextstate;
 
-        environment_->PrintState(state->StateID, false, fOut);
+        environment_->PrintState(state->id, false, fOut);
     }
 }
 
@@ -791,29 +791,29 @@ void ARAPlanner::PrintSearchState(ARAState* state, FILE* fOut)
 {
 #if DEBUG
     SBPL_FPRINTF(fOut, "state %d: h=%d g=%u v=%u iterc=%d callnuma=%d expands=%d heapind=%d inconslist=%d\n",
-                 state->MDPstate->StateID, state->h, state->g, state->v,
+                 state->MDPstate->id, state->h, state->g, state->v,
                  state->iterationclosed, state->callnumberaccessed, state->numofexpands, state->heapindex,
                  state->listelem[ARA_INCONS_LIST_ID] ? 1 : 0);
 #else
     SBPL_FPRINTF(fOut, "state %d: h=%d g=%u v=%u iterc=%d callnuma=%d heapind=%d inconslist=%d\n",
-                 state->MDPstate->StateID, state->h, state->g, state->v, state->iterationclosed,
+                 state->MDPstate->id, state->h, state->g, state->v, state->iterationclosed,
                  state->callnumberaccessed, state->heapindex, state->listelem[ARA_INCONS_LIST_ID] ? 1 : 0);
 #endif
-    environment_->PrintState(state->MDPstate->StateID, true, fOut);
+    environment_->PrintState(state->MDPstate->id, true, fOut);
 }
 
-int ARAPlanner::getHeurValue(ARASearchStateSpace_t* pSearchStateSpace, stateID StateID)
+int ARAPlanner::getHeurValue(ARASearchStateSpace_t* pSearchStateSpace, StateID StateID)
 {
     CMDPSTATE* MDPstate = GetState(StateID, pSearchStateSpace);
     ARAState* searchstateinfo = (ARAState*)MDPstate->PlannerSpecificData;
     return searchstateinfo->h;
 }
 
-vector<stateID> ARAPlanner::GetSearchPath(ARASearchStateSpace_t* pSearchStateSpace, int& solcost)
+Path ARAPlanner::GetSearchPath(ARASearchStateSpace_t* pSearchStateSpace, int& solcost)
 {
-    vector<stateID> SuccIDV;
+    Path SuccIDV;
     vector<int> CostV;
-    vector<stateID> wholePathIds;
+    Path wholePathIds;
     ARAState* searchstateinfo;
     CMDPSTATE* state = NULL;
     CMDPSTATE* goalstate = NULL;
@@ -833,7 +833,7 @@ vector<stateID> ARAPlanner::GetSearchPath(ARASearchStateSpace_t* pSearchStateSpa
 
     state = startstate;
 
-    wholePathIds.push_back(state->StateID);
+    wholePathIds.push_back(state->id);
     solcost = 0;
 
     FILE* fOut = stdout;
@@ -841,7 +841,7 @@ vector<stateID> ARAPlanner::GetSearchPath(ARASearchStateSpace_t* pSearchStateSpa
         SBPL_ERROR("ERROR: could not open file\n");
         throw new SBPL_Exception();
     }
-    while (state->StateID != goalstate->StateID) {
+    while (state->id != goalstate->id) {
         if (state->PlannerSpecificData == NULL) {
             SBPL_FPRINTF(fOut, "path does not exist since search data does not exist\n");
             break;
@@ -858,10 +858,10 @@ vector<stateID> ARAPlanner::GetSearchPath(ARASearchStateSpace_t* pSearchStateSpa
             break;
         }
 
-        environment_->GetSuccs(state->StateID, &SuccIDV, &CostV);
+        environment_->GetSuccs(state->id, &SuccIDV, &CostV);
         int actioncost = INFINITECOST;
         for (int i = 0; i < (int)SuccIDV.size(); i++) {
-            if (SuccIDV.at(i) == searchstateinfo->bestnextstate->StateID && CostV.at(i) < actioncost) {
+            if (SuccIDV.at(i) == searchstateinfo->bestnextstate->id && CostV.at(i) < actioncost) {
                 actioncost = CostV.at(i);
             }
         }
@@ -890,13 +890,13 @@ vector<stateID> ARAPlanner::GetSearchPath(ARASearchStateSpace_t* pSearchStateSpa
 
         state = searchstateinfo->bestnextstate;
 
-        wholePathIds.push_back(state->StateID);
+        wholePathIds.push_back(state->id);
     }
 
     return wholePathIds;
 }
 
-bool ARAPlanner::Search(ARASearchStateSpace_t* pSearchStateSpace, vector<stateID>& pathIds, int & PathCost,
+bool ARAPlanner::Search(ARASearchStateSpace_t* pSearchStateSpace, Path& pathIds, int & PathCost,
                         bool bFirstSolution, bool bOptimalSolution, double MaxNumofSecs)
 {
     CKey key;
@@ -1041,13 +1041,13 @@ bool ARAPlanner::Search(ARASearchStateSpace_t* pSearchStateSpace, vector<stateID
 
 //-----------------------------Interface function-----------------------------------------------------
 
-int ARAPlanner::replan(vector<stateID> *solution_stateIDs_V, ReplanParams params)
+int ARAPlanner::replan(Path *solution_stateIDs_V, ReplanParams params)
 {
     int solcost;
     return replan(solution_stateIDs_V, params, &solcost);
 }
 
-int ARAPlanner::replan(vector<stateID> *solution_stateIDs_V, ReplanParams params, int* solcost)
+int ARAPlanner::replan(Path *solution_stateIDs_V, ReplanParams params, int* solcost)
 {
     finitial_eps = params.initial_eps;
     final_epsilon = params.final_eps;
@@ -1059,7 +1059,7 @@ int ARAPlanner::replan(vector<stateID> *solution_stateIDs_V, ReplanParams params
 }
 
 //returns 1 if found a solution, and 0 otherwise
-int ARAPlanner::replan(double allocated_time_secs, vector<stateID> *solution_stateIDs_V)
+int ARAPlanner::replan(double allocated_time_secs, Path *solution_stateIDs_V)
 {
     int solcost;
 
@@ -1067,9 +1067,9 @@ int ARAPlanner::replan(double allocated_time_secs, vector<stateID> *solution_sta
 }
 
 //returns 1 if found a solution, and 0 otherwise
-int ARAPlanner::replan(double allocated_time_secs, vector<stateID> *solution_stateIDs_V, int* psolcost)
+int ARAPlanner::replan(double allocated_time_secs, Path *solution_stateIDs_V, int* psolcost)
 {
-    vector<stateID> pathIds;
+    Path pathIds;
     bool bFound = false;
     int PathCost;
     bool bFirstSolution = this->bsearchuntilfirstsolution;
@@ -1092,7 +1092,7 @@ int ARAPlanner::replan(double allocated_time_secs, vector<stateID> *solution_sta
     return (int)bFound;
 }
 
-int ARAPlanner::set_goal(stateID goal_stateID)
+int ARAPlanner::set_goal(StateID goal_stateID)
 {
     SBPL_PRINTF("planner: setting goal to %d\n", goal_stateID);
     environment_->PrintState(goal_stateID, true, stdout);
@@ -1113,7 +1113,7 @@ int ARAPlanner::set_goal(stateID goal_stateID)
     return 1;
 }
 
-int ARAPlanner::set_start(stateID start_stateID)
+int ARAPlanner::set_start(StateID start_stateID)
 {
     SBPL_PRINTF("planner: setting start to %d\n", start_stateID);
     environment_->PrintState(start_stateID, true, stdout);
@@ -1161,9 +1161,9 @@ int ARAPlanner::force_planning_from_scratch_and_free_memory()
     int start_id = -1;
     int goal_id = -1;
     if (pSearchStateSpace_->searchstartstate)
-        start_id = pSearchStateSpace_->searchstartstate->StateID;
+        start_id = pSearchStateSpace_->searchstartstate->id;
     if (pSearchStateSpace_->searchgoalstate)
-        goal_id = pSearchStateSpace_->searchgoalstate->StateID;
+        goal_id = pSearchStateSpace_->searchgoalstate->id;
 
     if (!bforwardsearch) {
         int temp = start_id;

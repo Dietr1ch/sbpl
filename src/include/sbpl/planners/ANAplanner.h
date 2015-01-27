@@ -109,23 +109,23 @@ public:
     /**
      * \brief replan a path within the allocated time, return the solution in the vector
      */
-    int replan(double allocated_time_secs, std::vector<stateID> *solution_stateIDs_V);
+    int replan(double allocated_time_secs, Path *solution_stateIDs_V);
 
     /**
      * \brief replan a path within the allocated time, return the solution in
      *        the vector, also returns solution cost
      */
-    int replan(double allocated_time_sec, std::vector<stateID> *solution_stateIDs_V, int* solcost);
+    int replan(double allocated_time_sec, Path *solution_stateIDs_V, int* solcost);
 
     /**
      * \brief set the goal state
      */
-    int set_goal(stateID goal_stateID);
+    int set_goal(StateID goal_stateID);
 
     /**
      * \brief set the start state
      */
-    int set_start(stateID start_stateID);
+    int set_start(StateID start_stateID);
 
     /**
      * \brief inform the search about the new edge costs
@@ -198,9 +198,9 @@ private:
 
     void Initialize_searchinfo(CMDPSTATE* state, anaSearchStateSpace_t* pSearchStateSpace);
 
-    CMDPSTATE* CreateState(int stateID, anaSearchStateSpace_t* pSearchStateSpace);
+    CMDPSTATE* CreateState(StateID id, anaSearchStateSpace_t* pSearchStateSpace);
 
-    CMDPSTATE* GetState(int stateID, anaSearchStateSpace_t* pSearchStateSpace);
+    CMDPSTATE* GetState(StateID id, anaSearchStateSpace_t* pSearchStateSpace);
 
     int ComputeHeuristic(CMDPSTATE* MDPstate, anaSearchStateSpace_t* pSearchStateSpace);
 
@@ -213,7 +213,7 @@ private:
     void DeleteSearchStateData(anaState* state);
 
     // NEW FUNCTION
-    double get_e_value(anaSearchStateSpace_t* pSearchStateSpace, int stateID);
+    double get_e_value(anaSearchStateSpace_t* pSearchStateSpace, StateID id);
 
     //used for backward search
     void UpdatePreds(anaState* state, anaSearchStateSpace_t* pSearchStateSpace);
@@ -250,9 +250,9 @@ private:
     //very first initialization
     int InitializeSearchStateSpace(anaSearchStateSpace_t* pSearchStateSpace);
 
-    int SetSearchGoalState(int SearchGoalStateID, anaSearchStateSpace_t* pSearchStateSpace);
+    int SetSearchGoalState(StateID SearchGoalStateID, anaSearchStateSpace_t* pSearchStateSpace);
 
-    int SetSearchStartState(int SearchStartStateID, anaSearchStateSpace_t* pSearchStateSpace);
+    int SetSearchStartState(StateID SearchStartStateID, anaSearchStateSpace_t* pSearchStateSpace);
 
     //reconstruct path functions are only relevant for forward search
     int ReconstructPath(anaSearchStateSpace_t* pSearchStateSpace);
@@ -262,9 +262,9 @@ private:
     int getHeurValue(anaSearchStateSpace_t* pSearchStateSpace, int StateID);
 
     //get path
-    std::vector<stateID> GetSearchPath(anaSearchStateSpace_t* pSearchStateSpace, int& solcost);
+    Path GetSearchPath(anaSearchStateSpace_t* pSearchStateSpace, int& solcost);
 
-    bool Search(anaSearchStateSpace_t* pSearchStateSpace, std::vector<stateID>& pathIds, int & PathCost, bool bFirstSolution,
+    bool Search(anaSearchStateSpace_t* pSearchStateSpace, Path &pathIds, int &PathCost, bool bFirstSolution,
                 bool bOptimalSolution, double MaxNumofSecs);
 };
 

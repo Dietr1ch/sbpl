@@ -45,7 +45,7 @@ public:
     // MDP State
     // ---------
     CMDPSTATE *MDPstate;
-    stateID id() const;
+    StateID id() const;
 
     // A* data
     // -------
@@ -93,8 +93,8 @@ public:
 // Functions
 // =========
 public:
-    ASTARNode(stateID id, ASTARSpace* space);
-    ASTARNode(stateID id, ASTARSpace* space, int initialH);
+    ASTARNode(StateID id, ASTARSpace* space);
+    ASTARNode(StateID id, ASTARSpace* space, int initialH);
     ~ASTARNode();
 
     void print(FILE *fOut);
@@ -168,8 +168,8 @@ public:
 
     // Configuration
     // =============
-    void setStart(stateID startID);
-    void setGoal(stateID goalID);
+    void setStart(StateID startID);
+    void setGoal(StateID goalID);
 
 
 
@@ -197,15 +197,15 @@ public:
     // =================
 
     /** Get an updated node */
-    ASTARNode* getNode(stateID id);
+    ASTARNode* getNode(StateID id);
     /** Get a node without updating h (having h=0 if it's new) */
-    ASTARNode* getNode0(stateID id);
+    ASTARNode* getNode0(StateID id);
 
     /** Get an updated node */
     ASTARNode* getNode(CMDPSTATE *mdpState);
 
     /** UNSAFE: Get an updated node */
-    ASTARNode* getNode_(stateID id);
+    ASTARNode* getNode_(StateID id);
 
     /** Gets the updated starting node */
     ASTARNode* getStart();
@@ -258,9 +258,9 @@ public:
 
 
 protected:
-    bool Search(vector<stateID> *pathIDs, int *cost, bool bFirstSolution, bool bOptimalSolution, double givenSeconds);
+    bool Search(Path *pathIDs, int *cost, bool bFirstSolution, bool bOptimalSolution, double givenSeconds);
 
-    typedef vector<nodeStub> (*neighborhoodFunction) (stateID id);
+    typedef vector<nodeStub> (*neighborhoodFunction) (StateID id);
     typedef void                 (*reachingFunction) (const ASTARNode &node, const nodeStub &nS);
 
     /** Expand Node backwards
@@ -290,7 +290,7 @@ protected:
     //void reevaluateFVals();
     //int reconstructPath();
     //void printPath(FILE *fOut=stdout);
-    //vector<stateID> getSearchPath(int &solcost);
+    //Path getSearchPath(int &solcost);
 
 
 
@@ -299,14 +299,14 @@ protected:
 
 public:
     /** Replan and drop the solution cost */
-    int replan(double givenTime, vector<stateID>* pathIDs);
+    int replan(double givenTime, Path* pathIDs);
     /** Replan */
-    int replan(double givenTime, vector<stateID>* pathIDs, int* cost);
+    int replan(double givenTime, Path* pathIDs, int* cost);
     /** Replan (unimplemented) */
-    int replan(vector<stateID>* pathIDs, ReplanParams params, int* cost);
+    int replan(Path* pathIDs, ReplanParams params, int* cost);
 
-    int set_start(stateID startID);
-    int set_goal(stateID goalID);
+    int set_start(StateID startID);
+    int set_goal(StateID goalID);
 
     int force_planning_from_scratch();
     int set_search_mode(bool bSearchUntilFirstSolution);

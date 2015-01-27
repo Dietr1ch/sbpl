@@ -41,10 +41,10 @@ LazyARAPlanner::LazyARAPlanner(DiscreteSpaceInformation* environment, bool bSear
   start_state_id = -1;
 }
 
-LazyARAState* LazyARAPlanner::GetState(stateID id){
+LazyARAState* LazyARAPlanner::GetState(StateID id){
   //if this stateID is out of bounds of our state vector then grow the list
-  if(id >= int(states.size())){
-    for(int i=states.size(); i<=id; i++)
+  if(id >= states.size()){
+    for(StateID i=states.size(); i<=id; i++)
       states.push_back(NULL);
   }
   //if we have never seen this state then create one
@@ -81,8 +81,8 @@ LazyARAState* LazyARAPlanner::GetState(stateID id){
 void LazyARAPlanner::ExpandState(LazyARAState* parent){
   bool print = false; //parent->id == goal_state_id; //parent->id == 285566;
   if(print)
-    printf("expand %d\n",parent->id);
-  vector<stateID> children;
+    printf("expand %zu\n",parent->id);
+  Path children;
   vector<int> costs;
   vector<bool> isTrueCost;
 
@@ -107,7 +107,7 @@ void LazyARAPlanner::ExpandState(LazyARAState* parent){
 void LazyARAPlanner::EvaluateState(LazyARAState* state){
   bool print = false; //state->id == goal_state_id; //state->id == 285566;
   if(print)
-    printf("evaluate %d (from %d)\n",state->id, state->best_parent->id);
+    printf("evaluate %zu (from %zu)\n",state->id, state->best_parent->id);
   LazyARAState* parent = state->best_parent;
 
   getNextLazyElement(state);
@@ -152,7 +152,7 @@ void LazyARAPlanner::getNextLazyElement(LazyARAState* state){
 void LazyARAPlanner::insertLazyList(LazyARAState* state, LazyARAState* parent, int edgeCost, bool isTrueCost){
   bool print = false; //state->id == goal_state_id; //state->id == 285566 || parent->id == 285566;
   if(print)
-    printf("insertLazyList state->id=%d parent->id=%d state->g=%d parent->v=%d edgeCost=%d isTrueCost=%d\n",state->id,parent->id,state->g,parent->v,edgeCost,isTrueCost);
+    printf("insertLazyList state->id=%zu parent->id=%zu state->g=%d parent->v=%d edgeCost=%d isTrueCost=%d\n",state->id,parent->id,state->g,parent->v,edgeCost,isTrueCost);
   if(state->v <= parent->v + edgeCost)
     return;
   else if(state->g <= parent->v + edgeCost){
@@ -198,7 +198,7 @@ void LazyARAPlanner::putStateInHeap(LazyARAState* state){
   //so insert into heap if not closed yet
   if(state->iteration_closed != search_iteration){
     if(print)
-      printf("put state %d in open with state->g=%d and state->isTrueCost=%d\n",state->id,state->g,state->isTrueCost);
+      printf("put state %zu in open with state->g=%d and state->isTrueCost=%d\n",state->id,state->g,state->isTrueCost);
     CKey key;
     key.key[0] = state->g + int(eps * state->h);
     //if the state is already in the heap, just update its priority
@@ -212,7 +212,7 @@ void LazyARAPlanner::putStateInHeap(LazyARAState* state){
   //that we know we have better costs for
   else if(!state->in_incons){
     if(print)
-      printf("put state %d in incons with state->g=%u and state->isTrueCost=%d\n",state->id,state->g,state->isTrueCost);
+      printf("put state %zu in incons with state->g=%u and state->isTrueCost=%d\n",state->id,state->g,state->isTrueCost);
     incons.push_back(state);
     state->in_incons = true;
   }
@@ -235,7 +235,7 @@ int LazyARAPlanner::ImprovePath(){
 
     if(state->v == state->g){
       printf("ERROR: consistent state is being expanded\n");
-      printf("id=%d v=%d g=%d isTrueCost=%d lazyListSize=%lu\n",
+      printf("id=%zu v=%d g=%d isTrueCost=%d lazyListSize=%lu\n",
               state->id,state->v,state->g,state->isTrueCost,state->lazyList.size());
       throw new SBPL_Exception();
     }
@@ -287,11 +287,11 @@ int LazyARAPlanner::ImprovePath(){
   return 1;
 }
 
-vector<stateID> LazyARAPlanner::GetSearchPath(int& solcost){
-  vector<stateID> SuccIDV;
+Path LazyARAPlanner::GetSearchPath(int& solcost){
+  Path SuccIDV;
   vector<int> CostV;
   vector<bool> isTrueCost;
-  vector<stateID> wholePathIds;
+  Path wholePathIds;
 
   LazyARAState* state;
   LazyARAState* final_state;
@@ -314,7 +314,7 @@ vector<stateID> LazyARAPlanner::GetSearchPath(int& solcost){
     }
     if(state->v == INFINITECOST){
       printf("a state along the path has an infinite g-value!\n");
-      printf("inf state = %d\n",state->id);
+      printf("inf state = %zu\n",state->id);
       break;
     }
 
@@ -324,7 +324,7 @@ vector<stateID> LazyARAPlanner::GetSearchPath(int& solcost){
       environment_->GetLazyPreds(state->expanded_best_parent->id, &SuccIDV, &CostV, &isTrueCost);
     int actioncost = INFINITECOST;
     //printf("reconstruct expand %d\n",state->expanded_best_parent->id);
-    for(unsigned int i=0; i<SuccIDV.size(); i++){
+    for(StateID i=0; i<SuccIDV.size(); i++){
       //printf("  succ %d\n",SuccIDV[i]);
       if(SuccIDV[i] == state->id && CostV[i]<actioncost)
         actioncost = CostV[i];
@@ -399,7 +399,7 @@ void LazyARAPlanner::initializeSearch(){
   environment_->EnsureHeuristicsUpdated((bforwardsearch==true));
 }
 
-bool LazyARAPlanner::Search(vector<stateID>& pathIds, int& PathCost){
+bool LazyARAPlanner::Search(Path &pathIds, int &PathCost){
   CKey key;
   TimeStarted = clock();
 
@@ -493,28 +493,28 @@ void LazyARAPlanner::prepareNextSearchIteration(){
 
 
 //-----------------------------Interface function-----------------------------------------------------
-int LazyARAPlanner::replan(double allocated_time_secs, std::vector<stateID>* solution_stateIDs_V){
+int LazyARAPlanner::replan(double allocated_time_secs, Path *solution_stateIDs_V){
   int solcost;
   return replan(allocated_time_secs, solution_stateIDs_V, &solcost);
 }
 
-int LazyARAPlanner::replan(double allocated_time_sec, std::vector<stateID>* solution_stateIDs_V, int* solcost){
+int LazyARAPlanner::replan(double allocated_time_sec, Path *solution_stateIDs_V, int *solcost){
   params.max_time = allocated_time_sec;
   return replan(solution_stateIDs_V, params, solcost);
 }
 
-int LazyARAPlanner::replan(vector<stateID>* solution_stateIDs_V, ReplanParams p){
+int LazyARAPlanner::replan(Path* solution_stateIDs_V, ReplanParams p){
   int solcost;
   return replan(solution_stateIDs_V, p, &solcost);
 }
 
-int LazyARAPlanner::replan(int start, int goal, vector<stateID>* solution_stateIDs_V, ReplanParams p, int* solcost){
+int LazyARAPlanner::replan(int start, int goal, Path* solution_stateIDs_V, ReplanParams p, int* solcost){
   set_start(start);
   set_goal(goal);
   return replan(solution_stateIDs_V, p, solcost);
 }
 
-int LazyARAPlanner::replan(vector<stateID>* solution_stateIDs_V, ReplanParams p, int* solcost){
+int LazyARAPlanner::replan(Path* solution_stateIDs_V, ReplanParams p, int* solcost){
   printf("planner: replan called\n");
   params = p;
   use_repair_time = params.repair_time >= 0;
@@ -529,7 +529,7 @@ int LazyARAPlanner::replan(vector<stateID>* solution_stateIDs_V, ReplanParams p,
   }
 
   //plan
-  vector<stateID> pathIds;
+  Path pathIds;
   int PathCost;
   bool solnFound = Search(pathIds, PathCost);
   printf("total expands=%d planning time=%.3f reconstruct path time=%.3f total time=%.3f solution cost=%d\n", 
@@ -545,8 +545,8 @@ int LazyARAPlanner::replan(vector<stateID>* solution_stateIDs_V, ReplanParams p,
   return (int)solnFound;
 }
 
-int LazyARAPlanner::set_goal(stateID id){
-  printf("planner: setting goal to %d\n", id);
+int LazyARAPlanner::set_goal(StateID id){
+  printf("planner: setting goal to %zu\n", id);
   if(bforwardsearch)
     goal_state_id = id;
   else
@@ -554,8 +554,8 @@ int LazyARAPlanner::set_goal(stateID id){
   return 1;
 }
 
-int LazyARAPlanner::set_start(stateID id){
-  printf("planner: setting start to %d\n", id);
+int LazyARAPlanner::set_start(StateID id){
+  printf("planner: setting start to %zu\n", id);
   if(bforwardsearch)
     start_state_id = id;
   else

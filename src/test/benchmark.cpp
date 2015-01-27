@@ -524,7 +524,7 @@ plan2d(PlannerType plannerType, char* envCfgFilename, bool forwardSearch) {
     }
 
     // plan a path
-    vector<stateID> solution_stateIDs_V;
+    Path solution_stateIDs_V;
 
     SBPLPlanner* planner = NULL;
     switch (plannerType) {
@@ -719,7 +719,7 @@ planxythetalat(PlannerType plannerType, char* envCfgFilename, char* motPrimFilen
     }
 
     // plan a path
-    vector<stateID> solution_stateIDs_V;
+    Path solution_stateIDs_V;
 
     SBPLPlanner* planner = NULL;
     switch (plannerType) {
@@ -774,7 +774,7 @@ planxythetalat(PlannerType plannerType, char* envCfgFilename, char* motPrimFilen
     }
 
     // write the discrete solution to file
-    //	for (size_t i = 0; i < solution_stateIDs_V.size(); i++) {
+    //	for (StateID = 0; i < solution_stateIDs_V.size(); i++) {
     //		int x;
     //		int y;
     //		int theta;
@@ -929,7 +929,7 @@ planxythetamlevlat(PlannerType plannerType, char* envCfgFilename, char* motPrimF
     }
 
     //plan a path
-    vector<stateID> solution_stateIDs_V;
+    Path solution_stateIDs_V;
 
     SBPLPlanner* planner = NULL;
     switch (plannerType) {
@@ -1038,7 +1038,7 @@ planandnavigate2d(PlannerType plannerType, char* envCfgFilename) {
     //int dy[8] = {-1,  0,  1, -1,  1, -1,  0,  1};
     bool bPrint = false;
     int x, y;
-    vector<stateID> preds_of_changededgesIDV;
+    Path preds_of_changededgesIDV;
     vector<nav2dcell_t> changedcellsV;
     nav2dcell_t nav2dcell;
     unsigned char obsthresh = 0;
@@ -1087,7 +1087,7 @@ planandnavigate2d(PlannerType plannerType, char* envCfgFilename) {
     }
 
     //create a planner
-    vector<stateID> solution_stateIDs_V;
+    Path solution_stateIDs_V;
     bool bforwardsearch = false;
 
     SBPLPlanner* planner = NULL;
@@ -1425,7 +1425,7 @@ planandnavigatexythetalat(PlannerType plannerType, char* envCfgFilename, char* m
     }
 
     // create a planner
-    vector<stateID> solution_stateIDs_V;
+    Path solution_stateIDs_V;
 
     SBPLPlanner* planner = NULL;
     switch (plannerType) {
@@ -1505,7 +1505,7 @@ planandnavigatexythetalat(PlannerType plannerType, char* envCfgFilename, char* m
     int goaltheta_c = ContTheta2Disc(goaltheta, num_thetas);
     printf("goal_c: %d %d %d\n", goalx_c, goaly_c, goaltheta_c);
 
-    vector<stateID> preds_of_changededgesIDV;
+    Path preds_of_changededgesIDV;
     vector<nav2dcell_t> changedcellsV;
     nav2dcell_t nav2dcell;
     vector<sbpl_xy_theta_pt_t> xythetaPath;
@@ -1710,7 +1710,7 @@ planrobarm(PlannerType plannerType, char* envCfgFilename, bool forwardSearch) {
     //srand(1);
 
     //plan a path
-    vector<stateID> solution_stateIDs_V;
+    Path solution_stateIDs_V;
 
     SBPLPlanner* planner = NULL;
     switch (plannerType) {
@@ -1910,7 +1910,7 @@ testEnvironment() {
         // Set instance
         setStartGoal(instancePair);
         // Plan (1st time)
-        vector<stateID> pathIDs;
+        Path pathIDs;
         int retCode = planner->replan(givenTime, &pathIDs);
 //         printf("plan status code=%d\n", retCode);
 

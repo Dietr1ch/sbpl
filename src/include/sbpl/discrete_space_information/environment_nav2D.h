@@ -78,7 +78,7 @@ typedef struct ENV_NAV2D_CONFIG
 
 typedef struct ENVHASHENTRY
 {
-    int stateID;
+    StateID id;
     int X;
     int Y;
 } EnvNAV2DHashEntry_t;
@@ -86,8 +86,8 @@ typedef struct ENVHASHENTRY
 //variables that dynamically change (e.g., array of states, ...)
 typedef struct
 {
-    int startstateid;
-    int goalstateid;
+    StateID startstateid;
+    StateID goalstateid;
 
     bool bInitialized;
 
@@ -121,17 +121,17 @@ public:
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual int GetFromToHeuristic(stateID FromStateID, stateID ToStateID);
+    virtual int GetFromToHeuristic(StateID FromStateID, StateID ToStateID);
 
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual int GetGoalHeuristic(stateID stateID);
+    virtual int GetGoalHeuristic(StateID stateID);
 
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual int GetStartHeuristic(stateID stateID);
+    virtual int GetStartHeuristic(StateID stateID);
 
     /**
      * \brief see comments on the same function in the parent class
@@ -146,41 +146,41 @@ public:
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual void GetSuccs(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV);
+    virtual void GetSuccs(StateID SourceStateID, Path *SuccIDV, std::vector<int>* CostV);
 
 
-    virtual void GetLazySuccs(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost){
+    virtual void GetLazySuccs(StateID SourceStateID, Path *SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost){
       GetSuccs(SourceStateID, SuccIDV, CostV);
       isTrueCost->resize(SuccIDV->size(),true);
     };
-    virtual void GetSuccsWithUniqueIds(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV){
+    virtual void GetSuccsWithUniqueIds(StateID SourceStateID, Path *SuccIDV, std::vector<int>* CostV){
       GetSuccs(SourceStateID, SuccIDV, CostV);
     };
-    virtual void GetLazySuccsWithUniqueIds(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost){
+    virtual void GetLazySuccsWithUniqueIds(StateID SourceStateID, Path *SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost){
       GetLazySuccs(SourceStateID, SuccIDV, CostV, isTrueCost);
     };
 
     virtual int GetTrueCost(int parentID, int childID){return -1;};//FIXME: this shouldn't ever be called because we always return true cost...
 
-    virtual bool isGoal(int id){
+    virtual bool isGoal(StateID id){
       return EnvNAV2D.goalstateid == id;
     };
 
-    virtual void GetLazyPreds(stateID TargetStateID, std::vector<stateID>* PredIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost){
+    virtual void GetLazyPreds(StateID TargetStateID, Path *PredIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost){
       GetPreds(TargetStateID, PredIDV, CostV);
       isTrueCost->resize(PredIDV->size(),true);
     };
-    virtual void GetPredsWithUniqueIds(stateID TargetStateID, std::vector<stateID>* PredIDV, std::vector<int>* CostV){
+    virtual void GetPredsWithUniqueIds(StateID TargetStateID, Path *PredIDV, std::vector<int>* CostV){
       GetPreds(TargetStateID, PredIDV, CostV);
     };
-    virtual void GetLazyPredsWithUniqueIds(stateID TargetStateID, std::vector<stateID>* PredIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost){
+    virtual void GetLazyPredsWithUniqueIds(StateID TargetStateID, Path *PredIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost){
       GetLazyPreds(TargetStateID, PredIDV, CostV, isTrueCost);
     };
 
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual void GetPreds(stateID TargetStateID, std::vector<stateID>* PredIDV, std::vector<int>* CostV);
+    virtual void GetPreds(StateID TargetStateID, Path *PredIDV, std::vector<int>* CostV);
 
     /**
      * \brief see comments on the same function in the parent class
@@ -190,7 +190,7 @@ public:
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual void PrintState(stateID stateID, bool bVerbose, FILE* fOut = NULL);
+    virtual void PrintState(StateID stateID, bool bVerbose, FILE* fOut = NULL);
 
     /**
      * \brief see comments on the same function in the parent class
@@ -251,33 +251,33 @@ public:
      *         outgoing edges that go through the changed cells
      */
     virtual void GetPredsofChangedEdges(std::vector<nav2dcell_t> const * changedcellsV,
-                                        std::vector<stateID> *preds_of_changededgesIDV);
+                                        Path *preds_of_changededgesIDV);
 
     /**
      * \brief same as GetPredsofChangedEdges, but returns successor states.
      *        Both functions need to be present for incremental search
      */
     virtual void GetSuccsofChangedEdges(std::vector<nav2dcell_t> const * changedcellsV,
-                                        std::vector<stateID> *succs_of_changededgesIDV);
+                                        Path *succs_of_changededgesIDV);
 
     /**
      * \brief returns true if two states meet the same condition - see
      *        environment.h for more info
      */
-    virtual bool AreEquivalent(stateID StateID1, stateID StateID2);
+    virtual bool AreEquivalent(StateID StateID1, StateID StateID2);
 
     /**
      * \brief generates succs at some domain-dependent distance - see
      *        environment.h for more info used by certain searches such as R*
      */
-    virtual void GetRandomSuccsatDistance(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CLowV);
+    virtual void GetRandomSuccsatDistance(StateID SourceStateID, Path *SuccIDV, std::vector<int>* CLowV);
 
     /**
      * \brief generates preds at some domain-dependent distance - see
      *        environment.h for more info
      *        used by certain searches such as R*
      */
-    virtual void GetRandomPredsatDistance(stateID TargetStateID, std::vector<stateID>* PredIDV, std::vector<int>* CLowV);
+    virtual void GetRandomPredsatDistance(StateID TargetStateID, Path *PredIDV, std::vector<int>* CLowV);
 
     /**
      * \brief generates nNumofNeighs random neighbors of cell <X,Y> at
@@ -285,7 +285,7 @@ public:
      *        it will also generate goal if within this distance as an additional
      *        neighbor
      */
-    virtual void GetRandomNeighs(stateID id, std::vector<stateID>* NeighIDV, std::vector<int>* CLowV, int nNumofNeighs,
+    virtual void GetRandomNeighs(StateID id, Path *NeighIDV, std::vector<int>* CLowV, int nNumofNeighs,
                                  int nDist_c, bool bSuccs);
 
     /** 
@@ -310,7 +310,7 @@ public:
     /**
      * \brief returns the actual <x,y> associated with state of stateID
      */
-    virtual void GetCoordFromState(stateID stateID, int& x, int& y) const;
+    virtual void GetCoordFromState(StateID stateID, int& x, int& y) const;
 
     /**
      * \brief returns a stateID associated with coordinates <x,y>
@@ -394,7 +394,7 @@ public:
     virtual bool generateRandomStart(MDPConfig *cfg, int seed, int maxTries);
     virtual bool generateRandomGoal(MDPConfig *cfg, int seed, int maxTries);
 
-    virtual char* toString(stateID id);
+    virtual char* toString(StateID id);
 };
 
 #endif

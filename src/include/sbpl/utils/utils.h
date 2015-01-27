@@ -223,7 +223,7 @@ void EnableMemCheck();
 #endif
 void CheckMDP(CMDP* mdp);
 void PrintMatrix(int** matrix, int rows, int cols, FILE* fOut);
-void EvaluatePolicy(CMDP* PolicyMDP, int StartStateID, int GoalStateID, double* PolValue, bool* bFullPolicy,
+void EvaluatePolicy(CMDP* PolicyMDP, StateID StartStateID, StateID GoalStateID, double* PolValue, bool* bFullPolicy,
                     double* Pcgoal, int* nMerges, bool* bCycles);
 int ComputeNumofStochasticActions(CMDP* pMDP);
 

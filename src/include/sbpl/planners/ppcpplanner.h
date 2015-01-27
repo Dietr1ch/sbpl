@@ -134,17 +134,17 @@ public:
     /**
      * \brief setting goal state in S
      */
-    int set_goal(stateID goal_stateID);
+    int set_goal(StateID goal_stateID);
 
     /**
      * \brief setting start state in S
      */
-    int set_start(stateID start_stateID);
+    int set_start(StateID start_stateID);
 
     /**
      * \brief not supported version of replan
      */
-    int replan(double allocated_time_sec, std::vector<stateID> *solution_stateIDs_V)
+    int replan(double allocated_time_sec, Path *solution_stateIDs_V)
     {
         SBPL_ERROR("ERROR: this version of replan not supported in PPCP planner\n");
         throw new SBPL_Exception();
@@ -153,7 +153,7 @@ public:
     /**
      * \brief not supported version of replan
      */
-    int replan(double allocated_time_sec, std::vector<stateID> *solution_stateIDs_V, int* solcost)
+    int replan(double allocated_time_sec, Path *solution_stateIDs_V, int* solcost)
     {
         SBPL_ERROR("ERROR: this version of replan not supported in PPCP planner\n");
         throw new SBPL_Exception();

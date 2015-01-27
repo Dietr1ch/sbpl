@@ -158,7 +158,7 @@ EnvROBARMHashEntry_t* EnvironmentROBARM::CreateNewHashEntry(short unsigned int* 
     HashEntry->endeffx = endeffx;
     HashEntry->endeffy = endeffy;
 
-    HashEntry->stateID = EnvROBARM.StateID2CoordTable.size();
+    HashEntry->id = EnvROBARM.StateID2CoordTable.size();
 
     //insert into the tables
     EnvROBARM.StateID2CoordTable.push_back(HashEntry);
@@ -173,10 +173,10 @@ EnvROBARMHashEntry_t* EnvironmentROBARM::CreateNewHashEntry(short unsigned int* 
     int* entry = new int[NUMOFINDICES_STATEID2IND];
     StateID2IndexMapping.push_back(entry);
     for (i = 0; i < NUMOFINDICES_STATEID2IND; i++) {
-        StateID2IndexMapping[HashEntry->stateID][i] = -1;
+        StateID2IndexMapping[HashEntry->id][i] = -1;
     }
 
-    if (HashEntry->stateID != (int)StateID2IndexMapping.size() - 1) {
+    if (HashEntry->id != StateID2IndexMapping.size() - 1) {
         SBPL_ERROR("ERROR in Env... function: last state has incorrect stateID\n");
         throw new SBPL_Exception();
     }
@@ -1056,21 +1056,21 @@ bool EnvironmentROBARM::InitializeEnv(const char* sEnvFile)
 bool EnvironmentROBARM::InitializeMDPCfg(MDPConfig *MDPCfg)
 {
     //initialize MDPCfg with the start and goal ids
-    MDPCfg->goalstateid = EnvROBARM.goalHashEntry->stateID;
-    MDPCfg->startstateid = EnvROBARM.startHashEntry->stateID;
+    MDPCfg->goalstateid = EnvROBARM.goalHashEntry->id;
+    MDPCfg->startstateid = EnvROBARM.startHashEntry->id;
 
     return true;
 }
 
-int EnvironmentROBARM::GetFromToHeuristic(stateID FromStateID, stateID ToStateID)
+int EnvironmentROBARM::GetFromToHeuristic(StateID FromStateID, StateID ToStateID)
 {
 #if USE_HEUR==0
     return 0;
 #endif
 
 #if DEBUG
-    if(FromStateID >= (int)EnvROBARM.StateID2CoordTable.size()
-        || ToStateID >= (int)EnvROBARM.StateID2CoordTable.size())
+    if(FromStateID >= EnvROBARM.StateID2CoordTable.size()
+        || ToStateID >= EnvROBARM.StateID2CoordTable.size())
     {
         SBPL_ERROR("ERROR in EnvROBARM... function: stateID illegal\n");
         throw new SBPL_Exception();
@@ -1100,31 +1100,31 @@ int EnvironmentROBARM::GetFromToHeuristic(stateID FromStateID, stateID ToStateID
     return h;
 }
 
-int EnvironmentROBARM::GetGoalHeuristic(stateID stateID)
+int EnvironmentROBARM::GetGoalHeuristic(StateID id)
 {
 #if USE_HEUR==0
     return 0;
 #endif
 
 #if DEBUG
-    if (stateID >= (int)EnvROBARM.StateID2CoordTable.size()) {
+    if (id >= EnvROBARM.StateID2CoordTable.size()) {
         SBPL_ERROR("ERROR in EnvROBARM... function: stateID illegal\n");
         throw new SBPL_Exception();
     }
 #endif
 
     //define this function if it used in the planner (heuristic forward search would use it)
-    return GetFromToHeuristic(stateID, EnvROBARM.goalHashEntry->stateID);
+    return GetFromToHeuristic(id, EnvROBARM.goalHashEntry->id);
 }
 
-int EnvironmentROBARM::GetStartHeuristic(stateID stateID)
+int EnvironmentROBARM::GetStartHeuristic(StateID id)
 {
 #if USE_HEUR==0
     return 0;
 #endif
 
 #if DEBUG
-    if (stateID >= (int)EnvROBARM.StateID2CoordTable.size()) {
+    if (id >= EnvROBARM.StateID2CoordTable.size()) {
         SBPL_ERROR("ERROR in EnvROBARM... function: stateID illegal\n");
         throw new SBPL_Exception();
     }
@@ -1151,11 +1151,11 @@ int EnvironmentROBARM::SizeofCreatedEnv()
     return EnvROBARM.StateID2CoordTable.size();
 }
 
-void EnvironmentROBARM::PrintState(stateID stateID, bool bVerbose, FILE* fOut /*=NULL*/)
+void EnvironmentROBARM::PrintState(StateID id, bool bVerbose, FILE* fOut /*=NULL*/)
 {
 
 #if DEBUG
-    if(stateID >= (int)EnvROBARM.StateID2CoordTable.size())
+    if(id >= EnvROBARM.StateID2CoordTable.size())
     {
         SBPL_ERROR("ERROR in EnvROBARM... function: stateID illegal (2)\n");
         throw new SBPL_Exception();
@@ -1164,12 +1164,12 @@ void EnvironmentROBARM::PrintState(stateID stateID, bool bVerbose, FILE* fOut /*
 
     if (fOut == NULL) fOut = stdout;
 
-    EnvROBARMHashEntry_t* HashEntry = EnvROBARM.StateID2CoordTable[stateID];
+    EnvROBARMHashEntry_t* HashEntry = EnvROBARM.StateID2CoordTable[id];
 
     bool bGoal = false;
-    if (stateID == EnvROBARM.goalHashEntry->stateID) bGoal = true;
+    if (id == EnvROBARM.goalHashEntry->id) bGoal = true;
 
-    if (stateID == EnvROBARM.goalHashEntry->stateID && bVerbose) {
+    if (id == EnvROBARM.goalHashEntry->id && bVerbose) {
         SBPL_FPRINTF(fOut, "the state is a goal state\n");
         bGoal = true;
     }
@@ -1179,7 +1179,7 @@ void EnvironmentROBARM::PrintState(stateID stateID, bool bVerbose, FILE* fOut /*
 
 //get the goal as a successor of source state at given cost
 //if costtogoal = -1 then the succ is chosen
-void EnvironmentROBARM::PrintSuccGoal(stateID SourceStateID, int costtogoal, bool bVerbose, bool bLocal /*=false*/,
+void EnvironmentROBARM::PrintSuccGoal(StateID SourceStateID, int costtogoal, bool bVerbose, bool bLocal /*=false*/,
                                       FILE* fOut /*=NULL*/)
 {
     short unsigned int succcoord[NUMOFLINKS];
@@ -1250,7 +1250,7 @@ void EnvironmentROBARM::SetAllActionsandAllOutcomes(CMDPSTATE* state)
     throw new SBPL_Exception();
 }
 
-void EnvironmentROBARM::GetSuccs(stateID SourceStateID, vector<stateID>* SuccIDV, vector<int>* CostV)
+void EnvironmentROBARM::GetSuccs(StateID SourceStateID, Path* SuccIDV, vector<int>* CostV)
 {
     int i, inc;
     short unsigned int succcoord[NUMOFLINKS];
@@ -1261,7 +1261,7 @@ void EnvironmentROBARM::GetSuccs(stateID SourceStateID, vector<stateID>* SuccIDV
     CostV->clear();
 
     //goal state should be absorbing
-    if (SourceStateID == EnvROBARM.goalHashEntry->stateID) return;
+    if (SourceStateID == EnvROBARM.goalHashEntry->id) return;
 
     //get X, Y for the state
     EnvROBARMHashEntry_t* HashEntry = EnvROBARM.StateID2CoordTable[SourceStateID];
@@ -1313,7 +1313,7 @@ void EnvironmentROBARM::GetSuccs(stateID SourceStateID, vector<stateID>* SuccIDV
                 //have to create a new entry
                 OutHashEntry = CreateNewHashEntry(succcoord, NUMOFLINKS, endeffx, endeffy);
             }
-            SuccIDV->push_back(OutHashEntry->stateID);
+            SuccIDV->push_back(OutHashEntry->id);
             CostV->push_back(cost(HashEntry->coord, succcoord));
         }
 
@@ -1322,14 +1322,14 @@ void EnvironmentROBARM::GetSuccs(stateID SourceStateID, vector<stateID>* SuccIDV
     }
 }
 
-void EnvironmentROBARM::GetPreds(stateID TargetStateID, vector<stateID>* PredIDV, vector<int>* CostV)
+void EnvironmentROBARM::GetPreds(StateID TargetStateID, Path* PredIDV, vector<int>* CostV)
 {
     SBPL_ERROR("ERROR in EnvROBARM... function: GetPreds is undefined\n");
     throw new SBPL_Exception();
 }
 
 //generate succs at some domain-dependent distance - see environment.h for more info
-void EnvironmentROBARM::GetRandomSuccsatDistance(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CLowV)
+void EnvironmentROBARM::GetRandomSuccsatDistance(StateID SourceStateID, Path * SuccIDV, std::vector<int>* CLowV)
 {
     short unsigned int coord[NUMOFLINKS];
     short unsigned int endeffx, endeffy;
@@ -1343,7 +1343,7 @@ void EnvironmentROBARM::GetRandomSuccsatDistance(stateID SourceStateID, std::vec
     int numofsuccs = ROBARM_NUMOFRANDSUCCSATDIST;
 
     //goal state should be absorbing
-    if (SourceStateID == EnvROBARM.goalHashEntry->stateID) return;
+    if (SourceStateID == EnvROBARM.goalHashEntry->id) return;
 
     //get X, Y for the state
     EnvROBARMHashEntry_t* HashEntry = EnvROBARM.StateID2CoordTable[SourceStateID];
@@ -1427,9 +1427,9 @@ void EnvironmentROBARM::GetRandomSuccsatDistance(stateID SourceStateID, std::vec
 
         //compute clow
         int clow;
-        clow = EnvironmentROBARM::GetFromToHeuristic(HashEntry->stateID, OutHashEntry->stateID);
+        clow = EnvironmentROBARM::GetFromToHeuristic(HashEntry->id, OutHashEntry->id);
 
-        SuccIDV->push_back(OutHashEntry->stateID);
+        SuccIDV->push_back(OutHashEntry->id);
         CLowV->push_back(clow);
 
         //time3_addallout += clock()-currenttime;
@@ -1441,18 +1441,18 @@ void EnvironmentROBARM::GetRandomSuccsatDistance(stateID SourceStateID, std::vec
     {
         EnvROBARMHashEntry_t* OutHashEntry = EnvROBARM.goalHashEntry;
 
-        int clow = EnvironmentROBARM::GetFromToHeuristic(HashEntry->stateID, OutHashEntry->stateID);
+        int clow = EnvironmentROBARM::GetFromToHeuristic(HashEntry->id, OutHashEntry->id);
 
-        SuccIDV->push_back(OutHashEntry->stateID);
+        SuccIDV->push_back(OutHashEntry->id);
         CLowV->push_back(clow);
     }
 }
 
-int EnvironmentROBARM::GetEdgeCost(stateID FromStateID, stateID ToStateID)
+int EnvironmentROBARM::GetEdgeCost(StateID FromStateID, StateID ToStateID)
 {
 #if DEBUG
-    if(FromStateID >= (int)EnvROBARM.StateID2CoordTable.size() ||
-       ToStateID >= (int)EnvROBARM.StateID2CoordTable.size())
+    if(FromStateID >= EnvROBARM.StateID2CoordTable.size() ||
+       ToStateID >= EnvROBARM.StateID2CoordTable.size())
     {
         SBPL_ERROR("ERROR in EnvROBARM... function: stateID illegal\n");
         throw new SBPL_Exception();
@@ -1559,10 +1559,10 @@ int EnvironmentROBARM::GetRandomState()
         HashEntry = CreateNewHashEntry(coord, NUMOFLINKS, endeffx, endeffy);
     }
 
-    return HashEntry->stateID;
+    return HashEntry->id;
 }
 
-bool EnvironmentROBARM::AreEquivalent(stateID State1ID, stateID State2ID)
+bool EnvironmentROBARM::AreEquivalent(StateID State1ID, StateID State2ID)
 {
     EnvROBARMHashEntry_t* HashEntry1 = EnvROBARM.StateID2CoordTable[State1ID];
     EnvROBARMHashEntry_t* HashEntry2 = EnvROBARM.StateID2CoordTable[State2ID];

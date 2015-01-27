@@ -50,14 +50,14 @@ class CMDPACTION
 public:
     //data
     int ActionID;
-    stateID SourceStateID;
-    vector<stateID> SuccsID;
+    StateID SourceStateID;
+    Path SuccsID;
     vector<int> Costs;
     vector<float> SuccsProb;
     void* PlannerSpecificData;
 
     //constructors
-    CMDPACTION(stateID ID, int sourcestateid)
+    CMDPACTION(StateID ID, int sourcestateid)
     {
         ActionID = ID;
         SourceStateID = sourcestateid;
@@ -75,9 +75,9 @@ public:
     //functions
     bool Delete();
     bool IsValid();
-    void AddOutcome(stateID OutcomeStateID, int OutcomeCost, float OutcomeProb);
+    void AddOutcome(StateID OutcomeStateID, int OutcomeCost, float OutcomeProb);
     int GetIndofMostLikelyOutcome();
-    int GetIndofOutcome(stateID OutcomeID);
+    int GetIndofOutcome(StateID OutcomeID);
     bool DeleteAllOutcomes();
 
     //operators
@@ -88,16 +88,16 @@ class CMDPSTATE
 {
 public:
     //data
-    stateID StateID;
+    StateID id;
     vector<CMDPACTION*> Actions;
-    vector<stateID> PredsID;
+    Path PredsID;
     void* PlannerSpecificData;
 
     //constructors
-    CMDPSTATE(stateID ID)
+    CMDPSTATE(StateID ID)
     {
         VALID_STATE(ID);
-        StateID = ID;
+        id = ID;
         PlannerSpecificData = NULL;
     }
 
@@ -112,9 +112,9 @@ public:
     //functions
     bool Delete();
     CMDPACTION* AddAction(int ID);
-    bool ContainsPred(stateID stateID);
-    bool AddPred(stateID stateID);
-    bool RemovePred(stateID stateID);
+    bool ContainsPred(StateID stateID);
+    bool AddPred(StateID stateID);
+    bool RemovePred(StateID stateID);
     bool RemoveAllActions();
     CMDPACTION* GetAction(int actionID);
 
@@ -142,7 +142,7 @@ public:
     bool Create(int numofstates);
     bool Delete();
     void Print(FILE* fOut);
-    CMDPSTATE* AddState(stateID StateID);
+    CMDPSTATE* AddState(StateID StateID);
 };
 
 #endif

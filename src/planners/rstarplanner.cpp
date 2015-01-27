@@ -103,12 +103,12 @@ void RSTARPlanner::Initialize_searchinfo(CMDPSTATE* state)
     InitializeSearchStateInfo(searchstateinfo);
 }
 
-CMDPSTATE* RSTARPlanner::CreateState(stateID stateID)
+CMDPSTATE* RSTARPlanner::CreateState(StateID id)
 {
     CMDPSTATE* state = NULL;
 
 #if DEBUG
-    if(environment_->StateID2IndexMapping[stateID][RSTARMDP_STATEID2IND] != -1)
+    if(environment_->StateID2IndexMapping[id][RSTARMDP_STATEID2IND] != -1)
     {
         SBPL_ERROR("ERROR in CreateState: state already created\n");
         throw new SBPL_Exception();
@@ -116,15 +116,15 @@ CMDPSTATE* RSTARPlanner::CreateState(stateID stateID)
 #endif
 
     //adds to the tail a state
-    state = pSearchStateSpace->searchMDP.AddState(stateID);
+    state = pSearchStateSpace->searchMDP.AddState(id);
 
     //remember the index of the state
-    environment_->StateID2IndexMapping[stateID][RSTARMDP_STATEID2IND] =
+    environment_->StateID2IndexMapping[id][RSTARMDP_STATEID2IND] =
             pSearchStateSpace->searchMDP.StateArray.size() - 1;
 
 #if DEBUG
     if(state !=
-       pSearchStateSpace->searchMDP.StateArray[environment_->StateID2IndexMapping[stateID][RSTARMDP_STATEID2IND]])
+       pSearchStateSpace->searchMDP.StateArray[environment_->StateID2IndexMapping[id][RSTARMDP_STATEID2IND]])
     {
         SBPL_ERROR("ERROR in CreateState: invalid state index\n");
         throw new SBPL_Exception();
@@ -139,17 +139,17 @@ CMDPSTATE* RSTARPlanner::CreateState(stateID stateID)
     return state;
 }
 
-CMDPSTATE* RSTARPlanner::GetState(stateID stateID)
+CMDPSTATE* RSTARPlanner::GetState(StateID id)
 {
-    if (stateID >= (int)environment_->StateID2IndexMapping.size()) {
-        SBPL_ERROR("ERROR int GetState: stateID %d is invalid\n", stateID);
+    if (id >= (StateID) environment_->StateID2IndexMapping.size()) {
+        SBPL_ERROR("ERROR int GetState: stateID %d is invalid\n", id);
         throw new SBPL_Exception();
     }
 
-    if (environment_->StateID2IndexMapping[stateID][RSTARMDP_STATEID2IND] == -1)
-        return CreateState(stateID);
+    if (environment_->StateID2IndexMapping[id][RSTARMDP_STATEID2IND] == -1)
+        return CreateState(id);
     else
-        return pSearchStateSpace->searchMDP.StateArray[environment_->StateID2IndexMapping[stateID][RSTARMDP_STATEID2IND]];
+        return pSearchStateSpace->searchMDP.StateArray[environment_->StateID2IndexMapping[id][RSTARMDP_STATEID2IND]];
 }
 
 //-----------------------------------------------------------------------------------------------------
@@ -173,27 +173,27 @@ void RSTARPlanner::Initialize_rstarlsearchdata(CMDPSTATE* state)
     rstarlsearch_data->MDPstate = state;
 }
 
-CMDPSTATE* RSTARPlanner::CreateLSearchState(stateID stateID)
+CMDPSTATE* RSTARPlanner::CreateLSearchState(StateID id)
 {
     CMDPSTATE* state = NULL;
 
 #if DEBUG
-    if (environment_->StateID2IndexMapping[stateID][RSTARMDP_LSEARCH_STATEID2IND] != -1) {
+    if (environment_->StateID2IndexMapping[id][RSTARMDP_LSEARCH_STATEID2IND] != -1) {
         SBPL_ERROR("ERROR in CreateState: state already created\n");
         throw new SBPL_Exception();
     }
 #endif
 
     //adds to the tail a state
-    state = pLSearchStateSpace->MDP.AddState(stateID);
+    state = pLSearchStateSpace->MDP.AddState(id);
 
     //remember the index of the state
-    environment_->StateID2IndexMapping[stateID][RSTARMDP_LSEARCH_STATEID2IND]
+    environment_->StateID2IndexMapping[id][RSTARMDP_LSEARCH_STATEID2IND]
         = pLSearchStateSpace->MDP.StateArray.size() - 1;
 
 #if DEBUG
     if(state !=
-       pLSearchStateSpace->MDP.StateArray[environment_->StateID2IndexMapping[stateID][RSTARMDP_LSEARCH_STATEID2IND]])
+       pLSearchStateSpace->MDP.StateArray[environment_->StateID2IndexMapping[id][RSTARMDP_LSEARCH_STATEID2IND]])
     {
         SBPL_ERROR("ERROR in CreateState: invalid state index\n");
         throw new SBPL_Exception();
@@ -207,9 +207,9 @@ CMDPSTATE* RSTARPlanner::CreateLSearchState(stateID stateID)
     return state;
 }
 
-CMDPSTATE* RSTARPlanner::GetLSearchState(stateID id)
+CMDPSTATE* RSTARPlanner::GetLSearchState(StateID id)
 {
-    if (id >= (int)environment_->StateID2IndexMapping.size()) {
+    if (id >= environment_->StateID2IndexMapping.size()) {
         SBPL_ERROR("ERROR int GetLSearchState: stateID is invalid\n");
         throw new SBPL_Exception();
     }
@@ -226,21 +226,21 @@ CKey RSTARPlanner::LocalSearchComputeKey(RSTARLSearchState* rstarlsearchState)
 
     int h;
     if (bforwardsearch)
-        h = environment_->GetFromToHeuristic(rstarlsearchState->MDPstate->StateID,
-                                             pLSearchStateSpace->GoalState->StateID);
+        h = environment_->GetFromToHeuristic(rstarlsearchState->MDPstate->id,
+                                             pLSearchStateSpace->GoalState->id);
     else
-        h = environment_->GetFromToHeuristic(pLSearchStateSpace->GoalState->StateID,
-                                             rstarlsearchState->MDPstate->StateID);
+        h = environment_->GetFromToHeuristic(pLSearchStateSpace->GoalState->id,
+                                             rstarlsearchState->MDPstate->id);
 
     retkey.key[0] = rstarlsearchState->g + (int)(pSearchStateSpace->eps * h);
 
     return retkey;
 }
 
-bool RSTARPlanner::ComputeLocalPath(stateID StartStateID, stateID GoalStateID, int maxc, int maxe, int *pCost, int *pCostLow,
-                                    int *pExp, vector<stateID>* pPathIDs, int* pNewGoalStateID, double maxnumofsecs)
+bool RSTARPlanner::ComputeLocalPath(StateID StartStateID, StateID GoalStateID, int maxc, int maxe, int *pCost, int *pCostLow,
+                                    int *pExp, Path* pPathIDs, StateID* pNewGoalStateID, double maxnumofsecs)
 {
-    vector<stateID> SuccIDV;
+    Path SuccIDV;
     vector<int> CostV;
 
     if (pLSearchStateSpace->OPEN == NULL) pLSearchStateSpace->OPEN = new CHeap;
@@ -286,16 +286,16 @@ bool RSTARPlanner::ComputeLocalPath(stateID StartStateID, stateID GoalStateID, i
 
         //expansion
         local_expands++;
-        //environment_->PrintState(rstarlsearchstate->MDPstate->StateID, false, fLowLevelExp);
+        //environment_->PrintState(rstarlsearchstate->MDPstate->id, false, fLowLevelExp);
 
         //generate SUCCS state
         SuccIDV.clear();
         CostV.clear();
         //this setting makes it to get all successors - since this is a deterministic search
         if (bforwardsearch == false)
-            environment_->GetPreds(rstarlsearchstate->MDPstate->StateID, &SuccIDV, &CostV);
+            environment_->GetPreds(rstarlsearchstate->MDPstate->id, &SuccIDV, &CostV);
         else
-            environment_->GetSuccs(rstarlsearchstate->MDPstate->StateID, &SuccIDV, &CostV);
+            environment_->GetSuccs(rstarlsearchstate->MDPstate->id, &SuccIDV, &CostV);
 
         //iterate over states in SUCCS set
         for (int i = 0; i < (int)SuccIDV.size(); i++) {
@@ -319,15 +319,15 @@ bool RSTARPlanner::ComputeLocalPath(stateID StartStateID, stateID GoalStateID, i
                     pLSearchStateSpace->OPEN->updateheap(rstarlsearchSuccState,
                                                          LocalSearchComputeKey(rstarlsearchSuccState));
 
-                int goalStateID = pSearchStateSpace->searchgoalstate->StateID;
-                if (!environment_->AreEquivalent(rstarlsearchSuccState->MDPstate->StateID, goalStateID) &&
-                    environment_->AreEquivalent(rstarlsearchSuccState->MDPstate->StateID,
-                                                rstarlsearchgoalstate->MDPstate->StateID) &&
+                int goalStateID = pSearchStateSpace->searchgoalstate->id;
+                if (!environment_->AreEquivalent(rstarlsearchSuccState->MDPstate->id, goalStateID) &&
+                    environment_->AreEquivalent(rstarlsearchSuccState->MDPstate->id,
+                                                rstarlsearchgoalstate->MDPstate->id) &&
                     rstarlsearchSuccState->g < rstarlsearchgoalstate->g)
                 {
                     //swap the goal
                     rstarlsearchgoalstate = rstarlsearchSuccState;
-                    GoalStateID = rstarlsearchgoalstate->MDPstate->StateID;
+                    GoalStateID = rstarlsearchgoalstate->MDPstate->id;
                 }
             }
         }
@@ -344,7 +344,7 @@ bool RSTARPlanner::ComputeLocalPath(stateID StartStateID, stateID GoalStateID, i
     SBPL_FPRINTF(fDeb, "local search: expands=%d\n", local_expands);
 
     //set the return path and other path related variables
-    vector<stateID> tempPathID;
+    Path tempPathID;
     pPathIDs->clear();
     if (rstarlsearchgoalstate->g < INFINITECOST) {
         int pathcost = 0;
@@ -353,7 +353,7 @@ bool RSTARPlanner::ComputeLocalPath(stateID StartStateID, stateID GoalStateID, i
         rstarlsearchstate = rstarlsearchgoalstate;
         while (rstarlsearchstate->bestpredstate != NULL && rstarlsearchstate->MDPstate
             != pLSearchStateSpace->StartState) {
-            tempPathID.push_back(rstarlsearchstate->MDPstate->StateID);
+            tempPathID.push_back(rstarlsearchstate->MDPstate->id);
             pathcost += rstarlsearchstate->bestpredstateactioncost;
             rstarlsearchstate = (RSTARLSearchState*)rstarlsearchstate->bestpredstate->PlannerSpecificData;
         }
@@ -396,7 +396,7 @@ bool RSTARPlanner::DestroyLocalSearchMemory()
         RSTARLSearchState* rstarlsearchstatedata = (RSTARLSearchState*)state->PlannerSpecificData;
         delete rstarlsearchstatedata;
         state->PlannerSpecificData = NULL;
-        environment_->StateID2IndexMapping[state->StateID][RSTARMDP_LSEARCH_STATEID2IND] = -1;
+        environment_->StateID2IndexMapping[state->id][RSTARMDP_LSEARCH_STATEID2IND] = -1;
     }
     //now we can delete the states themselves
     if (pLSearchStateSpace->MDP.Delete() == false) {
@@ -426,7 +426,7 @@ int RSTARPlanner::ComputeHeuristic(CMDPSTATE* MDPstate)
 #endif
 
         //forward search: heur = distance from state to searchgoal which is Goal RSTARState
-        int retv = environment_->GetFromToHeuristic(MDPstate->StateID, pSearchStateSpace->searchgoalstate->StateID);
+        int retv = environment_->GetFromToHeuristic(MDPstate->id, pSearchStateSpace->searchgoalstate->id);
 
 #if MEM_CHECK == 1
         //if (WasEn)
@@ -437,7 +437,7 @@ int RSTARPlanner::ComputeHeuristic(CMDPSTATE* MDPstate)
     }
     else {
         //backward search: heur = distance from searchgoal to state
-        return environment_->GetFromToHeuristic(pSearchStateSpace->searchgoalstate->StateID, MDPstate->StateID);
+        return environment_->GetFromToHeuristic(pSearchStateSpace->searchgoalstate->id, MDPstate->id);
     }
 }
 
@@ -546,16 +546,16 @@ CKey RSTARPlanner::ComputeKey(RSTARState* rstarState)
 
     int h, starttostateh;
     if (bforwardsearch) {
-        h = environment_->GetFromToHeuristic(rstarState->MDPstate->StateID,
-                                             pSearchStateSpace->searchgoalstate->StateID);
-        starttostateh = environment_->GetFromToHeuristic(pSearchStateSpace->searchstartstate->StateID,
-                                                         rstarState->MDPstate->StateID);
+        h = environment_->GetFromToHeuristic(rstarState->MDPstate->id,
+                                             pSearchStateSpace->searchgoalstate->id);
+        starttostateh = environment_->GetFromToHeuristic(pSearchStateSpace->searchstartstate->id,
+                                                         rstarState->MDPstate->id);
     }
     else {
-        h = environment_->GetFromToHeuristic(pSearchStateSpace->searchgoalstate->StateID,
-                                             rstarState->MDPstate->StateID);
-        starttostateh = environment_->GetFromToHeuristic(rstarState->MDPstate->StateID,
-                                                         pSearchStateSpace->searchstartstate->StateID);
+        h = environment_->GetFromToHeuristic(pSearchStateSpace->searchgoalstate->id,
+                                             rstarState->MDPstate->id);
+        starttostateh = environment_->GetFromToHeuristic(rstarState->MDPstate->id,
+                                                         pSearchStateSpace->searchstartstate->id);
     }
 
     //compute 2nd element of the key
@@ -584,7 +584,7 @@ int RSTARPlanner::ImprovePath(double MaxNumofSecs)
     CKey key, minkey;
     CKey goalkey;
 
-    vector<stateID> SuccIDV;
+    Path SuccIDV;
     vector<int> CLowV;
     int highlevelexpands = 0;
 
@@ -627,9 +627,9 @@ int RSTARPlanner::ImprovePath(double MaxNumofSecs)
         //pop the min element
         rstarstate = (RSTARState*)pSearchStateSpace->OPEN->deleteminheap();
 
-        SBPL_FPRINTF(fDeb, "ComputePath:  selected state %d g=%d (AVOID=%d)\n", rstarstate->MDPstate->StateID,
+        SBPL_FPRINTF(fDeb, "ComputePath:  selected state %d g=%d (AVOID=%d)\n", rstarstate->MDPstate->id,
                      rstarstate->g, (int)minkey.key[0]);
-        environment_->PrintState(rstarstate->MDPstate->StateID, true, fDeb);
+        environment_->PrintState(rstarstate->MDPstate->id, true, fDeb);
 
         if (rstarstate->MDPstate != pSearchStateSpace->searchstartstate &&
             ((RSTARACTIONDATA*)rstarstate->bestpredaction->PlannerSpecificData)->pathIDs.size() == 0)
@@ -655,11 +655,11 @@ int RSTARPlanner::ImprovePath(double MaxNumofSecs)
                 CKey nextkey = rstarPlanner.OPEN->getminkeyheap();
 
                 if(bforwardsearch)
-                h = environment_->GetFromToHeuristic(rstarstate->MDPstate->StateID,
+                h = environment_->GetFromToHeuristic(rstarstate->MDPstate->id,
                                                      pSearchStateSpace->GoalState->StateID);
                 else
                 h = environment_->GetFromToHeuristic(pSearchStateSpace->GoalState->StateID,
-                                                     rstarstate->MDPstate->StateID);
+                                                     rstarstate->MDPstate->id);
 
                 maxc = nextkey[1] -
                 (rstarpredstate->g + rstarPlanner.epsilon*h) + RSTAR_COSTDELTA;
@@ -667,24 +667,24 @@ int RSTARPlanner::ImprovePath(double MaxNumofSecs)
             }
 
             SBPL_FPRINTF(fDeb, "recomputing path from bp %d to state %d with maxc=%d maxe=%d\n",
-                         rstarpredstate->MDPstate->StateID, rstarstate->MDPstate->StateID, maxc, maxe);
+                         rstarpredstate->MDPstate->id, rstarstate->MDPstate->id, maxc, maxe);
             SBPL_FPRINTF(fDeb, "bp state:\n");
-            environment_->PrintState(rstarpredstate->MDPstate->StateID, true, fDeb);
+            environment_->PrintState(rstarpredstate->MDPstate->id, true, fDeb);
 
             //re-compute the path
-            int NewGoalStateID = rstarstate->MDPstate->StateID;
-            ComputeLocalPath(rstarpredstate->MDPstate->StateID, rstarstate->MDPstate->StateID, maxc, maxe,
+            StateID NewGoalStateID = rstarstate->MDPstate->id;
+            ComputeLocalPath(rstarpredstate->MDPstate->id, rstarstate->MDPstate->id, maxc, maxe,
                              &computedaction->Costs[0], &computedactiondata->clow, &computedactiondata->exp,
                              &computedactiondata->pathIDs, &NewGoalStateID, MaxNumofSecs);
 
             SBPL_FPRINTF(fDeb, "return values: pathcost=%d clow=%d exp=%d\n", computedaction->Costs[0],
                          computedactiondata->clow, computedactiondata->exp);
             bool bSwitch = false;
-            if (NewGoalStateID != rstarstate->MDPstate->StateID) {
+            if (NewGoalStateID != rstarstate->MDPstate->id) {
                 bSwitch = true;
-                SBPL_FPRINTF(fDeb, "targetstate was switched from %d to %d\n", rstarstate->MDPstate->StateID,
+                SBPL_FPRINTF(fDeb, "targetstate was switched from %d to %d\n", rstarstate->MDPstate->id,
                              NewGoalStateID);
-                SBPL_FPRINTF(stdout, "targetstate was switched from %d to %d\n", rstarstate->MDPstate->StateID,
+                SBPL_FPRINTF(stdout, "targetstate was switched from %d to %d\n", rstarstate->MDPstate->id,
                              NewGoalStateID);
                 environment_->PrintState(NewGoalStateID, true, fDeb);
 
@@ -701,7 +701,7 @@ int RSTARPlanner::ImprovePath(double MaxNumofSecs)
 
                 //add the successor to our graph
                 CMDPACTION* action = rstarpredstate->MDPstate->AddAction(rstarpredstate->MDPstate->Actions.size());
-                action->AddOutcome(rstarNewTargetState->MDPstate->StateID, computedaction->Costs[0], 1.0);
+                action->AddOutcome(rstarNewTargetState->MDPstate->id, computedaction->Costs[0], 1.0);
                 action->PlannerSpecificData = new RSTARACTIONDATA;
                 MaxMemoryCounter += sizeof(RSTARACTIONDATA);
                 ((RSTARACTIONDATA*)action->PlannerSpecificData)->clow = computedactiondata->clow;
@@ -714,11 +714,11 @@ int RSTARPlanner::ImprovePath(double MaxNumofSecs)
                 //the action was not found to the old state
                 computedaction->Costs[0] = INFINITECOST;
                 if (bforwardsearch)
-                    computedactiondata->clow = environment_->GetFromToHeuristic(rstarpredstate->MDPstate->StateID,
-                                                                                rstarstate->MDPstate->StateID);
+                    computedactiondata->clow = environment_->GetFromToHeuristic(rstarpredstate->MDPstate->id,
+                                                                                rstarstate->MDPstate->id);
                 else
-                    computedactiondata->clow = environment_->GetFromToHeuristic(rstarstate->MDPstate->StateID,
-                                                                                rstarpredstate->MDPstate->StateID);
+                    computedactiondata->clow = environment_->GetFromToHeuristic(rstarstate->MDPstate->id,
+                                                                                rstarpredstate->MDPstate->id);
 
                 computedactiondata->pathIDs.clear();
 
@@ -734,11 +734,11 @@ int RSTARPlanner::ImprovePath(double MaxNumofSecs)
             CMDPACTION* utosaction = NULL;
             int hfromstarttostate;
             if (bforwardsearch)
-                hfromstarttostate = environment_->GetFromToHeuristic(searchstartstate->MDPstate->StateID,
-                                                                     rstarstate->MDPstate->StateID);
+                hfromstarttostate = environment_->GetFromToHeuristic(searchstartstate->MDPstate->id,
+                                                                     rstarstate->MDPstate->id);
             else
-                hfromstarttostate = environment_->GetFromToHeuristic(rstarstate->MDPstate->StateID,
-                                                                     searchstartstate->MDPstate->StateID);
+                hfromstarttostate = environment_->GetFromToHeuristic(rstarstate->MDPstate->id,
+                                                                     searchstartstate->MDPstate->id);
             if (computedactiondata->pathIDs.size() == 0 ||
                 rstarpredstate->g + computedactiondata->clow > pSearchStateSpace->eps * hfromstarttostate)
             {
@@ -756,7 +756,7 @@ int RSTARPlanner::ImprovePath(double MaxNumofSecs)
                         utosaction = predaction;
                     }
                 }
-                if (stateu) SBPL_FPRINTF(fDeb, "best pred stateid: %d\n", stateu->MDPstate->StateID);
+                if (stateu) SBPL_FPRINTF(fDeb, "best pred stateid: %d\n", stateu->MDPstate->id);
 
                 //set the predecessor
                 if (minQ < INFINITECOST) SetBestPredecessor(rstarstate, stateu, utosaction);
@@ -776,8 +776,8 @@ int RSTARPlanner::ImprovePath(double MaxNumofSecs)
             }
         }
         else {
-            SBPL_FPRINTF(fDeb, "high-level normal expansion of state %d\n", rstarstate->MDPstate->StateID);
-            environment_->PrintState(rstarstate->MDPstate->StateID, true, fDeb);
+            SBPL_FPRINTF(fDeb, "high-level normal expansion of state %d\n", rstarstate->MDPstate->id);
+            environment_->PrintState(rstarstate->MDPstate->id, true, fDeb);
             highlevelexpands++;
 
             //close the state
@@ -790,9 +790,9 @@ int RSTARPlanner::ImprovePath(double MaxNumofSecs)
             SuccIDV.clear();
             CLowV.clear();
             if (bforwardsearch)
-                environment_->GetRandomSuccsatDistance(rstarstate->MDPstate->StateID, &SuccIDV, &CLowV);
+                environment_->GetRandomSuccsatDistance(rstarstate->MDPstate->id, &SuccIDV, &CLowV);
             else
-                environment_->GetRandomPredsatDistance(rstarstate->MDPstate->StateID, &SuccIDV, &CLowV);
+                environment_->GetRandomPredsatDistance(rstarstate->MDPstate->id, &SuccIDV, &CLowV);
 
             SBPL_FPRINTF(fDeb, "%d succs were generated at random\n", (unsigned int)SuccIDV.size());
 
@@ -802,7 +802,7 @@ int RSTARPlanner::ImprovePath(double MaxNumofSecs)
                 RSTARState* rstarSuccState = (RSTARState*)GetState(SuccIDV.at(i))->PlannerSpecificData;
 
                 SBPL_FPRINTF(fDeb, "succ %d:\n", i);
-                environment_->PrintState(rstarSuccState->MDPstate->StateID, true, fDeb);
+                environment_->PrintState(rstarSuccState->MDPstate->id, true, fDeb);
 
                 //re-initialize the state if necessary
                 if (rstarSuccState->callnumberaccessed != pSearchStateSpace->callnumber) {
@@ -816,16 +816,16 @@ int RSTARPlanner::ImprovePath(double MaxNumofSecs)
                 }
                 notclosed++;
 
-                //if(rstarSuccState->MDPstate->StateID == 3838){
+                //if(rstarSuccState->MDPstate->id == 3838){
                 //    SBPL_FPRINTF(fDeb, "generating state %d with g=%d bp=%d:\n",
-                //                 rstarSuccState->MDPstate->StateID, rstarSuccState->g, 
+                //                 rstarSuccState->MDPstate->id, rstarSuccState->g,
                 //            (rstarSuccState->bestpredaction==NULL?-1:rstarSuccState->bestpredaction->SourceStateID));
-                //    Env_PrintState(rstarSuccState->MDPstate->StateID, true, false, fDeb);
+                //    Env_PrintState(rstarSuccState->MDPstate->id, true, false, fDeb);
                 //}
 
                 //add the successor to our graph
                 CMDPACTION* action = rstarstate->MDPstate->AddAction(i);
-                action->AddOutcome(rstarSuccState->MDPstate->StateID, INFINITECOST, 1.0);
+                action->AddOutcome(rstarSuccState->MDPstate->id, INFINITECOST, 1.0);
                 action->PlannerSpecificData = new RSTARACTIONDATA;
                 MaxMemoryCounter += sizeof(RSTARACTIONDATA);
                 ((RSTARACTIONDATA*)action->PlannerSpecificData)->clow = CLowV[i];
@@ -1043,10 +1043,10 @@ int RSTARPlanner::InitializeSearchStateSpace()
     return 1;
 }
 
-int RSTARPlanner::SetSearchGoalState(stateID SearchGoalStateID)
+int RSTARPlanner::SetSearchGoalState(StateID SearchGoalStateID)
 {
     if (pSearchStateSpace->searchgoalstate == NULL ||
-        pSearchStateSpace->searchgoalstate->StateID != SearchGoalStateID)
+        pSearchStateSpace->searchgoalstate->id != SearchGoalStateID)
     {
         pSearchStateSpace->searchgoalstate = GetState(SearchGoalStateID);
 
@@ -1071,7 +1071,7 @@ int RSTARPlanner::SetSearchGoalState(stateID SearchGoalStateID)
     return 1;
 }
 
-int RSTARPlanner::SetSearchStartState(stateID SearchStartStateID)
+int RSTARPlanner::SetSearchStartState(StateID SearchStartStateID)
 {
     CMDPSTATE* MDPstate = GetState(SearchStartStateID);
 
@@ -1086,9 +1086,9 @@ int RSTARPlanner::SetSearchStartState(stateID SearchStartStateID)
 
 void RSTARPlanner::PrintSearchState(RSTARState* state, FILE* fOut)
 {
-    SBPL_FPRINTF(fOut, "state %d: h=%d g=%u iterc=%d callnuma=%d heapind=%d \n", state->MDPstate->StateID, state->h,
+    SBPL_FPRINTF(fOut, "state %d: h=%d g=%u iterc=%d callnuma=%d heapind=%d \n", state->MDPstate->id, state->h,
                  state->g, state->iterationclosed, state->callnumberaccessed, state->heapindex);
-    environment_->PrintState(state->MDPstate->StateID, true, fOut);
+    environment_->PrintState(state->MDPstate->id, true, fOut);
 }
 
 int RSTARPlanner::getHeurValue(int StateID)
@@ -1098,9 +1098,9 @@ int RSTARPlanner::getHeurValue(int StateID)
     return searchstateinfo->h;
 }
 
-vector<stateID> RSTARPlanner::GetSearchPath(int& solcost)
+Path RSTARPlanner::GetSearchPath(int& solcost)
 {
-    vector<stateID> wholePathIds;
+    Path wholePathIds;
     RSTARState* rstargoalstate = (RSTARState*)pSearchStateSpace->searchgoalstate->PlannerSpecificData;
 
     //set the return path and other path related variables
@@ -1138,12 +1138,12 @@ vector<stateID> RSTARPlanner::GetSearchPath(int& solcost)
                        bestpredactiondata->clow, predstate->g, bestpredactiondata->clow + predstate->g, rstarstate->g,
                        pSearchStateSpace->callnumber, pSearchStateSpace->searchiteration);
             SBPL_PRINTF("predstate: ");
-            environment_->PrintState(predstate->MDPstate->StateID, true, stdout);
+            environment_->PrintState(predstate->MDPstate->id, true, stdout);
             SBPL_PRINTF("succstate: ");
-            environment_->PrintState(rstarstate->MDPstate->StateID, true, stdout);
-            SBPL_PRINTF("PredState: stateID=%d g=%d calln=%d iterc=%d h=%d\n", predstate->MDPstate->StateID,
+            environment_->PrintState(rstarstate->MDPstate->id, true, stdout);
+            SBPL_PRINTF("PredState: stateID=%d g=%d calln=%d iterc=%d h=%d\n", predstate->MDPstate->id,
                         predstate->g, predstate->callnumberaccessed, predstate->iterationclosed, predstate->h);
-            SBPL_PRINTF("Succstate: stateID=%d g=%d calln=%d iterc=%d h=%d\n", rstarstate->MDPstate->StateID,
+            SBPL_PRINTF("Succstate: stateID=%d g=%d calln=%d iterc=%d h=%d\n", rstarstate->MDPstate->id,
                         rstarstate->g, rstarstate->callnumberaccessed, rstarstate->iterationclosed, rstarstate->h);
             fflush(fDeb);
 
@@ -1182,9 +1182,9 @@ vector<stateID> RSTARPlanner::GetSearchPath(int& solcost)
     }
     //add the goal state
     if (bforwardsearch)
-        wholePathIds.push_back(rstargoalstate->MDPstate->StateID);
+        wholePathIds.push_back(rstargoalstate->MDPstate->id);
     else
-        wholePathIds.push_back(pSearchStateSpace->searchstartstate->StateID);
+        wholePathIds.push_back(pSearchStateSpace->searchstartstate->id);
 
     SBPL_FPRINTF(fDeb, "high-level pathcost=%d and high-level g(searchgoal)=%d\n", pathcost, rstargoalstate->g);
 
@@ -1195,7 +1195,7 @@ vector<stateID> RSTARPlanner::GetSearchPath(int& solcost)
 
 void RSTARPlanner::PrintSearchPath(FILE* fOut)
 {
-    vector<stateID> pathIds;
+    Path pathIds;
     int solcost;
 
     pathIds = GetSearchPath(solcost);
@@ -1206,7 +1206,7 @@ void RSTARPlanner::PrintSearchPath(FILE* fOut)
     }
 }
 
-bool RSTARPlanner::Search(vector<stateID>& pathIds, int & PathCost, bool bFirstSolution, bool bOptimalSolution,
+bool RSTARPlanner::Search(Path& pathIds, int & PathCost, bool bFirstSolution, bool bOptimalSolution,
                           double MaxNumofSecs)
 {
     CKey key;
@@ -1303,7 +1303,7 @@ bool RSTARPlanner::Search(vector<stateID>& pathIds, int & PathCost, bool bFirstS
         prevexpands = highlevel_searchexpands;
 
         //keep track of the best solution so far
-        vector<stateID> CurrentPathIds;
+        Path CurrentPathIds;
         int CurrentPathCost = ((RSTARState*)pSearchStateSpace->searchgoalstate->PlannerSpecificData)->g;
         if (CurrentPathCost == INFINITECOST ||
             ((RSTARACTIONDATA*)((RSTARState*)pSearchStateSpace->searchgoalstate->PlannerSpecificData)->bestpredaction->PlannerSpecificData)->pathIDs.size() == 0)
@@ -1356,7 +1356,7 @@ bool RSTARPlanner::Search(vector<stateID>& pathIds, int & PathCost, bool bFirstS
 
 //-----------------------------Interface function-----------------------------------------------------
 //returns 1 if found a solution, and 0 otherwise
-int RSTARPlanner::replan(double allocated_time_secs, vector<stateID>* solution_stateIDs_V)
+int RSTARPlanner::replan(double allocated_time_secs, Path* solution_stateIDs_V)
 {
     int solcost;
 
@@ -1364,9 +1364,9 @@ int RSTARPlanner::replan(double allocated_time_secs, vector<stateID>* solution_s
 }
 
 //returns 1 if found a solution, and 0 otherwise
-int RSTARPlanner::replan(double allocated_time_secs, vector<stateID>* solution_stateIDs_V, int* psolcost)
+int RSTARPlanner::replan(double allocated_time_secs, Path* solution_stateIDs_V, int* psolcost)
 {
-    vector<stateID> pathIds;
+    Path pathIds;
     bool bFound = false;
     int PathCost;
     bool bFirstSolution = this->bsearchuntilfirstsolution;
@@ -1387,7 +1387,7 @@ int RSTARPlanner::replan(double allocated_time_secs, vector<stateID>* solution_s
     return (int)bFound;
 }
 
-int RSTARPlanner::set_goal(stateID goal_stateID)
+int RSTARPlanner::set_goal(StateID goal_stateID)
 {
     SBPL_PRINTF("planner: setting goal to %d\n", goal_stateID);
     environment_->PrintState(goal_stateID, true, stdout);
@@ -1408,7 +1408,7 @@ int RSTARPlanner::set_goal(stateID goal_stateID)
     return 1;
 }
 
-int RSTARPlanner::set_start(stateID start_stateID)
+int RSTARPlanner::set_start(StateID start_stateID)
 {
     SBPL_PRINTF("planner: setting start to %d\n", start_stateID);
     environment_->PrintState(start_stateID, true, stdout);

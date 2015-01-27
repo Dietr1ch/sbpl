@@ -188,11 +188,11 @@ public:
 class AAPlanner : public SBPLPlanner {
 
     public:
-        int replan(double givenSeconds, vector<stateID> *solution_stateIDs_V);
-        int replan(double givenSeconds, vector<stateID> *solution_stateIDs_V, int *solcost);
+        int replan(double givenSeconds, Path *solution_stateIDs_V);
+        int replan(double givenSeconds, Path *solution_stateIDs_V, int *solcost);
 
-        int set_start(stateID startID);
-        int set_goal(stateID goalID);
+        int set_start(StateID startID);
+        int set_goal(StateID goalID);
 
         void costs_changed(StateChangeQuery const &stateChange);
         void costs_changed();
@@ -235,9 +235,9 @@ class AAPlanner : public SBPLPlanner {
         FILE *fDeb;
 
 
-        CMDPSTATE *CreateState(int stateID, AASpace *space);
+        CMDPSTATE *CreateState(StateID id, AASpace *space);
 
-        CMDPSTATE *GetState(int stateID, AASpace *space);
+        CMDPSTATE *GetState(StateID id, AASpace *space);
 
 public:
         int ComputeHeuristic(CMDPSTATE *MDPstate, AASpace* space);
@@ -288,10 +288,10 @@ private:
         //very first initialization
         int InitializeSearchStateSpace(AASpace *space);
 
-        int SetSearchGoalState(int SearchGoalStateID, AASpace *space);
+        int SetSearchGoalState(StateID SearchGoalStateID, AASpace *space);
 
 
-        int SetSearchStartState(int SearchStartStateID, AASpace *space);
+        int SetSearchStartState(StateID SearchStartStateID, AASpace *space);
 
         //reconstruct path functions are only relevant for forward search
         int ReconstructPath(AASpace *space);
@@ -302,9 +302,9 @@ private:
         int getHeurValue(AASpace *space, int StateID);
 
         //get path
-        vector<stateID> GetSearchPath(AASpace *space, int &solcost);
+        Path GetSearchPath(AASpace *space, int &solcost);
 
-        bool Search(AASpace *space, vector<stateID> &pathIds, int &PathCost, bool bFirstSolution, bool bOptimalSolution, double MaxNumofSecs);
+        bool Search(AASpace *space, Path &pathIds, int &PathCost, bool bFirstSolution, bool bOptimalSolution, double MaxNumofSecs);
 
 
 
@@ -314,12 +314,12 @@ private:
 //------------------------------------------------------------------------------
         AAState *ChooseOneSuccs_for_TargetMove(AAState *state, AASpace *space);
 
-        int ReSetSearchGoalState(int SearchGoalStateID, AASpace *space);
-        int reset_goal(int start_stateID);
+        int ReSetSearchGoalState(StateID SearchGoalStateID, AASpace *space);
+        int reset_goal(StateID start_stateID);
 // return 1 if target moved off the previous path, return 0 otherwise
         int goal_moved(AASpace *space);
         int ReSetSearchStartState(int SearchStartStateID, AASpace *space);
-        int reset_start(int start_stateID);
+        int reset_start(StateID start_stateID);
 // return 1 if robot moved one step
         int start_moved(AASpace *space);
 

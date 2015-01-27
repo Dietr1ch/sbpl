@@ -47,14 +47,14 @@ using std::string;
 
 
 struct nodeStub {
-    stateID id;
+    StateID id;
     int     cost;
 };
 
 
 /**
  * \brief base class for environments defining planning graphs
- * 
+ *
  * It is independent of the graph search used
  * The main means of communication between environment and graph search is
  * through stateID.  Each state is uniquely defined by stateID and graph
@@ -98,17 +98,17 @@ public:
     /**
      * \brief heuristic estimate from state FromStateID to state ToStateID
      */
-    virtual int GetFromToHeuristic(stateID fromID, stateID toID) = 0;
+    virtual int GetFromToHeuristic(StateID fromID, StateID toID) = 0;
 
     /**
      * \brief heuristic estimate from state with stateID to goal state
      */
-    virtual int GetGoalHeuristic(stateID id) = 0;
+    virtual int GetGoalHeuristic(StateID id) = 0;
 
     /**
      * \brief heuristic estimate from start state to state with stateID
      */
-    virtual int GetStartHeuristic(stateID id) = 0;
+    virtual int GetStartHeuristic(StateID id) = 0;
 
 
     // REVIEW: A vector of structs should be used instead of parallel vectors
@@ -121,27 +121,27 @@ public:
      *         keep the pointers to successors (predecessors) but most searches do not
      *         require this, so it is not necessary to support this
      */
-    virtual void GetSuccs(stateID id, vector<stateID>* SuccIDV, vector<int>* CostV) = 0;
+    virtual void GetSuccs(StateID id, Path* SuccIDV, vector<int>* CostV) = 0;
 
-    virtual vector<nodeStub>* GetSuccs(stateID id) {
+    virtual vector<nodeStub>* GetSuccs(StateID id) {
         // TODO: this MUST be done on a lower level!
 
         // Retrieve successors the old way
-        vector<stateID> ids;
+        vector<StateID> ids;
         vector<int> costs;
         GetSuccs(id, &ids, &costs);
 
         // Copy the data onto a new vector
-        int successorsCount = ids.size();
+        StateID successorsCount = ids.size();
 #if !DEBUG
         QUIT("OVERHEAD: %d copies and some calls", successorsCount);
 #endif
 
         vector<nodeStub> *successors = new vector<nodeStub>(successorsCount);
-        assert(successors->size() == (size_t)successorsCount);
+        assert(successors->size() == successorsCount);
 
         // Variadic zip operator would be nice :c
-        for(int i=0; i<successorsCount; i++) {
+        for(StateID i=0; i<successorsCount; i++) {
             VALID_STATE( ids[i] );
             assert( costs[i]>=0 );
 
@@ -153,25 +153,25 @@ public:
         return successors;
     };
 
-    virtual vector<nodeStub>* GetPreds(stateID id) {
+    virtual vector<nodeStub>* GetPreds(StateID id) {
         // TODO: this MUST be done on a lower level!
 
         // Retrieve successors the old way
-        vector<stateID> ids;
+        Path ids;
         vector<int> costs;
         GetPreds(id, &ids, &costs);
 
         // Copy the data onto a new vector
-        int count = ids.size();
+        std::size_t count = ids.size();
 #if !DEBUG
         QUIT("OVERHEAD: %d copies and some calls", count);
 #endif
 
         vector<nodeStub> *predecessors = new vector<nodeStub>(count);
-        assert(predecessors->size() == (size_t)count);
+        assert(predecessors->size() == count);
 
         // Variadic zip operator would be nice :c
-        for(int i=0; i<count; i++) {
+        for(std::size_t i=0; i<count; i++) {
             VALID_STATE( ids[i] );
             assert( costs[i]>=0 );
 
@@ -187,20 +187,20 @@ public:
      *        been evaluated fully (and therefore their true cost is being returned) or if it has not been.
      *        If a successor's cost is not true, then the cost must not overestimate the true cost.
      */
-    virtual void GetLazySuccs(stateID id, vector<stateID>* SuccIDV, vector<int>* CostV, vector<bool>* isTrueCost){
+    virtual void GetLazySuccs(StateID id, Path* SuccIDV, vector<int>* CostV, vector<bool>* isTrueCost){
       SBPL_ERROR("ERROR: GetLazySuccs is not implemented for this environment!\n");
       throw new SBPL_Exception();
     };
 
     /**
-     * \brief This version of GetSuccs is needed for E-Graphs. It always returns a unique ID for 
+     * \brief This version of GetSuccs is needed for E-Graphs. It always returns a unique ID for
      *        every successor. Generally, this function operates the same as the usual GetSuccs
      *        and only has different behavior when dealing with an underspecified goal condition
      *        so that several different states will have to map to the same id number (most planners
-     *        in sbpl use a single goal id number to identify the goal). This function is used 
+     *        in sbpl use a single goal id number to identify the goal). This function is used
      *        in conjunction with isGoal.
      */
-    virtual void GetSuccsWithUniqueIds(stateID id, vector<stateID>* SuccIDV, vector<int>* CostV){
+    virtual void GetSuccsWithUniqueIds(StateID id, Path* SuccIDV, vector<int>* CostV){
       SBPL_ERROR("ERROR: GetSuccsWithUniqueIds is not implemented for this environment!\n");
       throw new SBPL_Exception();
     };
@@ -208,7 +208,7 @@ public:
     /**
      * \brief The lazy version of GetSuccsUniqueIds.
      */
-    virtual void GetLazySuccsWithUniqueIds(stateID id, vector<stateID>* SuccIDV, vector<int>* CostV, vector<bool>* isTrueCost){
+    virtual void GetLazySuccsWithUniqueIds(StateID id, Path* SuccIDV, vector<int>* CostV, vector<bool>* isTrueCost){
       SBPL_ERROR("ERROR: GetLazySuccsWithUniqueIds (lazy) is not implemented for this environment!\n");
       throw new SBPL_Exception();
     };
@@ -217,16 +217,16 @@ public:
      * \brief Used with lazy planners. This evaluates a edge fully that had previously been provided by GetSuccs
      *        without a "true cost". If the edge is found to be invalid, it should return -1
      */
-    virtual int GetTrueCost(stateID parentID, stateID childID){
+    virtual int GetTrueCost(StateID parentID, StateID childID){
       SBPL_ERROR("ERROR: GetTrueCost (used for lazy planning) is not implemented for this environment!\n");
       throw new SBPL_Exception();
       return -1;
     };
 
     /**
-     * \brief This function is generally used with E-Graphs (in conjunction with GetSuccsWithUniqueIds). 
+     * \brief This function is generally used with E-Graphs (in conjunction with GetSuccsWithUniqueIds).
      */
-    virtual bool isGoal(stateID id){
+    virtual bool isGoal(StateID id){
       SBPL_ERROR("ERROR: isGoal is not implemented for this environment!\n");
       throw new SBPL_Exception();
       return false;
@@ -235,12 +235,12 @@ public:
     /**
      * \brief see comments for GetSuccs functon
      */
-    virtual void GetPreds(stateID TargetStateID, vector<stateID>* PredIDV, vector<int>* CostV) = 0;
+    virtual void GetPreds(StateID TargetStateID, Path* PredIDV, vector<int>* CostV) = 0;
 
     /**
      * \brief see comments for GetSuccs functon
      */
-    virtual void GetLazyPreds(stateID TargetStateID, vector<stateID>* PredIDV, vector<int>* CostV, vector<bool>* isTrueCost){
+    virtual void GetLazyPreds(StateID TargetStateID, Path* PredIDV, vector<int>* CostV, vector<bool>* isTrueCost){
       SBPL_ERROR("ERROR: GetLazyPreds is not implemented for this environment!\n");
       throw new SBPL_Exception();
     };
@@ -248,7 +248,7 @@ public:
     /**
      * \brief see comments for GetSuccs functon
      */
-    virtual void GetPredsWithUniqueIds(stateID TargetStateID, vector<stateID>* PredIDV, vector<int>* CostV){
+    virtual void GetPredsWithUniqueIds(StateID TargetStateID, Path* PredIDV, vector<int>* CostV){
       SBPL_ERROR("ERROR: GetPredsWithUniqueIds is not implemented for this environment!\n");
       throw new SBPL_Exception();
     };
@@ -256,7 +256,7 @@ public:
     /**
      * \brief see comments for GetSuccs functon
      */
-    virtual void GetLazyPredsWithUniqueIds(stateID TargetStateID, vector<stateID>* PredIDV, vector<int>* CostV, vector<bool>* isTrueCost){
+    virtual void GetLazyPredsWithUniqueIds(StateID TargetStateID, Path* PredIDV, vector<int>* CostV, vector<bool>* isTrueCost){
       SBPL_ERROR("ERROR: GetLazyPredsWithUniqueIds is not implemented for this environment!\n");
       throw new SBPL_Exception();
     };
@@ -279,7 +279,7 @@ public:
     /**
      * \brief prints the state variables for a state with stateID
      */
-    virtual void PrintState(stateID id, bool bVerbose, FILE* fOut = NULL) = 0;
+    virtual void PrintState(StateID id, bool bVerbose, FILE* fOut = NULL) = 0;
 
     /**
      * \brief prints environment config file
@@ -296,10 +296,10 @@ public:
     }
 
     /** NOTE - for debugging door planner - ben 8.31.09 */
-    virtual vector<stateID> GetExpandedStates()
+    virtual Path GetExpandedStates()
     {
         SBPL_ERROR("Error: Not yet defined for any environment other than door environment.\n");
-        vector<stateID> list;
+        Path list;
         return list;
     }
 
@@ -310,7 +310,7 @@ public:
      *         position unless overwritten in a child class, this function is not
      *         implemented
      */
-    virtual bool AreEquivalent(stateID StateID1, stateID StateID2)
+    virtual bool AreEquivalent(StateID StateID1, StateID StateID2)
     {
         SBPL_ERROR("ERROR: environment does not support calls to AreEquivalent function\n");
         throw new SBPL_Exception();
@@ -324,7 +324,7 @@ public:
      *         states (or vice versa for preds function) unless overwritten in a child
      *         class, this function is not implemented
      */
-    virtual void GetRandomSuccsatDistance(stateID SourceStateID, vector<stateID>* SuccIDV, vector<int>* CLowV)
+    virtual void GetRandomSuccsatDistance(StateID SourceStateID, Path* SuccIDV, vector<int>* CLowV)
     {
         SBPL_ERROR("ERROR: environment does not support calls to GetRandomSuccsatDistance function\n");
         throw new SBPL_Exception();
@@ -333,7 +333,7 @@ public:
     /**
      * \brief see comments for GetRandomSuccsatDistance
      */
-    virtual void GetRandomPredsatDistance(stateID TargetStateID, vector<stateID>* PredIDV, vector<int>* CLowV)
+    virtual void GetRandomPredsatDistance(StateID TargetStateID, Path* PredIDV, vector<int>* CLowV)
     {
         SBPL_ERROR("ERROR: environment does not support calls to GetRandomPredsatDistance function\n");
         throw new SBPL_Exception();
@@ -428,7 +428,7 @@ public:
 
     // TODO: Expose Sensor updates
 
-    virtual char* toString(stateID id){
+    virtual char* toString(StateID id){
         return nullptr;
     };
 };

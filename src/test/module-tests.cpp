@@ -70,7 +70,7 @@ void runARAPlannerTest(const std::string& problem)
         ASSERT_EQ(environment_nav2D.InitializeMDPCfg(&MDPCfg), true);
 
         // plan a path
-        vector<stateID> solution_stateIDs_V;
+        Path solution_stateIDs_V;
         ARAPlanner ara_planner(&environment_nav2D, false);
         ASSERT_EQ(ara_planner.set_start(MDPCfg.startstateid), true);
         ASSERT_EQ(ara_planner.set_goal(MDPCfg.goalstateid), true);

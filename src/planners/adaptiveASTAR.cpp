@@ -211,10 +211,10 @@ AAPlanner::~AAPlanner() {
 
 //Xiaoxun 1: CreateState()
 CMDPSTATE*
-AAPlanner::CreateState(int stateID, AASpace *space) {
+AAPlanner::CreateState(StateID id, AASpace *space) {
 
 #if DEBUG
-    if (environment_->StateID2IndexMapping[stateID][ARAMDP_STATEID2IND] != -1) {
+    if (environment_->StateID2IndexMapping[id][ARAMDP_STATEID2IND] != -1) {
         SBPL_ERROR("ERROR in CreateState: state already created\n");
         exit(1);
     }
@@ -222,14 +222,14 @@ AAPlanner::CreateState(int stateID, AASpace *space) {
 
 
     //adds to the tail a state
-    CMDPSTATE *state = space->searchMDP.AddState(stateID); // Xiaoxun 2:  searchMDP == vector<CMDPSTATE*> StateArray;
+    CMDPSTATE *state = space->searchMDP.AddState(id); // Xiaoxun 2:  searchMDP == vector<CMDPSTATE*> StateArray;
 
     //remember the index of the state
-    environment_->StateID2IndexMapping[stateID][ARAMDP_STATEID2IND] = space->searchMDP.StateArray.size() - 1;
+    environment_->StateID2IndexMapping[id][ARAMDP_STATEID2IND] = space->searchMDP.StateArray.size() - 1;
 
 
 #if DEBUG
-    if (state != space->searchMDP.StateArray[environment_->StateID2IndexMapping[stateID][ARAMDP_STATEID2IND]]) {
+    if (state != space->searchMDP.StateArray[environment_->StateID2IndexMapping[id][ARAMDP_STATEID2IND]]) {
         SBPL_ERROR("ERROR in CreateState: invalid state index\n");
         exit(1);
     }
@@ -245,17 +245,17 @@ AAPlanner::CreateState(int stateID, AASpace *space) {
 }
 
 CMDPSTATE*
-AAPlanner::GetState(int stateID, AASpace *pSearchStateSpace) {
+AAPlanner::GetState(StateID id, AASpace *pSearchStateSpace) {
 
-    if (stateID >= (int)environment_->StateID2IndexMapping.size()) {
-        SBPL_ERROR("ERROR int GetState: stateID %d is invalid\n", stateID);
+    if (id >= (StateID) environment_->StateID2IndexMapping.size()) {
+        SBPL_ERROR("ERROR int GetState: stateID %d is invalid\n", id);
         exit(1);
     }
 
-    if (environment_->StateID2IndexMapping[stateID][ARAMDP_STATEID2IND] == -1) // Xiaoxun: ARAMDP_STATEID2IND == 0
-        return CreateState(stateID, pSearchStateSpace);
+    if (environment_->StateID2IndexMapping[id][ARAMDP_STATEID2IND] == -1) // Xiaoxun: ARAMDP_STATEID2IND == 0
+        return CreateState(id, pSearchStateSpace);
     else
-        return pSearchStateSpace->searchMDP.StateArray[environment_->StateID2IndexMapping[stateID][ARAMDP_STATEID2IND]];
+        return pSearchStateSpace->searchMDP.StateArray[environment_->StateID2IndexMapping[id][ARAMDP_STATEID2IND]];
 }
 
 
@@ -273,11 +273,11 @@ AAPlanner::ComputeHeuristic(CMDPSTATE *MDPstate, AASpace* space) {
     //compute heuristic for search
     if (bforwardsearch) {
         //forward search: heur = distance from state to searchgoal which is Goal AAState
-        int retv =  environment_->GetFromToHeuristic(MDPstate->StateID, space->searchgoalstate->StateID);
+        int retv =  environment_->GetFromToHeuristic(MDPstate->id, space->searchgoalstate->id);
         return retv;
     } else {
         //backward search: heur = distance from state to searchstart
-        int retv = environment_->GetFromToHeuristic(MDPstate->StateID, space->searchstartstate->StateID);
+        int retv = environment_->GetFromToHeuristic(MDPstate->id, space->searchstartstate->id);
         return retv;
     }
 }
@@ -453,14 +453,14 @@ AAPlanner::ImprovePath(AASpace *space, double MaxNumofSecs) {
 #ifdef XIAOXUN_DEBUG
         if (pSearchStateSpace->callnumber == 1)
             SBPL_FPRINTF(fDeb, "expanding state(%4d): h=%d g=%u key=%u iterclosed=%d callnuma=%d expands=%d (g(goal)=%u)\n",
-                    state->MDPstate->StateID, state->h, state->g, state->g + (int)(pSearchStateSpace->eps * state->h),
+                    state->MDPstate->id, state->h, state->g, state->g + (int)(pSearchStateSpace->eps * state->h),
                     state->iterationclosed, state->callnumberaccessed, state->numofexpands, searchgoalstate->g);
 //        SBPL_FPRINTF(fDeb, "expanding: ");
 //        PrintSearchState(state, fDeb);
         fflush(fDeb);
 #endif
-        TRACE("Expanding [%5d] (f:%7.1f) (g:%7.1f) (h:%7.1f)\n",
-                   state->MDPstate->StateID,
+        TRACE("Expanding [%5zu] (f:%7.1f) (g:%7.1f) (h:%7.1f)\n",
+                   state->MDPstate->id,
                    (state->g + state->h)/1000.0,
                    state->g/1000.0,
                    state->h/1000.0);
@@ -664,11 +664,11 @@ AAPlanner::InitializeSearchStateSpace(AASpace *space) {
 
 
 int
-AAPlanner::SetSearchGoalState(int SearchGoalStateID, AASpace *pSearchStateSpace) {
+AAPlanner::SetSearchGoalState(StateID SearchGoalStateID, AASpace *pSearchStateSpace) {
 //Xiaoxun1: if(1) ps->searchgoalstate has not been set,
 //          if(2) goal has moved, so       ps->searchgoalstate->StateID != SearchGoalStateID
 //
-    if (pSearchStateSpace->searchgoalstate == NULL || pSearchStateSpace->searchgoalstate->StateID != SearchGoalStateID) {
+    if (pSearchStateSpace->searchgoalstate == NULL || pSearchStateSpace->searchgoalstate->id != SearchGoalStateID) {
         pSearchStateSpace->searchgoalstate = GetState(SearchGoalStateID, pSearchStateSpace);
         //recompute heuristic for the heap if heuristics is used
 // Xiaoxun 1:  becasue the search goal state has changed, so the h-values need to be re-calculated
@@ -692,7 +692,7 @@ AAPlanner::SetSearchGoalState(int SearchGoalStateID, AASpace *pSearchStateSpace)
 
 
 int
-AAPlanner::SetSearchStartState(int SearchStartStateID, AASpace *pSearchStateSpace) {
+AAPlanner::SetSearchStartState(StateID SearchStartStateID, AASpace *pSearchStateSpace) {
 //Xiaoxun 1: this is to get the address of the (CMDPSTATE*) of the start state
     CMDPSTATE *MDPstate = GetState(SearchStartStateID, pSearchStateSpace); //Xiaoxun 1:  see P13
 
@@ -829,23 +829,23 @@ void
 AAPlanner::PrintSearchPath(AASpace *space, FILE *fOut) {
     AAState *searchstateinfo;
     CMDPSTATE *state;
-    int goalID;
+    StateID goalID;
     int PathCost;
 
     if (bforwardsearch) {
         state  = space->searchstartstate;
 
         if (space->temp_goal_state && space->temp_goal_state != space->searchgoalstate)
-            goalID = space->temp_goal_state->StateID;
+            goalID = space->temp_goal_state->id;
         else
-            goalID = space->searchgoalstate->StateID;
+            goalID = space->searchgoalstate->id;
 
         PathCost = ((AAState *) space->searchgoalstate->PlannerSpecificData)->g;
 
     } else { // search backward _________________________________________
 //      state = pSearchStateSpace->searchgoalstate;
         state = space->searchstartstate;
-        goalID = space->searchstartstate->StateID;   // goalID = agent->StateID
+        goalID = space->searchstartstate->id;   // goalID = agent->StateID
 
         PathCost = ((AAState *)space->searchstartstate->PlannerSpecificData)->g;
     }
@@ -857,16 +857,16 @@ AAPlanner::PrintSearchPath(AASpace *space, FILE *fOut) {
 
 
     SBPL_FPRINTF(fOut, "Printing a path from state %d to the goal state %d\n",
-            state->StateID, space->searchgoalstate->StateID);
+            state->id, space->searchgoalstate->id);
     SBPL_FPRINTF(fOut, "Path cost = %d:\n", PathCost);
 
 
-    environment_->PrintState(state->StateID, false, fOut);
+    environment_->PrintState(state->id, false, fOut);
 
     int costFromStart = 0;
 
-    while (state->StateID != goalID) {
-        SBPL_FPRINTF(fOut, "state %d ", state->StateID);
+    while (state->id != goalID) {
+        SBPL_FPRINTF(fOut, "state %d ", state->id);
 
         if (state->PlannerSpecificData == NULL) {
             SBPL_FPRINTF(fOut, "path does not exist since search data does not exist\n");
@@ -894,11 +894,11 @@ AAPlanner::PrintSearchPath(AASpace *space, FILE *fOut) {
         costFromStart += transcost;
 
         SBPL_FPRINTF(fOut, "g=%d-->state %d, h = %d ctg = %d  ", searchstateinfo->g,
-                searchstateinfo->bestSuccState->StateID, searchstateinfo->h, costToGoal);
+                searchstateinfo->bestSuccState->id, searchstateinfo->h, costToGoal);
 
         state = searchstateinfo->bestSuccState;
 
-        environment_->PrintState(state->StateID, false, fOut);
+        environment_->PrintState(state->id, false, fOut);
 
 
 
@@ -912,9 +912,9 @@ AAPlanner::PrintSearchState(AAState *state, FILE *fOut) {
     expansions = state->expansions;
 #endif
     SBPL_FPRINTF(fOut, "state %d: h=%d g=%u iterc=%d callnuma=%d expands=%d heapind=%d \n",
-            state->MDPstate->StateID, state->h, state->g,
+            state->MDPstate->id, state->h, state->g,
             state->iterationclosed, state->callnumberaccessed, expansions, state->heapindex);
-    environment_->PrintState(state->MDPstate->StateID, true, fOut);
+    environment_->PrintState(state->MDPstate->id, true, fOut);
 
 }
 
@@ -928,11 +928,11 @@ AAPlanner::getHeurValue(AASpace *pSearchStateSpace, int StateID) {
 }
 
 //Xiaoxun 0: this is to get the <STATE_ID> of all cells along the path
-vector<stateID>
+Path
 AAPlanner::GetSearchPath(AASpace *space, int &solcost) {
-    vector<stateID> SuccIDV;
+    Path SuccIDV;
     vector<int> CostV;
-    vector<stateID> wholePathIds;
+    Path wholePathIds;
     AAState *searchstateinfo;
     CMDPSTATE *state = NULL;
     CMDPSTATE *goalstate = NULL;
@@ -954,12 +954,12 @@ AAPlanner::GetSearchPath(AASpace *space, int &solcost) {
 
     state = startstate;
 
-    wholePathIds.push_back(state->StateID);
+    wholePathIds.push_back(state->id);
     solcost = 0;
 
     FILE *fOut = stdout;
 
-    while (state->StateID != goalstate->StateID) {
+    while (state->id != goalstate->id) {
         if (state->PlannerSpecificData == NULL) {
             SBPL_FPRINTF(fOut, "path does not exist since search data does not exist\n");
             break;
@@ -983,11 +983,11 @@ AAPlanner::GetSearchPath(AASpace *space, int &solcost) {
 
 
 #else
-        environment_->GetSuccs(state->StateID, &SuccIDV, &CostV);
+        environment_->GetSuccs(state->id, &SuccIDV, &CostV);
         int actioncost = INFINITECOST;
 
         for (int i = 0; i < (int)SuccIDV.size(); i++) {
-            if (SuccIDV.at(i) == searchstateinfo->bestSuccState->StateID) {
+            if (SuccIDV.at(i) == searchstateinfo->bestSuccState->id) {
                 actioncost = CostV.at(i);
                 break; // Xiaoxun added this break;
             }
@@ -1020,7 +1020,7 @@ AAPlanner::GetSearchPath(AASpace *space, int &solcost) {
 #endif
 
         state = searchstateinfo->bestSuccState;
-        wholePathIds.push_back(state->StateID);
+        wholePathIds.push_back(state->id);
 
     }// end while
 
@@ -1040,7 +1040,7 @@ AAPlanner::GetSearchPath(AASpace *space, int &solcost) {
 
 //Xiaoxun 0:     Search() == ComputeShortestPath()...... however, it contains function IMPROVE_PATH() inside.
 bool
-AAPlanner::Search(AASpace *space, vector<stateID> &pathIds, int &PathCost, bool bFirstSolution, bool bOptimalSolution, double MaxNumofSecs) {
+AAPlanner::Search(AASpace *space, Path &pathIds, int &PathCost, bool bFirstSolution, bool bOptimalSolution, double MaxNumofSecs) {
     CKey key;
     TimeStarted = clock();
     searchexpands = 0;
@@ -1169,7 +1169,7 @@ AAPlanner::Search(AASpace *space, vector<stateID> &pathIds, int &PathCost, bool 
 // ===================
 
 //returns 1 if found a solution, and 0 otherwise
-int AAPlanner::replan(double allocated_time_secs, vector<stateID> *solution_stateIDs_V) {
+int AAPlanner::replan(double allocated_time_secs, Path *solution_stateIDs_V) {
     int solcost;
     return replan(allocated_time_secs, solution_stateIDs_V, &solcost);
 }
@@ -1178,8 +1178,8 @@ int AAPlanner::replan(double allocated_time_secs, vector<stateID> *solution_stat
 //Xiaoxun 0: return 1 if found a solution, and 0 otherwise
 //           re-plan is to do multiple searches until the goal is caught
 int
-AAPlanner::replan(double allocated_time_secs, vector<stateID> *solution_stateIDs_V, int *psolcost) {
-    vector<stateID> pathIds;
+AAPlanner::replan(double allocated_time_secs, Path *solution_stateIDs_V, int *psolcost) {
+    Path pathIds;
     bool bFound = false;
     int PathCost;
     bool bFirstSolution = this->bsearchuntilfirstsolution;
@@ -1448,7 +1448,7 @@ AAPlanner::replan(double allocated_time_secs, vector<stateID> *solution_stateIDs
 
 
 int
-AAPlanner::set_goal(stateID goal_stateID) {
+AAPlanner::set_goal(StateID goal_stateID) {
 
     SBPL_DEBUG("planner: setting goal to %d\n", goal_stateID);
     environment_->PrintState(goal_stateID, true, stdout);
@@ -1463,7 +1463,7 @@ AAPlanner::set_goal(stateID goal_stateID) {
 
 //Xiaoxun: set the start_state
 int
-AAPlanner::set_start(stateID start_stateID) {
+AAPlanner::set_start(StateID start_stateID) {
     SBPL_DEBUG("AA planner: setting start to %d\n", start_stateID);
     environment_->PrintState(start_stateID, true, stdout);
 
@@ -1537,9 +1537,9 @@ AAPlanner::ChooseOneSuccs_for_TargetMove(AAState *state, AASpace *pSearchStateSp
     //CKey key;
 
     // Get successors from environment
-    vector<stateID> SuccIDV;
+    Path SuccIDV;
     vector<int> CostV;
-    environment_->GetSuccs(state->MDPstate->StateID, &SuccIDV, &CostV);
+    environment_->GetSuccs(state->MDPstate->id, &SuccIDV, &CostV);
     int successorCount = (int)SuccIDV.size();
 
     state->successors.clear();
@@ -1591,14 +1591,14 @@ AAPlanner::ChooseOneSuccs_for_TargetMove(AAState *state, AASpace *pSearchStateSp
 
 //function 2:
 int
-AAPlanner::ReSetSearchGoalState(int SearchGoalStateID, AASpace *pSearchStateSpace) {
+AAPlanner::ReSetSearchGoalState(StateID SearchGoalStateID, AASpace *pSearchStateSpace) {
 //Xiaoxun1: if(1) ps->searchgoalstate has not been set,
 //          if(2) goal has moved, so       ps->searchgoalstate->StateID != SearchGoalStateID
 
 
 
 
-    if (pSearchStateSpace->searchgoalstate == NULL || pSearchStateSpace->searchgoalstate->StateID != SearchGoalStateID) {
+    if (pSearchStateSpace->searchgoalstate == NULL || pSearchStateSpace->searchgoalstate->id != SearchGoalStateID) {
         pSearchStateSpace->searchgoalstate = GetState(SearchGoalStateID, pSearchStateSpace);
 
         //should be new search iteration
@@ -1628,7 +1628,7 @@ AAPlanner::ReSetSearchGoalState(int SearchGoalStateID, AASpace *pSearchStateSpac
 
 //function 3:
 int
-AAPlanner::reset_goal(int goal_stateID) {
+AAPlanner::reset_goal(StateID goal_stateID) {
 #ifdef XIAOXUN_DEBUG
     SBPL_DEBUG("planner: resetting goal to %d\n", goal_stateID);
 //  environment_->PrintState(goal_stateID, true, stdout);
@@ -1729,7 +1729,7 @@ AAPlanner::ReSetSearchStartState(int SearchStartStateID, AASpace *space) {
 //function 6:
 //Xiaoxun: set the start_state
 int
-AAPlanner::reset_start(int start_stateID) {
+AAPlanner::reset_start(StateID start_stateID) {
 #ifdef XIAOXUN_DEBUG
     SBPL_DEBUG("AA planner: re-setting start to STATEID = [%d]\n", start_stateID);
     environment_->PrintState(start_stateID, true, stdout);
@@ -1779,13 +1779,13 @@ AAPlanner::start_moved(AASpace *space) {
 
     SBPL_DEBUG(" -hunter cost = %d ", movecost);
 
-    reset_start(newsearchstartstate->MDPstate->StateID); // set new start state for the (ps) search space
+    reset_start(newsearchstartstate->MDPstate->id); // set new start state for the (ps) search space
 
 
 #ifdef XIAOXUN_DEBUG
     SBPL_DEBUG("______robot moved, show the information of old and new start \n");
-    environment_->PrintState(oldsearchstartstate->MDPstate->StateID, true, stdout);
-    environment_->PrintState(newsearchstartstate->MDPstate->StateID, true, stdout);
+    environment_->PrintState(oldsearchstartstate->MDPstate->id, true, stdout);
+    environment_->PrintState(newsearchstartstate->MDPstate->id, true, stdout);
 #endif
 
 
@@ -1798,12 +1798,12 @@ AAPlanner::start_moved(AASpace *space) {
 void
 AAPlanner::UpdateSuccs(AAState *state, AASpace *space) {
 
-    TRACE("Expanding [%d]", state->MDPstate->StateID);
+    TRACE("Expanding [%zu]", state->MDPstate->id);
 
     // Get successors from environment
-    vector<stateID> SuccIDV;
+    Path SuccIDV;
     vector<int> CostV;
-    environment_->GetSuccs(state->MDPstate->StateID, &SuccIDV, &CostV);
+    environment_->GetSuccs(state->MDPstate->id, &SuccIDV, &CostV);
     // REVIEW: this probably can be done faster (at least by changing the env API)
     int successorCount = SuccIDV.size();
     TRACE("State node successors: %lu", state->successors.size());
@@ -1821,7 +1821,7 @@ AAPlanner::UpdateSuccs(AAState *state, AASpace *space) {
     for(nodeStub nS : state->successors) {
         CMDPSTATE* SuccMDPState = GetState(nS.id, space);
         AAState* succstate = (AAState *)(SuccMDPState->PlannerSpecificData);
-        printf("Reaching [%d]\n", succstate->MDPstate->StateID);
+        printf("Reaching [%zu]\n", succstate->MDPstate->id);
 
         if (succstate->iterationclosed != space->searchiteration) {
 #ifdef ADAPTIVE_H // Adaptive A*
@@ -1843,12 +1843,6 @@ AAPlanner::UpdateSuccs(AAState *state, AASpace *space) {
                 key.key[1] = succstate->h;
 #endif
 
-                printf("Adding [%d] to the heap\n", succstate->MDPstate->StateID);
-                if(succstate->MDPstate->StateID==31){
-                    printf("--\n");
-                    printf("succesors: %ld\n", succstate->successors.size());
-                    printf("predecesors: %ld\n", succstate->predecessors.size());
-                }
                 if (succstate->heapindex != 0)
                     space->heap->updateheap(succstate, key);
                 else
@@ -1870,9 +1864,9 @@ AAPlanner::UpdatePreds(AAState *state, AASpace *space) {
 
 
     // Get predecessors from environment
-    vector<stateID> PredIDV;
+    Path PredIDV;
     vector<int> CostV;
-    environment_->GetPreds(state->MDPstate->StateID, &PredIDV, &CostV);
+    environment_->GetPreds(state->MDPstate->id, &PredIDV, &CostV);
     int predecessorCount = PredIDV.size();
 
     state->predecessors.clear();
@@ -2011,7 +2005,7 @@ AAPlanner::GetMoveCost(AAState *state, AASpace *space) {
     }// end (sind)
 #else
     for(nodeStub nS : state->successors)
-        if(nS.id == state->bestSuccState->StateID){
+        if(nS.id == state->bestSuccState->id){
             actioncost = nS.cost;
             break;
         }
@@ -2028,7 +2022,7 @@ AAPlanner::GetTargetMoveCost(AAState *state, AAState *state2, AASpace *space) {
     int actioncost;
 
     for(nodeStub nS : state->successors)
-        if (nS.id == state2->MDPstate->StateID) {
+        if (nS.id == state2->MDPstate->id) {
             actioncost = nS.cost;
             break;
         }

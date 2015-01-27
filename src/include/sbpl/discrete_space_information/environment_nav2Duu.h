@@ -83,14 +83,14 @@ typedef struct ENV_NAV2DUU_CONFIG
 } EnvNAV2DUUConfig_t;
 
 #define NAVNAV2DUU_MAXWIDTHHEIGH 1024
-#define ENVNAV2DUU_STATEIDTOY(stateID) (stateID%NAVNAV2DUU_MAXWIDTHHEIGH)
-#define ENVNAV2DUU_STATEIDTOX(stateID) (stateID/NAVNAV2DUU_MAXWIDTHHEIGH)
+#define ENVNAV2DUU_STATEIDTOY(stateID) (stateID % NAVNAV2DUU_MAXWIDTHHEIGH)
+#define ENVNAV2DUU_STATEIDTOX(stateID) (stateID / NAVNAV2DUU_MAXWIDTHHEIGH)
 #define ENVNAV2DUU_XYTOSTATEID(X, Y) (X*NAVNAV2DUU_MAXWIDTHHEIGH + Y)
 
 typedef struct
 {
-    int startstateid;
-    int goalstateid;
+    StateID startstateid;
+    StateID goalstateid;
 
     //any additional variables
     bool bInitialized;
@@ -151,22 +151,22 @@ public:
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual int GetFromToHeuristic(stateID FromStateID, stateID ToStateID);
+    virtual int GetFromToHeuristic(StateID FromStateID, StateID ToStateID);
 
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual int GetGoalHeuristic(stateID id);
+    virtual int GetGoalHeuristic(StateID id);
 
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual int GetStartHeuristic(stateID id);
+    virtual int GetStartHeuristic(StateID id);
 
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual void PrintState(stateID id, bool bVerbose, FILE* fOut = NULL);
+    virtual void PrintState(StateID id, bool bVerbose, FILE* fOut = NULL);
 
     /**
      * \brief see comments on the same function in the parent class
@@ -182,7 +182,7 @@ public:
     /**
      * \brief not fully implemented yet
      */
-    virtual void GetPreds(stateID stateID, const std::vector<sbpl_BinaryHiddenVar_t>* updatedhvaluesV,
+    virtual void GetPreds(StateID stateID, const std::vector<sbpl_BinaryHiddenVar_t>* updatedhvaluesV,
                           std::vector<CMDPACTION>* IncomingDetActionV, std::vector<CMDPACTION>* IncomingStochActionV,
                           std::vector<sbpl_BinaryHiddenVar_t>* StochActionNonpreferredOutcomeV);
 
@@ -207,7 +207,7 @@ public:
     /**
      * \brief not fully implemented yet
      */
-    virtual void GetSuccs(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV)
+    virtual void GetSuccs(StateID SourceStateID, Path * SuccIDV, std::vector<int>* CostV)
     {
         SBPL_ERROR("ERROR: GetSuccs not supported in NAV2D UNDER UNCERTAINTY\n");
         throw new SBPL_Exception();
@@ -216,7 +216,7 @@ public:
     /**
      * \brief not fully implemented yet
      */
-    virtual void GetPreds(stateID TargetStateID, std::vector<stateID>* PredIDV, std::vector<int>* CostV)
+    virtual void GetPreds(StateID TargetStateID, Path * PredIDV, std::vector<int>* CostV)
     {
         SBPL_ERROR("ERROR: GetPreds not supported in NAV2D UNDER UNCERTAINTY\n");
         throw new SBPL_Exception();

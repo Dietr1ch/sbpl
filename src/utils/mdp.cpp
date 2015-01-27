@@ -62,7 +62,7 @@ bool CMDPACTION::IsValid()
     return (fabs(Prob - 1.0) < EPS_ERROR);
 }
 
-void CMDPACTION::AddOutcome(stateID OutcomeStateID, int OutcomeCost, float OutcomeProb)
+void CMDPACTION::AddOutcome(StateID OutcomeStateID, int OutcomeCost, float OutcomeProb)
 {
 #if MEM_CHECK
     DisableMemCheck();
@@ -98,7 +98,7 @@ int CMDPACTION::GetIndofMostLikelyOutcome()
     return mlind;
 }
 
-int CMDPACTION::GetIndofOutcome(stateID OutcomeID)
+int CMDPACTION::GetIndofOutcome(StateID OutcomeID)
 {
     for (int oind = 0; oind < (int)this->SuccsID.size(); oind++) {
         if (this->SuccsID[oind] == OutcomeID) {
@@ -139,7 +139,7 @@ bool CMDPSTATE::Delete()
 
 CMDPACTION* CMDPSTATE::AddAction(int ID)
 {
-    CMDPACTION* action = new CMDPACTION(ID, this->StateID);
+    CMDPACTION* action = new CMDPACTION(ID, this->id);
 
 #if MEM_CHECK
     DisableMemCheck();
@@ -154,15 +154,15 @@ CMDPACTION* CMDPSTATE::AddAction(int ID)
     return action;
 }
 
-bool CMDPSTATE::AddPred(stateID stateID)
+bool CMDPSTATE::AddPred(StateID id)
 {
     //add the predecessor
-    if (!ContainsPred(stateID)) {
+    if (!ContainsPred(id)) {
 #if MEM_CHECK
         DisableMemCheck();
 #endif
 
-        PredsID.push_back(stateID);
+        PredsID.push_back(id);
 #if MEM_CHECK
         EnableMemCheck();
 #endif
@@ -171,10 +171,10 @@ bool CMDPSTATE::AddPred(stateID stateID)
     return true;
 }
 
-bool CMDPSTATE::RemovePred(stateID stateID)
+bool CMDPSTATE::RemovePred(StateID id)
 {
     for (int i = 0; i < (int)this->PredsID.size(); i++) {
-        if (this->PredsID.at(i) == stateID) {
+        if (this->PredsID.at(i) == id) {
             this->PredsID.at(i) = this->PredsID.at(this->PredsID.size() - 1);
             this->PredsID.pop_back();
             return true;
@@ -205,7 +205,7 @@ bool CMDPSTATE::RemoveAllActions()
     return true;
 }
 
-bool CMDPSTATE::ContainsPred(stateID stateID)
+bool CMDPSTATE::ContainsPred(StateID stateID)
 {
     for (int i = 0; i < (int)PredsID.size(); i++) {
         if (PredsID[i] == stateID) return true;
@@ -215,7 +215,7 @@ bool CMDPSTATE::ContainsPred(stateID stateID)
 
 void CMDPSTATE::operator =(const CMDPSTATE& rhsstate)
 {
-    this->StateID = rhsstate.StateID;
+    this->id = rhsstate.id;
 }
 
 CMDPACTION* CMDPSTATE::GetAction(int actionID)
@@ -267,7 +267,7 @@ bool CMDP::Create(int numofstates)
 }
 
 //Adds a new state The id must be initialized elsewhere
-CMDPSTATE* CMDP::AddState(stateID StateID)
+CMDPSTATE* CMDP::AddState(StateID StateID)
 {
     if ((int)StateArray.size() + 1 > MAXSTATESPACESIZE) {
         SBPL_ERROR("ERROR: maximum of states is reached in MDP\n");
@@ -307,7 +307,7 @@ void CMDP::Print(FILE* fOut)
     SBPL_FPRINTF(fOut, "MDP statespace size=%d\n", (unsigned int)StateArray.size());
 
     for(CMDPSTATE *state : StateArray){
-        SBPL_FPRINTF(fOut, "%d: ", state->StateID);
+        SBPL_FPRINTF(fOut, "%d: ", state->id);
 
         for(CMDPACTION *action : state->Actions){
             SBPL_FPRINTF(fOut, "[%d", action->ActionID);

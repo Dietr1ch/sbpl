@@ -85,7 +85,7 @@ typedef struct ENV_ROBARM_CONFIG
 
 typedef struct ENVROBARMHASHENTRY
 {
-    int stateID;
+    StateID id;
     //state coordinates
     short unsigned int coord[NUMOFLINKS];
     short unsigned int endeffx;
@@ -127,17 +127,17 @@ public:
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual int GetFromToHeuristic(stateID FromStateID, stateID ToStateID);
+    virtual int GetFromToHeuristic(StateID FromStateID, StateID ToStateID);
 
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual int GetGoalHeuristic(stateID stateID);
+    virtual int GetGoalHeuristic(StateID stateID);
 
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual int GetStartHeuristic(stateID stateID);
+    virtual int GetStartHeuristic(StateID stateID);
 
     /**
      * \brief see comments on the same function in the parent class
@@ -152,12 +152,12 @@ public:
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual void GetSuccs(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV);
+    virtual void GetSuccs(StateID SourceStateID, Path * SuccIDV, std::vector<int>* CostV);
 
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual void GetPreds(stateID TargetStateID, std::vector<stateID>* PredIDV, std::vector<int>* CostV);
+    virtual void GetPreds(StateID TargetStateID, Path * PredIDV, std::vector<int>* CostV);
 
     /**
      * \brief see comments on the same function in the parent class
@@ -167,7 +167,7 @@ public:
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual void PrintState(stateID stateID, bool bVerbose, FILE* fOut = NULL);
+    virtual void PrintState(StateID stateID, bool bVerbose, FILE* fOut = NULL);
 
     /**
      * \brief see comments on the same function in the parent class
@@ -198,7 +198,7 @@ protected:
     virtual void ContXY2Cell(double x, double y, short unsigned int* pX, short unsigned int *pY);
     virtual int IsValidLineSegment(double x0, double y0, double x1, double y1, char **Grid2D,
                                    std::vector<CELLV>* pTestedCells);
-    virtual void GetRandomSuccsatDistance(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CLowV);
+    virtual void GetRandomSuccsatDistance(StateID SourceStateID, Path * SuccIDV, std::vector<int>* CLowV);
     virtual unsigned int GetHeurBasedonCoord(short unsigned int coord[NUMOFLINKS]);
     virtual void PrintHeader(FILE* fOut);
     virtual int cost(short unsigned int state1coord[], short unsigned int state2coord[]);
@@ -220,11 +220,11 @@ protected:
 
     virtual void ComputeHeuristicValues();
 
-    virtual int GetEdgeCost(stateID FromStateID, stateID ToStateID);
+    virtual int GetEdgeCost(StateID FromStateID, StateID ToStateID);
     virtual int GetRandomState();
-    virtual bool AreEquivalent(stateID State1ID, stateID State2ID);
+    virtual bool AreEquivalent(StateID State1ID, StateID State2ID);
 
-    virtual void PrintSuccGoal(stateID SourceStateID, int costtogoal, bool bVerbose, bool bLocal /*=false*/,
+    virtual void PrintSuccGoal(StateID SourceStateID, int costtogoal, bool bVerbose, bool bLocal /*=false*/,
                                FILE* fOut /*=NULL*/);
 };
 

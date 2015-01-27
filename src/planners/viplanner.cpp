@@ -51,28 +51,28 @@ void VIPlanner::Initialize_vidata(CMDPSTATE* state)
 
     vi_data->bestnextaction = NULL;
     vi_data->iteration = 0;
-    vi_data->v = (float)environment_->GetGoalHeuristic(state->StateID);
+    vi_data->v = (float)environment_->GetGoalHeuristic(state->id);
 }
 
-CMDPSTATE* VIPlanner::CreateState(stateID stateID)
+CMDPSTATE* VIPlanner::CreateState(StateID id)
 {
     CMDPSTATE* state = NULL;
 
 #if DEBUG
-    if (environment_->StateID2IndexMapping[stateID][VIMDP_STATEID2IND] != -1) {
+    if (environment_->StateID2IndexMapping[id][VIMDP_STATEID2IND] != -1) {
         SBPL_ERROR("ERROR in CreateState: state already created\n");
         throw new SBPL_Exception();
     }
 #endif
 
     //adds to the tail a state
-    state = viPlanner.MDP.AddState(stateID);
+    state = viPlanner.MDP.AddState(id);
 
     //remember the index of the state
-    environment_->StateID2IndexMapping[stateID][VIMDP_STATEID2IND] = viPlanner.MDP.StateArray.size() - 1;
+    environment_->StateID2IndexMapping[id][VIMDP_STATEID2IND] = viPlanner.MDP.StateArray.size() - 1;
 
 #if DEBUG
-    if (state != viPlanner.MDP.StateArray[environment_->StateID2IndexMapping[stateID][VIMDP_STATEID2IND]]) {
+    if (state != viPlanner.MDP.StateArray[environment_->StateID2IndexMapping[id][VIMDP_STATEID2IND]]) {
         SBPL_ERROR("ERROR in CreateState: invalid state index\n");
         throw new SBPL_Exception();
     }
@@ -85,17 +85,17 @@ CMDPSTATE* VIPlanner::CreateState(stateID stateID)
     return state;
 }
 
-CMDPSTATE* VIPlanner::GetState(stateID stateID)
+CMDPSTATE* VIPlanner::GetState(StateID id)
 {
-    if (stateID >= (int)environment_->StateID2IndexMapping.size()) {
+    if (id >= (StateID) environment_->StateID2IndexMapping.size()) {
         SBPL_ERROR("ERROR int GetState: stateID is invalid\n");
         throw new SBPL_Exception();
     }
 
-    if (environment_->StateID2IndexMapping[stateID][VIMDP_STATEID2IND] == -1)
-        return CreateState(stateID);
+    if (environment_->StateID2IndexMapping[id][VIMDP_STATEID2IND] == -1)
+        return CreateState(id);
     else
-        return viPlanner.MDP.StateArray[environment_->StateID2IndexMapping[stateID][VIMDP_STATEID2IND]];
+        return viPlanner.MDP.StateArray[environment_->StateID2IndexMapping[id][VIMDP_STATEID2IND]];
 }
 
 void VIPlanner::PrintVIData()
@@ -136,21 +136,21 @@ void VIPlanner::PrintPolicy(FILE* fPolicy)
         WorkList.pop_back();
         VIState* statedata = (VIState*)state->PlannerSpecificData;
 
-        CMDPSTATE* polstate = PolicyforEvaluation.AddState(state->StateID);
+        CMDPSTATE* polstate = PolicyforEvaluation.AddState(state->id);
 
         //print state ID
         if (!bPrintStatOnly) {
-            SBPL_FPRINTF(fPolicy, "%d\n", state->StateID);
-            environment_->PrintState(state->StateID, false, fPolicy);
+            SBPL_FPRINTF(fPolicy, "%d\n", state->id);
+            environment_->PrintState(state->id, false, fPolicy);
 
-            int h = environment_->GetGoalHeuristic(state->StateID);
+            int h = environment_->GetGoalHeuristic(state->id);
             SBPL_FPRINTF(fPolicy, "h=%d\n", h);
             if (h > statedata->v) {
                 SBPL_FPRINTF(fPolicy, "WARNING h overestimates exp.cost\n");
             }
         }
 
-        if (state->StateID == viPlanner.GoalState->StateID) {
+        if (state->id == viPlanner.GoalState->id) {
             //goal state
             if (!bPrintStatOnly) SBPL_FPRINTF(fPolicy, "0\n");
             Conf += ((VIState*)state->PlannerSpecificData)->Pc;
@@ -159,7 +159,7 @@ void VIPlanner::PrintPolicy(FILE* fPolicy)
             //unexplored
             if (!bPrintStatOnly) {
                 //no outcome explored - stay in the same place
-                SBPL_FPRINTF(fPolicy, "%d %d %d\n", 1, 0, state->StateID);
+                SBPL_FPRINTF(fPolicy, "%d %d %d\n", 1, 0, state->id);
             }
         }
         else {
@@ -196,7 +196,7 @@ void VIPlanner::PrintPolicy(FILE* fPolicy)
     bool bFullPolicy = false;
     double Pcgoal = -1;
     int nMerges = 0;
-    EvaluatePolicy(&PolicyforEvaluation, viPlanner.StartState->StateID, viPlanner.GoalState->StateID, &PolicyValue,
+    EvaluatePolicy(&PolicyforEvaluation, viPlanner.StartState->id, viPlanner.GoalState->id, &PolicyValue,
                    &bFullPolicy, &Pcgoal, &nMerges, &bCycles);
 
     SBPL_PRINTF("Policy value = %f FullPolicy=%d Merges=%d Cycles=%d\n", PolicyValue, bFullPolicy, nMerges, bCycles);
@@ -266,7 +266,7 @@ void VIPlanner::perform_iteration_backward()
     int aind, oind;
 
     //initialize the worklist
-    Worklist.push_back(viPlanner.GoalState->StateID);
+    Worklist.push_back(viPlanner.GoalState->id);
 
     //backup all the states
     while ((int)Worklist.size() > 0) {
@@ -288,7 +288,7 @@ void VIPlanner::perform_iteration_backward()
 
                 //skip if already was in the queue
                 if ((int)((VIState*)succstate->PlannerSpecificData)->iteration != viPlanner.iteration) {
-                    Worklist.push_back(succstate->StateID);
+                    Worklist.push_back(succstate->id);
 
                     //mark it
                     ((VIState*)succstate->PlannerSpecificData)->iteration = viPlanner.iteration;
@@ -307,7 +307,7 @@ void VIPlanner::perform_iteration_backward()
 
             //skip if already was in the queue
             if ((int)((VIState*)PredState->PlannerSpecificData)->iteration != viPlanner.iteration) {
-                Worklist.push_back(PredState->StateID);
+                Worklist.push_back(PredState->id);
 
                 //mark it
                 ((VIState*)PredState->PlannerSpecificData)->iteration = viPlanner.iteration;
@@ -368,7 +368,7 @@ void VIPlanner::InitializePlanner()
 
 //the planning entry point
 //returns 1 if path is found, 0 otherwise
-int VIPlanner::replan(double allocatedtime, vector<stateID>* solution_stateIDs_V)
+int VIPlanner::replan(double allocatedtime, Path* solution_stateIDs_V)
 {
 #ifndef ROS
     const char* policy = "policy.txt";

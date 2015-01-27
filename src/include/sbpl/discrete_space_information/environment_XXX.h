@@ -57,7 +57,7 @@ typedef struct ENV_XXX_CONFIG
 
 typedef struct ENVXXXHASHENTRY
 {
-    int stateID;
+    StateID id;
     unsigned int X1;
     unsigned int X2;
     unsigned int X3;
@@ -66,8 +66,8 @@ typedef struct ENVXXXHASHENTRY
 
 typedef struct
 {
-    int startstateid;
-    int goalstateid;
+    StateID startstateid;
+    StateID goalstateid;
 
     //hash table of size x_size*y_size. Maps from coords to stateId
     int HashTableSize;
@@ -98,17 +98,17 @@ public:
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual int GetFromToHeuristic(int FromStateID, int ToStateID);
+    virtual int GetFromToHeuristic(StateID FromStateID, StateID ToStateID);
 
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual int GetGoalHeuristic(int stateID);
+    virtual int GetGoalHeuristic(StateID id);
 
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual int GetStartHeuristic(int stateID);
+    virtual int GetStartHeuristic(StateID id);
 
     /**
      * \brief see comments on the same function in the parent class
@@ -123,12 +123,12 @@ public:
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual void GetSuccs(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV);
+    virtual void GetSuccs(StateID SourceStateID, Path * SuccIDV, std::vector<int>* CostV);
 
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual void GetPreds(stateID TargetStateID, std::vector<stateID>* PredIDV, std::vector<int>* CostV);
+    virtual void GetPreds(StateID TargetStateID, Path * PredIDV, std::vector<int>* CostV);
 
     /**
      * \brief see comments on the same function in the parent class
@@ -138,7 +138,7 @@ public:
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual void PrintState(int stateID, bool bVerbose, FILE* fOut = NULL);
+    virtual void PrintState(StateID id, bool bVerbose, FILE* fOut = NULL);
 
     /**
      * \brief see comments on the same function in the parent class

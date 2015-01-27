@@ -89,14 +89,14 @@ int PPCPPlanner::CreateSearchStateSpace(PPCPStateSpace_t* pStateSpace)
 //-------------------------------------------------------------------------------------------------
 
 //setting start state in S
-int PPCPPlanner::set_goal(stateID goal_stateID)
+int PPCPPlanner::set_goal(StateID goal_stateID)
 {
     //TODO
     return 1;
 }
 
 //setting goal state in S
-int PPCPPlanner::set_start(stateID start_stateID)
+int PPCPPlanner::set_start(StateID start_stateID)
 {
     //TODO
     return 1;

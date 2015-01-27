@@ -62,12 +62,12 @@ void anaPlanner::Initialize_searchinfo(CMDPSTATE* state, anaSearchStateSpace_t* 
     InitializeSearchStateInfo(searchstateinfo, pSearchStateSpace);
 }
 
-CMDPSTATE* anaPlanner::CreateState(int stateID, anaSearchStateSpace_t* pSearchStateSpace)
+CMDPSTATE* anaPlanner::CreateState(StateID id, anaSearchStateSpace_t* pSearchStateSpace)
 {
     CMDPSTATE* state = NULL;
 
 #if DEBUG
-    if(environment_->StateID2IndexMapping[stateID][anaMDP_STATEID2IND] != -1)
+    if(environment_->StateID2IndexMapping[id][anaMDP_STATEID2IND] != -1)
     {
         printf("ERROR in CreateState: state already created\n");
         exit(1);
@@ -75,15 +75,15 @@ CMDPSTATE* anaPlanner::CreateState(int stateID, anaSearchStateSpace_t* pSearchSt
 #endif
 
     //adds to the tail a state
-    state = pSearchStateSpace->searchMDP.AddState(stateID);
+    state = pSearchStateSpace->searchMDP.AddState(id);
 
     //remember the index of the state
-    environment_->StateID2IndexMapping[stateID][anaMDP_STATEID2IND] =
+    environment_->StateID2IndexMapping[id][anaMDP_STATEID2IND] =
             pSearchStateSpace->searchMDP.StateArray.size() - 1;
 
 #if DEBUG
     if (state != 
-        pSearchStateSpace->searchMDP.StateArray[environment_->StateID2IndexMapping[stateID][anaMDP_STATEID2IND]])
+        pSearchStateSpace->searchMDP.StateArray[environment_->StateID2IndexMapping[id][anaMDP_STATEID2IND]])
     {
         printf("ERROR in CreateState: invalid state index\n");
         exit(1);
@@ -98,17 +98,17 @@ CMDPSTATE* anaPlanner::CreateState(int stateID, anaSearchStateSpace_t* pSearchSt
     return state;
 }
 
-CMDPSTATE* anaPlanner::GetState(int stateID, anaSearchStateSpace_t* pSearchStateSpace)
+CMDPSTATE* anaPlanner::GetState(StateID id, anaSearchStateSpace_t* pSearchStateSpace)
 {
-    if (stateID >= (int)environment_->StateID2IndexMapping.size()) {
-        SBPL_ERROR("ERROR in GetState: stateID %d is invalid\n", stateID);
+    if (id >= (StateID) environment_->StateID2IndexMapping.size()) {
+        SBPL_ERROR("ERROR in GetState: stateID %d is invalid\n", id);
         throw new SBPL_Exception();
     }
 
-    if (environment_->StateID2IndexMapping[stateID][anaMDP_STATEID2IND] == -1)
-        return CreateState(stateID, pSearchStateSpace);
+    if (environment_->StateID2IndexMapping[id][anaMDP_STATEID2IND] == -1)
+        return CreateState(id, pSearchStateSpace);
     else
-        return pSearchStateSpace->searchMDP.StateArray[environment_->StateID2IndexMapping[stateID][anaMDP_STATEID2IND]];
+        return pSearchStateSpace->searchMDP.StateArray[environment_->StateID2IndexMapping[id][anaMDP_STATEID2IND]];
 }
 
 //-----------------------------------------------------------------------------------------------------
@@ -124,7 +124,7 @@ int anaPlanner::ComputeHeuristic(CMDPSTATE* MDPstate, anaSearchStateSpace_t* pSe
 #endif
 
         //forward search: heur = distance from state to searchgoal which is Goal anaState
-        int retv = environment_->GetGoalHeuristic(MDPstate->StateID);
+        int retv = environment_->GetGoalHeuristic(MDPstate->id);
 
 #if MEM_CHECK == 1
         //if (WasEn)
@@ -136,7 +136,7 @@ int anaPlanner::ComputeHeuristic(CMDPSTATE* MDPstate, anaSearchStateSpace_t* pSe
     }
     else {
         //backward search: heur = distance from searchgoal to state
-        return environment_->GetStartHeuristic(MDPstate->StateID);
+        return environment_->GetStartHeuristic(MDPstate->id);
     }
 }
 
@@ -205,10 +205,10 @@ void anaPlanner::DeleteSearchStateData(anaState* state)
     return;
 }
 
-double anaPlanner::get_e_value(anaSearchStateSpace_t* pSearchStateSpace, int stateID)
+double anaPlanner::get_e_value(anaSearchStateSpace_t* pSearchStateSpace, StateID id)
 {
 
-    CMDPSTATE* MDPstate = GetState(stateID, pSearchStateSpace);
+    CMDPSTATE* MDPstate = GetState(id, pSearchStateSpace);
     anaState* searchstateinfo = (anaState*)MDPstate->PlannerSpecificData;
 
     //if(!(searchstateinfo->g > pSearchStateSpace->G)) {
@@ -232,12 +232,12 @@ double anaPlanner::get_e_value(anaSearchStateSpace_t* pSearchStateSpace, int sta
 //used for backward search
 void anaPlanner::UpdatePreds(anaState* state, anaSearchStateSpace_t* pSearchStateSpace)
 {
-    vector<stateID> PredIDV;
+    Path PredIDV;
     vector<int> CostV;
     CKey key;
     anaState *p;
 
-    environment_->GetPreds(state->MDPstate->StateID, &PredIDV, &CostV);
+    environment_->GetPreds(state->MDPstate->id, &PredIDV, &CostV);
 
     //iterate through predecessors of s
     for (int pind = 0; pind < (int)PredIDV.size(); pind++) {
@@ -252,7 +252,7 @@ void anaPlanner::UpdatePreds(anaState* state, anaSearchStateSpace_t* pSearchStat
             p->bestnextstate = state->MDPstate;
             p->costtobestnextstate = CostV[pind];
 
-            key.key[0] = (long)-get_e_value(pSearchStateSpace, p->MDPstate->StateID);
+            key.key[0] = (long)-get_e_value(pSearchStateSpace, p->MDPstate->id);
             if (pSearchStateSpace->heap->inheap(p)) {
                 pSearchStateSpace->heap->updateheap(p, key);
             }
@@ -266,12 +266,12 @@ void anaPlanner::UpdatePreds(anaState* state, anaSearchStateSpace_t* pSearchStat
 //used for forward search
 void anaPlanner::UpdateSuccs(anaState* state, anaSearchStateSpace_t* pSearchStateSpace)
 {
-    vector<stateID> SuccIDV;
+    Path SuccIDV;
     vector<int> CostV;
     CKey key;
     anaState *n;
 
-    environment_->GetSuccs(state->MDPstate->StateID, &SuccIDV, &CostV);
+    environment_->GetSuccs(state->MDPstate->id, &SuccIDV, &CostV);
 
     //iterate through predecessors of s
     for (int sind = 0; sind < (int)SuccIDV.size(); sind++) {
@@ -287,7 +287,7 @@ void anaPlanner::UpdateSuccs(anaState* state, anaSearchStateSpace_t* pSearchStat
             n->g = state->g + cost;
             n->bestpredstate = state->MDPstate;
 
-            key.key[0] = (long)-get_e_value(pSearchStateSpace, n->MDPstate->StateID);
+            key.key[0] = (long)-get_e_value(pSearchStateSpace, n->MDPstate->id);
             /*if(key.key[0] >= -1) {
              printf("inserting on Open with key =%d\n", key.key[0]);
              }*/
@@ -331,7 +331,7 @@ int anaPlanner::ImprovePath(anaSearchStateSpace_t* pSearchStateSpace, double Max
     }
 
     //set goal key
-    //goalkey.key[0] = -get_e_value(pSearchStateSpace, searchgoalstate->MDPstate->StateID);
+    //goalkey.key[0] = -get_e_value(pSearchStateSpace, searchgoalstate->MDPstate->id);
     //goalkey.key[1] = searchgoalstate->h;
 
     //expand states until done
@@ -349,7 +349,7 @@ int anaPlanner::ImprovePath(anaSearchStateSpace_t* pSearchStateSpace, double Max
         //get the state
         state = (anaState*)pSearchStateSpace->heap->deleteminheap();
 
-        if (state->MDPstate->StateID == searchgoalstate->MDPstate->StateID) {
+        if (state->MDPstate->id == searchgoalstate->MDPstate->id) {
             pSearchStateSpace->G = state->g;
             //minkey.key[0] =
             //printf("search exited with a solution for eps=%.3f\n", pSearchStateSpace->eps);
@@ -370,7 +370,7 @@ int anaPlanner::ImprovePath(anaSearchStateSpace_t* pSearchStateSpace, double Max
 
 #if DEBUG
         //SBPL_FPRINTF(fDeb, "expanding state(%d): h=%d g=%u key=%u v=%u iterc=%d callnuma=%d expands=%d (g(goal)=%u)\n",
-        //	state->MDPstate->StateID, state->h, state->g, state->g+(int)(pSearchStateSpace->eps*state->h), state->v,
+        //	state->MDPstate->id, state->h, state->g, state->g+(int)(pSearchStateSpace->eps*state->h), state->v,
         //	state->iterationclosed, state->callnumberaccessed, state->numofexpands, searchgoalstate->g);
         //SBPL_FPRINTF(fDeb, "expanding: ");
         //PrintSearchState(state, fDeb);
@@ -422,7 +422,7 @@ int anaPlanner::ImprovePath(anaSearchStateSpace_t* pSearchStateSpace, double Max
             //printf("expands so far=%u\n", expands);
         }
 
-        /*if(state->MDPstate->StateID == searchgoalstate->MDPstate->StateID) {
+        /*if(state->MDPstate->id == searchgoalstate->MDPstate->id) {
          goalkey.key[0] = minkey.key[0];
          break;
          }*/
@@ -468,7 +468,7 @@ void anaPlanner::Reevaluatefvals(anaSearchStateSpace_t* pSearchStateSpace)
         // CHANGED - cast removed
 
         pheap->heap[i].key.key[0] = (long)-get_e_value(pSearchStateSpace,
-                                                       ((anaState*)pheap->heap[i].heapstate)->MDPstate->StateID);
+                                                       ((anaState*)pheap->heap[i].heapstate)->MDPstate->id);
 
         //pheap->heap[i].key.key[1] = state->h;
     }
@@ -573,7 +573,7 @@ void anaPlanner::ReInitializeSearchStateSpace(anaSearchStateSpace_t* pSearchStat
     //insert start state into the heap
 
     // CHANGED - long int cast removed
-    key.key[0] = (long)-get_e_value(pSearchStateSpace, startstateinfo->MDPstate->StateID); 
+    key.key[0] = (long)-get_e_value(pSearchStateSpace, startstateinfo->MDPstate->id);
 
     //key.key[1] = startstateinfo->h;
     pSearchStateSpace->heap->insertheap(startstateinfo, key);
@@ -609,10 +609,10 @@ int anaPlanner::InitializeSearchStateSpace(anaSearchStateSpace_t* pSearchStateSp
     return 1;
 }
 
-int anaPlanner::SetSearchGoalState(int SearchGoalStateID, anaSearchStateSpace_t* pSearchStateSpace)
+int anaPlanner::SetSearchGoalState(StateID SearchGoalStateID, anaSearchStateSpace_t* pSearchStateSpace)
 {
     if (pSearchStateSpace->searchgoalstate == NULL ||
-        pSearchStateSpace->searchgoalstate->StateID != SearchGoalStateID)
+        pSearchStateSpace->searchgoalstate->id != SearchGoalStateID)
     {
         pSearchStateSpace->searchgoalstate = GetState(SearchGoalStateID, pSearchStateSpace);
 
@@ -637,7 +637,7 @@ int anaPlanner::SetSearchGoalState(int SearchGoalStateID, anaSearchStateSpace_t*
     return 1;
 }
 
-int anaPlanner::SetSearchStartState(int SearchStartStateID, anaSearchStateSpace_t* pSearchStateSpace)
+int anaPlanner::SetSearchStartState(StateID SearchStartStateID, anaSearchStateSpace_t* pSearchStateSpace)
 {
     CMDPSTATE* MDPstate = GetState(SearchStartStateID, pSearchStateSpace);
 
@@ -704,30 +704,30 @@ void anaPlanner::PrintSearchPath(anaSearchStateSpace_t* pSearchStateSpace, FILE*
 {
     anaState* searchstateinfo;
     CMDPSTATE* state;
-    int goalID;
+    StateID goalID;
     int PathCost;
 
     if (bforwardsearch) {
         state = pSearchStateSpace->searchstartstate;
-        goalID = pSearchStateSpace->searchgoalstate->StateID;
+        goalID = pSearchStateSpace->searchgoalstate->id;
     }
     else {
         state = pSearchStateSpace->searchgoalstate;
-        goalID = pSearchStateSpace->searchstartstate->StateID;
+        goalID = pSearchStateSpace->searchstartstate->id;
     }
     if (fOut == NULL) fOut = stdout;
 
     PathCost = ((anaState*)pSearchStateSpace->searchgoalstate->PlannerSpecificData)->g;
 
-    SBPL_FPRINTF(fOut, "Printing a path from state %d to the goal state %d\n", state->StateID,
-            pSearchStateSpace->searchgoalstate->StateID);
+    SBPL_FPRINTF(fOut, "Printing a path from state %d to the goal state %d\n", state->id,
+            pSearchStateSpace->searchgoalstate->id);
     SBPL_FPRINTF(fOut, "Path cost = %d:\n", PathCost);
 
-    environment_->PrintState(state->StateID, false, fOut);
+    environment_->PrintState(state->id, false, fOut);
 
     int costFromStart = 0;
-    while (state->StateID != goalID) {
-        SBPL_FPRINTF(fOut, "state %d ", state->StateID);
+    while (state->id != goalID) {
+        SBPL_FPRINTF(fOut, "state %d ", state->id);
 
         if (state->PlannerSpecificData == NULL) {
             SBPL_FPRINTF(fOut, "path does not exist since search data does not exist\n");
@@ -752,20 +752,20 @@ void anaPlanner::PrintSearchPath(anaSearchStateSpace_t* pSearchStateSpace, FILE*
         costFromStart += transcost;
 
         SBPL_FPRINTF(fOut, "g=%d-->state %d, h = %d ctg = %d  ", searchstateinfo->g,
-                searchstateinfo->bestnextstate->StateID, searchstateinfo->h, costToGoal);
+                searchstateinfo->bestnextstate->id, searchstateinfo->h, costToGoal);
 
         state = searchstateinfo->bestnextstate;
 
-        environment_->PrintState(state->StateID, false, fOut);
+        environment_->PrintState(state->id, false, fOut);
     }
 }
 
 void anaPlanner::PrintSearchState(anaState* state, FILE* fOut)
 {
     SBPL_FPRINTF(fOut, "state %d: h=%d g=%u v=%u iterc=%d callnuma=%d expands=%d heapind=%d inconslist=%d\n",
-            state->MDPstate->StateID, state->h, state->g, state->v, state->iterationclosed, state->callnumberaccessed,
+            state->MDPstate->id, state->h, state->g, state->v, state->iterationclosed, state->callnumberaccessed,
             state->numofexpands, state->heapindex, state->listelem[ana_INCONS_LIST_ID] ? 1 : 0);
-    environment_->PrintState(state->MDPstate->StateID, true, fOut);
+    environment_->PrintState(state->MDPstate->id, true, fOut);
 }
 
 int anaPlanner::getHeurValue(anaSearchStateSpace_t* pSearchStateSpace, int StateID)
@@ -775,11 +775,11 @@ int anaPlanner::getHeurValue(anaSearchStateSpace_t* pSearchStateSpace, int State
     return searchstateinfo->h;
 }
 
-vector<stateID> anaPlanner::GetSearchPath(anaSearchStateSpace_t* pSearchStateSpace, int& solcost)
+Path anaPlanner::GetSearchPath(anaSearchStateSpace_t* pSearchStateSpace, int &solcost)
 {
-    vector<stateID> SuccIDV;
+    Path SuccIDV;
     vector<int> CostV;
-    vector<stateID> wholePathIds;
+    Path wholePathIds;
     anaState* searchstateinfo;
     CMDPSTATE* state = NULL;
     CMDPSTATE* goalstate = NULL;
@@ -799,11 +799,11 @@ vector<stateID> anaPlanner::GetSearchPath(anaSearchStateSpace_t* pSearchStateSpa
 
     state = startstate;
 
-    wholePathIds.push_back(state->StateID);
+    wholePathIds.push_back(state->id);
     solcost = 0;
 
     FILE* fOut = stdout;
-    while (state->StateID != goalstate->StateID) {
+    while (state->id != goalstate->id) {
         if (state->PlannerSpecificData == NULL) {
             SBPL_FPRINTF(fOut, "path does not exist since search data does not exist\n");
             break;
@@ -820,11 +820,11 @@ vector<stateID> anaPlanner::GetSearchPath(anaSearchStateSpace_t* pSearchStateSpa
             break;
         }
 
-        environment_->GetSuccs(state->StateID, &SuccIDV, &CostV);
+        environment_->GetSuccs(state->id, &SuccIDV, &CostV);
         int actioncost = INFINITECOST;
         for (int i = 0; i < (int)SuccIDV.size(); i++) {
 
-            if (SuccIDV.at(i) == searchstateinfo->bestnextstate->StateID) actioncost = CostV.at(i);
+            if (SuccIDV.at(i) == searchstateinfo->bestnextstate->id) actioncost = CostV.at(i);
 
         }
         if (actioncost == INFINITECOST) printf("WARNING: actioncost = %d\n", actioncost);
@@ -851,13 +851,13 @@ vector<stateID> anaPlanner::GetSearchPath(anaSearchStateSpace_t* pSearchStateSpa
 
         state = searchstateinfo->bestnextstate;
 
-        wholePathIds.push_back(state->StateID);
+        wholePathIds.push_back(state->id);
     }
 
     return wholePathIds;
 }
 
-bool anaPlanner::Search(anaSearchStateSpace_t* pSearchStateSpace, vector<stateID>& pathIds, int & PathCost,
+bool anaPlanner::Search(anaSearchStateSpace_t* pSearchStateSpace, Path& pathIds, int & PathCost,
                         bool bFirstSolution, bool bOptimalSolution, double MaxNumofSecs)
 {
     CKey key;
@@ -932,7 +932,7 @@ bool anaPlanner::Search(anaSearchStateSpace_t* pSearchStateSpace, vector<stateID
             if (temp_eps > epsprime) {
                 epsprime = temp_eps;
             }
-            double e_val = get_e_value(pSearchStateSpace, state->MDPstate->StateID);
+            double e_val = get_e_value(pSearchStateSpace, state->MDPstate->id);
             if (e_val <= 1.0) {
 
                 open->deleteheap_unsafe(state);
@@ -1008,7 +1008,7 @@ bool anaPlanner::Search(anaSearchStateSpace_t* pSearchStateSpace, vector<stateID
 //-----------------------------Interface function-----------------------------------------------------
 
 //returns 1 if found a solution, and 0 otherwise
-int anaPlanner::replan(double allocated_time_secs, vector<stateID> *solution_stateIDs_V)
+int anaPlanner::replan(double allocated_time_secs, Path *solution_stateIDs_V)
 {
     int solcost;
 
@@ -1016,9 +1016,9 @@ int anaPlanner::replan(double allocated_time_secs, vector<stateID> *solution_sta
 }
 
 //returns 1 if found a solution, and 0 otherwise
-int anaPlanner::replan(double allocated_time_secs, vector<stateID>* solution_stateIDs_V, int* psolcost)
+int anaPlanner::replan(double allocated_time_secs, Path* solution_stateIDs_V, int* psolcost)
 {
-    vector<stateID> pathIds;
+    Path pathIds;
     bool bFound = false;
     int PathCost;
     //bool bFirstSolution = true;
@@ -1043,9 +1043,9 @@ int anaPlanner::replan(double allocated_time_secs, vector<stateID>* solution_sta
 
 }
 
-int anaPlanner::set_goal(stateID goal_stateID)
+int anaPlanner::set_goal(StateID goal_stateID)
 {
-    printf("planner: setting goal to %d\n", goal_stateID);
+    printf("planner: setting goal to %zu\n", goal_stateID);
     environment_->PrintState(goal_stateID, true, stdout);
 
     if (bforwardsearch) {
@@ -1064,9 +1064,9 @@ int anaPlanner::set_goal(stateID goal_stateID)
     return 1;
 }
 
-int anaPlanner::set_start(stateID start_stateID)
+int anaPlanner::set_start(StateID start_stateID)
 {
-    printf("planner: setting start to %d\n", start_stateID);
+    printf("planner: setting start to %zu\n", start_stateID);
     environment_->PrintState(start_stateID, true, stdout);
 
     if (bforwardsearch) {

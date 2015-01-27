@@ -37,7 +37,7 @@ class LazyListElement;
 
 class LazyARAState: public AbstractSearchState{
   public:
-    int id;
+    StateID id;
     unsigned int v;
     unsigned int g;
     int h;
@@ -69,14 +69,14 @@ class LazyListElement{
 class LazyARAPlanner : public SBPLPlanner{
 
 public:
-	virtual int replan(double allocated_time_secs, std::vector<stateID> *solution_stateIDs_V);
-	virtual int replan(double allocated_time_sec, std::vector<stateID> *solution_stateIDs_V, int* solcost);
-  virtual int replan(int start, int goal, std::vector<stateID> *solution_stateIDs_V, ReplanParams params, int* solcost);
-  virtual int replan(std::vector<stateID> *solution_stateIDs_V, ReplanParams params);
-  virtual int replan(std::vector<stateID> *solution_stateIDs_V, ReplanParams params, int* solcost);
+  virtual int replan(double allocated_time_secs, Path *solution_stateIDs_V);
+  virtual int replan(double allocated_time_sec, Path *solution_stateIDs_V, int* solcost);
+  virtual int replan(int start, int goal, Path *solution_stateIDs_V, ReplanParams params, int* solcost);
+  virtual int replan(Path *solution_stateIDs_V, ReplanParams params);
+  virtual int replan(Path *solution_stateIDs_V, ReplanParams params, int* solcost);
 
-  virtual int set_goal(stateID goal_stateID);
-  virtual int set_start(stateID start_stateID);
+  virtual int set_goal(StateID goal_stateID);
+  virtual int set_start(StateID start_stateID);
 
   virtual void costs_changed(StateChangeQuery const & stateChange){return;};
   virtual void costs_changed(){return;};
@@ -150,21 +150,21 @@ protected:
   double totalPlanTime;
   double reconstructTime;
 
-	virtual LazyARAState* GetState(stateID id);
-	virtual void ExpandState(LazyARAState* parent);
-	virtual void EvaluateState(LazyARAState* parent);
+  virtual LazyARAState* GetState(StateID id);
+  virtual void ExpandState(LazyARAState* parent);
+  virtual void EvaluateState(LazyARAState* parent);
   void getNextLazyElement(LazyARAState* state);
   void insertLazyList(LazyARAState* state, LazyARAState* parent, int edgeCost, bool isTrueCost);
   void putStateInHeap(LazyARAState* state);
 
-	virtual int ImprovePath();
+  virtual int ImprovePath();
 
-	virtual std::vector<stateID> GetSearchPath(int& solcost);
+  virtual Path GetSearchPath(int& solcost);
 
   virtual bool outOfTime();
   virtual void initializeSearch();
   virtual void prepareNextSearchIteration();
-	virtual bool Search(std::vector<stateID>& pathIds, int & PathCost);
+  virtual bool Search(Path& pathIds, int & PathCost);
 
 };
 

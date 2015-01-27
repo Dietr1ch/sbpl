@@ -145,7 +145,7 @@ EnvXXXHashEntry_t* EnvironmentXXX::CreateNewHashEntry(unsigned int X1, unsigned 
     HashEntry->X3 = X3;
     HashEntry->X4 = X4;
 
-    HashEntry->stateID = EnvXXX.StateID2CoordTable.size();
+    HashEntry->id = EnvXXX.StateID2CoordTable.size();
 
     //insert into the tables
     EnvXXX.StateID2CoordTable.push_back(HashEntry);
@@ -160,10 +160,10 @@ EnvXXXHashEntry_t* EnvironmentXXX::CreateNewHashEntry(unsigned int X1, unsigned 
     int* entry = new int[NUMOFINDICES_STATEID2IND];
     StateID2IndexMapping.push_back(entry);
     for (i = 0; i < NUMOFINDICES_STATEID2IND; i++) {
-        StateID2IndexMapping[HashEntry->stateID][i] = -1;
+        StateID2IndexMapping[HashEntry->id][i] = -1;
     }
 
-    if (HashEntry->stateID != (int)StateID2IndexMapping.size() - 1) {
+    if (HashEntry->id != (StateID) StateID2IndexMapping.size() - 1) {
         SBPL_ERROR("ERROR in Env... function: last state has incorrect stateID\n");
         throw new SBPL_Exception();
     }
@@ -183,12 +183,12 @@ void EnvironmentXXX::CreateStartandGoalStates()
     unsigned int X3 = 0;
     unsigned int X4 = 0;
     HashEntry = CreateNewHashEntry(X1, X2, X3, X4);
-    EnvXXX.startstateid = HashEntry->stateID;
+    EnvXXX.startstateid = HashEntry->id;
 
     //create goal state
     X1 = X2 = X3 = X4 = 1;
     HashEntry = CreateNewHashEntry(X1, X2, X3, X4);
-    EnvXXX.goalstateid = HashEntry->stateID;
+    EnvXXX.goalstateid = HashEntry->id;
 }
 
 void EnvironmentXXX::InitializeEnvironment()
@@ -225,7 +225,7 @@ void EnvironmentXXX::AddAllOutcomes(unsigned int SourceX1, unsigned int SourceX2
             OutHashEntry = CreateNewHashEntry(newX1, newX2, newX3, newX4);
         }
         float Prob = 0.5; //probability of the outcome
-        action->AddOutcome(OutHashEntry->stateID, cost, Prob);
+        action->AddOutcome(OutHashEntry->id, cost, Prob);
         CumProb += Prob;
 
     } //while
@@ -281,15 +281,15 @@ bool EnvironmentXXX::InitializeMDPCfg(MDPConfig *MDPCfg)
     return true;
 }
 
-int EnvironmentXXX::GetFromToHeuristic(int FromStateID, int ToStateID)
+int EnvironmentXXX::GetFromToHeuristic(StateID FromStateID, StateID ToStateID)
 {
 #if USE_HEUR==0
     return 0;
 #endif
 
 #if DEBUG
-    if(FromStateID >= (int)EnvXXX.StateID2CoordTable.size() ||
-       ToStateID >= (int)EnvXXX.StateID2CoordTable.size())
+    if(FromStateID >= (StateID) EnvXXX.StateID2CoordTable.size() ||
+         ToStateID >= (StateID) EnvXXX.StateID2CoordTable.size())
     {
         SBPL_ERROR("ERROR in EnvXXX... function: stateID illegal\n");
         throw new SBPL_Exception();
@@ -304,14 +304,14 @@ int EnvironmentXXX::GetFromToHeuristic(int FromStateID, int ToStateID)
     return 0;
 }
 
-int EnvironmentXXX::GetGoalHeuristic(int stateID)
+int EnvironmentXXX::GetGoalHeuristic(StateID id)
 {
 #if USE_HEUR==0
     return 0;
 #endif
 
 #if DEBUG
-    if (stateID >= (int)EnvXXX.StateID2CoordTable.size()) {
+    if (id >= (StateID) EnvXXX.StateID2CoordTable.size()) {
         SBPL_ERROR("ERROR in EnvXXX... function: stateID illegal\n");
         throw new SBPL_Exception();
     }
@@ -323,14 +323,14 @@ int EnvironmentXXX::GetGoalHeuristic(int stateID)
     throw new SBPL_Exception();
 }
 
-int EnvironmentXXX::GetStartHeuristic(int stateID)
+int EnvironmentXXX::GetStartHeuristic(StateID id)
 {
 #if USE_HEUR==0
     return 0;
 #endif
 
 #if DEBUG
-    if (stateID >= (int)EnvXXX.StateID2CoordTable.size()) {
+    if (id >= (StateID) EnvXXX.StateID2CoordTable.size()) {
         SBPL_ERROR("ERROR in EnvXXX... function: stateID illegal\n");
         throw new SBPL_Exception();
     }
@@ -348,7 +348,7 @@ void EnvironmentXXX::SetAllActionsandAllOutcomes(CMDPSTATE* state)
 {
 
 #if DEBUG
-    if (state->StateID >= (int)EnvXXX.StateID2CoordTable.size()) {
+    if (state->id >= (StateID) EnvXXX.StateID2CoordTable.size()) {
         SBPL_ERROR("ERROR in EnvXXX... function: stateID illegal\n");
         throw new SBPL_Exception();
     }
@@ -360,10 +360,10 @@ void EnvironmentXXX::SetAllActionsandAllOutcomes(CMDPSTATE* state)
 #endif
 
     //if it is goal then no successors
-    if (state->StateID == EnvXXX.goalstateid) return;
+    if (state->id == EnvXXX.goalstateid) return;
 
     //get values for the state
-    EnvXXXHashEntry_t* HashEntry = EnvXXX.StateID2CoordTable[state->StateID];
+    EnvXXXHashEntry_t* HashEntry = EnvXXX.StateID2CoordTable[state->id];
 
     //iterate through the actions for the state
     for (int aind = 0; aind < XXX_MAXACTIONSWIDTH; aind++) {
@@ -390,13 +390,13 @@ void EnvironmentXXX::SetAllPreds(CMDPSTATE* state)
     throw new SBPL_Exception();
 }
 
-void EnvironmentXXX::GetSuccs(stateID SourceStateID, vector<stateID>* SuccIDV, vector<int>* CostV)
+void EnvironmentXXX::GetSuccs(StateID SourceStateID, Path* SuccIDV, vector<int>* CostV)
 {
     SBPL_ERROR("ERROR in EnvXXX... function: GetSuccs is undefined\n");
     throw new SBPL_Exception();
 }
 
-void EnvironmentXXX::GetPreds(stateID TargetStateID, vector<stateID>* PredIDV, vector<int>* CostV)
+void EnvironmentXXX::GetPreds(StateID TargetStateID, Path* PredIDV, vector<int>* CostV)
 {
     SBPL_ERROR("ERROR in EnvXXX... function: GetPreds is undefined\n");
     throw new SBPL_Exception();
@@ -404,13 +404,13 @@ void EnvironmentXXX::GetPreds(stateID TargetStateID, vector<stateID>* PredIDV, v
 
 int EnvironmentXXX::SizeofCreatedEnv()
 {
-    return (int)EnvXXX.StateID2CoordTable.size();
+    return (int) EnvXXX.StateID2CoordTable.size();
 }
 
-void EnvironmentXXX::PrintState(int stateID, bool bVerbose, FILE* fOut /*=NULL*/)
+void EnvironmentXXX::PrintState(StateID id, bool bVerbose, FILE* fOut /*=NULL*/)
 {
 #if DEBUG
-    if(stateID >= (int)EnvXXX.StateID2CoordTable.size())
+    if(id >= (StateID) EnvXXX.StateID2CoordTable.size())
     {
         SBPL_ERROR("ERROR in EnvXXX... function: stateID illegal (2)\n");
         throw new SBPL_Exception();
@@ -419,9 +419,9 @@ void EnvironmentXXX::PrintState(int stateID, bool bVerbose, FILE* fOut /*=NULL*/
 
     if (fOut == NULL) fOut = stdout;
 
-    EnvXXXHashEntry_t* HashEntry = EnvXXX.StateID2CoordTable[stateID];
+    EnvXXXHashEntry_t* HashEntry = EnvXXX.StateID2CoordTable[id];
 
-    if (stateID == EnvXXX.goalstateid) {
+    if (id == EnvXXX.goalstateid) {
         SBPL_FPRINTF(fOut, "the state is a goal state\n");
     }
 

@@ -124,7 +124,7 @@ typedef struct RSTARACTIONDATA_T
      *       (not search tree) so if the search is forward, then the path is from
      *       source to target and otherwise, the path is from target toward source
      */
-    std::vector<stateID> pathIDs;
+    Path pathIDs;
 } RSTARACTIONDATA;
 
 /**
@@ -279,22 +279,22 @@ public:
     /**
      * \brief replan a path within the allocated time, return the solution in the vector
      */
-    int replan(double allocated_time_secs, std::vector<stateID>* solution_stateIDs_V);
+    int replan(double allocated_time_secs, Path * solution_stateIDs_V);
 
     /**
      * \brief replan a path within the allocated time, return the solution in the vector, also returns solution cost
      */
-    int replan(double allocated_time_sec, std::vector<stateID>* solution_stateIDs_V, int* solcost);
+    int replan(double allocated_time_sec, Path * solution_stateIDs_V, int* solcost);
 
     /**
      * \brief set the goal state
      */
-    int set_goal(stateID goal_stateID);
+    int set_goal(StateID goal_stateID);
 
     /**
      * \brief set the start state
      */
-    int set_start(stateID start_stateID);
+    int set_start(StateID start_stateID);
 
     /**
      * \brief inform the search about the new edge costs
@@ -404,8 +404,8 @@ private:
 
     //member functions
     void Initialize_searchinfo(CMDPSTATE* state);
-    CMDPSTATE* CreateState(stateID stateID);
-    CMDPSTATE* GetState(stateID stateID);
+    CMDPSTATE* CreateState(StateID stateID);
+    CMDPSTATE* GetState(StateID stateID);
 
     int ComputeHeuristic(CMDPSTATE* MDPstate);
 
@@ -447,21 +447,21 @@ private:
     int InitializeSearchStateSpace();
 
     //setting start/goal
-    int SetSearchGoalState(stateID SearchGoalStateID);
-    int SetSearchStartState(stateID SearchStartStateID);
+    int SetSearchGoalState(StateID SearchGoalStateID);
+    int SetSearchStartState(StateID SearchStartStateID);
 
     int getHeurValue(int StateID);
 
     //get path
-    std::vector<stateID> GetSearchPath(int& solcost);
+    Path GetSearchPath(int& solcost);
     void PrintSearchPath(FILE* fOut);
 
     //the actual search
-    bool Search(std::vector<stateID>& pathIds, int & PathCost, bool bFirstSolution, bool bOptimalSolution,
+    bool Search(Path &pathIds, int & PathCost, bool bFirstSolution, bool bOptimalSolution,
                 double MaxNumofSecs);
     //local search
-    bool ComputeLocalPath(stateID StartStateID, stateID GoalStateID, int maxc, int maxe, int *pCost, int *pCostLow, int *pExp,
-                          std::vector<stateID>* pPathIDs, int* pNewGoalStateID, double maxnumofsecs);
+    bool ComputeLocalPath(StateID StartStateID, StateID GoalStateID, int maxc, int maxe, int *pCost, int *pCostLow, int *pExp,
+                          Path * pPathIDs, StateID* pNewGoalStateID, double maxnumofsecs);
 
     //global search functions
     void SetBestPredecessor(RSTARState* rstarState, RSTARState* rstarPredState, CMDPACTION* action);
@@ -469,8 +469,8 @@ private:
 
     //local search functions
     void Initialize_rstarlsearchdata(CMDPSTATE* state);
-    CMDPSTATE* CreateLSearchState(stateID stateID);
-    CMDPSTATE* GetLSearchState(stateID stateID);
+    CMDPSTATE* CreateLSearchState(StateID stateID);
+    CMDPSTATE* GetLSearchState(StateID stateID);
     bool DestroyLocalSearchMemory();
     CKey LocalSearchComputeKey(RSTARLSearchState* rstarlsearchState);
 };

@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2009, Maxim Likhachev
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above copyright
@@ -13,7 +13,7 @@
  *     * Neither the name of the University of Pennsylvania nor the names of its
  *       contributors may be used to endorse or promote products derived from
  *       this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -359,11 +359,11 @@ void EnvironmentNAV2DUU::Computedxy()
         if (EnvNAV2DUUCfg.dx_[dind] != 0 && EnvNAV2DUUCfg.dy_[dind] != 0) {
             if (dind <= 7) {
                 //the cost of a diagonal move in millimeters
-                EnvNAV2DUUCfg.dxy_distance_mm_[dind] = (int)(ENVNAV2DUU_COSTMULT * 1.414); 
+                EnvNAV2DUUCfg.dxy_distance_mm_[dind] = (int)(ENVNAV2DUU_COSTMULT * 1.414);
             }
             else {
                 //the cost of a move to 1,2 or 2,1 or so on in millimeters
-                EnvNAV2DUUCfg.dxy_distance_mm_[dind] = (int)(ENVNAV2DUU_COSTMULT * 2.236); 
+                EnvNAV2DUUCfg.dxy_distance_mm_[dind] = (int)(ENVNAV2DUU_COSTMULT * 2.236);
             }
         }
         else
@@ -418,10 +418,10 @@ void EnvironmentNAV2DUU::ComputeHeuristicValues()
 
 //-----------------Printing Routines--------------------------------------------
 
-void EnvironmentNAV2DUU::PrintState(stateID stateID, bool bVerbose, FILE* fOut /*=NULL*/)
+void EnvironmentNAV2DUU::PrintState(StateID id, bool bVerbose, FILE* fOut /*=NULL*/)
 {
 #if DEBUG
-    if (stateID >= this->EnvNAV2DUUCfg.EnvWidth_c*this->EnvNAV2DUUCfg.EnvHeight_c) {
+    if (id >= (StateID) (EnvNAV2DUUCfg.EnvWidth_c * EnvNAV2DUUCfg.EnvHeight_c)) {
         SBPL_ERROR("ERROR in EnvNAV2DUU... function: stateID illegal (2)\n");
         throw new SBPL_Exception();
     }
@@ -429,14 +429,14 @@ void EnvironmentNAV2DUU::PrintState(stateID stateID, bool bVerbose, FILE* fOut /
 
     if (fOut == NULL) fOut = stdout;
 
-    if (stateID == EnvNAV2DUU.goalstateid && bVerbose) {
+    if (id == EnvNAV2DUU.goalstateid && bVerbose) {
         SBPL_FPRINTF(fOut, "the state is a goal state\n");
     }
 
     if (bVerbose)
-        SBPL_FPRINTF(fOut, "X=%d Y=%d\n", ENVNAV2DUU_STATEIDTOX(stateID), ENVNAV2DUU_STATEIDTOY(stateID));
+        SBPL_FPRINTF(fOut, "X=%d Y=%d\n", ENVNAV2DUU_STATEIDTOX(id), ENVNAV2DUU_STATEIDTOY(id));
     else
-        SBPL_FPRINTF(fOut, "%d %d\n", ENVNAV2DUU_STATEIDTOX(stateID), ENVNAV2DUU_STATEIDTOY(stateID));
+        SBPL_FPRINTF(fOut, "%d %d\n", ENVNAV2DUU_STATEIDTOX(id), ENVNAV2DUU_STATEIDTOY(id));
 }
 
 void EnvironmentNAV2DUU::PrintEnv_Config(FILE* fOut)
@@ -504,7 +504,7 @@ bool EnvironmentNAV2DUU::InitializeMDPCfg(MDPConfig *MDPCfg)
     return true;
 }
 
-int EnvironmentNAV2DUU::GetFromToHeuristic(stateID FromStateID, stateID ToStateID)
+int EnvironmentNAV2DUU::GetFromToHeuristic(StateID FromStateID, StateID ToStateID)
 {
 #if USE_HEUR==0
     return 0;
@@ -518,7 +518,7 @@ int EnvironmentNAV2DUU::GetFromToHeuristic(stateID FromStateID, stateID ToStateI
     return 0;
 }
 
-int EnvironmentNAV2DUU::GetGoalHeuristic(stateID stateID)
+int EnvironmentNAV2DUU::GetGoalHeuristic(StateID stateID)
 {
 #if USE_HEUR==0
     return 0;
@@ -530,7 +530,7 @@ int EnvironmentNAV2DUU::GetGoalHeuristic(stateID stateID)
     throw new SBPL_Exception();
 }
 
-int EnvironmentNAV2DUU::GetStartHeuristic(stateID stateID)
+int EnvironmentNAV2DUU::GetStartHeuristic(StateID stateID)
 {
 #if USE_HEUR==0
     return 0;
@@ -544,15 +544,15 @@ int EnvironmentNAV2DUU::GetStartHeuristic(stateID stateID)
     return 0;
 }
 
-void EnvironmentNAV2DUU::GetPreds(stateID stateID, const vector<sbpl_BinaryHiddenVar_t>* updatedhvaluesV,
+void EnvironmentNAV2DUU::GetPreds(StateID id, const vector<sbpl_BinaryHiddenVar_t>* updatedhvaluesV,
                                   vector<CMDPACTION>* IncomingDetActionV, vector<CMDPACTION>* IncomingStochActionV,
                                   vector<sbpl_BinaryHiddenVar_t>* StochActionNonpreferredOutcomeV)
 {
     int aind;
 
     //get state coords
-    int destx = ENVNAV2DUU_STATEIDTOX(stateID);
-    int desty = ENVNAV2DUU_STATEIDTOY(stateID);
+    int destx = ENVNAV2DUU_STATEIDTOX(id);
+    int desty = ENVNAV2DUU_STATEIDTOY(id);
 
     //clear succs
     IncomingDetActionV->clear();
@@ -565,7 +565,7 @@ void EnvironmentNAV2DUU::GetPreds(stateID stateID, const vector<sbpl_BinaryHidde
     //see if the destination was originally uncertain
     bool bDet = false;
     //no need to worry about ==1.0 since obstacles are rejected above
-    if (EnvNAV2DUUCfg.UncertaintyGrid2D[destx][desty] < NAV2DUU_ERR_EPS) 
+    if (EnvNAV2DUUCfg.UncertaintyGrid2D[destx][desty] < NAV2DUU_ERR_EPS)
     bDet = true;
 
     //if yes, then figure out the probability of being an obstacle
@@ -667,13 +667,13 @@ void EnvironmentNAV2DUU::GetPreds(stateID stateID, const vector<sbpl_BinaryHidde
 
         if (bDet) {
             //if dest is known - then form a deterministic action
-            action.AddOutcome(stateID, cost, 1.0);
+            action.AddOutcome(id, cost, 1.0);
             IncomingDetActionV->push_back(action);
         }
         else {
             //if dest is unknown - then form a stoch action and compute the corresponding belief part
-            action.AddOutcome(stateID, cost, 1 - ProbObs); //preferred outcome
-            action.AddOutcome(predstateID, 2 * cost, ProbObs); //non-preferred outcome (stateID is untraversable)
+            action.AddOutcome(id, cost, 1 - ProbObs); //preferred outcome
+            action.AddOutcome(predstateID, 2 * cost, ProbObs); //non-preferred outcome (StateID is untraversable)
             IncomingStochActionV->push_back(action);
             //also insert the corresponding hidden variable value
             sbpl_BinaryHiddenVar_t hval;

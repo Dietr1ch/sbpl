@@ -135,34 +135,34 @@ public:
     /**
      * \brief replan a path within the allocated time, return the solution in the vector
      */
-    virtual int replan(double allocated_time_secs, std::vector<stateID> *solution_stateIDs_V);
+    virtual int replan(double allocated_time_secs, Path *solution_stateIDs_V);
 
     /**
      * \brief replan a path within the allocated time, return the solution in the vector, also returns solution cost
      */
-    virtual int replan(double allocated_time_sec, std::vector<stateID> *solution_stateIDs_V, int* solcost);
+    virtual int replan(double allocated_time_sec, Path *solution_stateIDs_V, int* solcost);
 
     /**
      * \brief works same as replan function with time and solution states, but
      *        it let's you fill out all the parameters for the search
      */
-    virtual int replan(std::vector<stateID> *solution_stateIDs_V, ReplanParams params);
+    virtual int replan(Path *solution_stateIDs_V, ReplanParams params);
 
     /**
      * \brief works same as replan function with time, solution states, and
      *        cost, but it let's you fill out all the parameters for the search
      */
-    virtual int replan(std::vector<stateID> *solution_stateIDs_V, ReplanParams params, int* solcost);
+    virtual int replan(Path *solution_stateIDs_V, ReplanParams params, int* solcost);
 
     /**
      * \brief set the goal state
      */
-    virtual int set_goal(stateID goal_stateID);
+    virtual int set_goal(StateID goal_stateID);
 
     /**
      * \brief set the start state
      */
-    virtual int set_start(stateID start_stateID);
+    virtual int set_start(StateID start_stateID);
 
     /**
      * \brief inform the search about the new edge costs
@@ -283,9 +283,9 @@ protected:
     //member functions
     virtual void Initialize_searchinfo(CMDPSTATE* state, ARASearchStateSpace_t* pSearchStateSpace);
 
-    virtual CMDPSTATE* CreateState(int stateID, ARASearchStateSpace_t* pSearchStateSpace);
+    virtual CMDPSTATE* CreateState(StateID id, ARASearchStateSpace_t* pSearchStateSpace);
 
-    virtual CMDPSTATE* GetState(int stateID, ARASearchStateSpace_t* pSearchStateSpace);
+    virtual CMDPSTATE* GetState(StateID id, ARASearchStateSpace_t* pSearchStateSpace);
 
     virtual int ComputeHeuristic(CMDPSTATE* MDPstate, ARASearchStateSpace_t* pSearchStateSpace);
 
@@ -333,21 +333,21 @@ protected:
     //very first initialization
     virtual int InitializeSearchStateSpace(ARASearchStateSpace_t* pSearchStateSpace);
 
-    virtual int SetSearchGoalState(int SearchGoalStateID, ARASearchStateSpace_t* pSearchStateSpace);
+    virtual int SetSearchGoalState(StateID SearchGoalStateID, ARASearchStateSpace_t* pSearchStateSpace);
 
-    virtual int SetSearchStartState(int SearchStartStateID, ARASearchStateSpace_t* pSearchStateSpace);
+    virtual int SetSearchStartState(StateID SearchStartStateID, ARASearchStateSpace_t* pSearchStateSpace);
 
     //reconstruct path functions are only relevant for forward search
     virtual int ReconstructPath(ARASearchStateSpace_t* pSearchStateSpace);
 
     virtual void PrintSearchPath(ARASearchStateSpace_t* pSearchStateSpace, FILE* fOut);
 
-    virtual int getHeurValue(ARASearchStateSpace_t* pSearchStateSpace, stateID StateID);
+    virtual int getHeurValue(ARASearchStateSpace_t* pSearchStateSpace, StateID StateID);
 
     //get path
-    virtual std::vector<stateID> GetSearchPath(ARASearchStateSpace_t* pSearchStateSpace, int& solcost);
+    virtual Path GetSearchPath(ARASearchStateSpace_t* pSearchStateSpace, int& solcost);
 
-    virtual bool Search(ARASearchStateSpace_t* pSearchStateSpace, std::vector<stateID>& pathIds, int & PathCost,
+    virtual bool Search(ARASearchStateSpace_t* pSearchStateSpace, Path &pathIds, int & PathCost,
                         bool bFirstSolution, bool bOptimalSolution, double MaxNumofSecs);
 };
 

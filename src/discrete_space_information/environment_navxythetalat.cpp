@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2008, Maxim Likhachev
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above copyright
@@ -13,7 +13,7 @@
  *     * Neither the name of the University of Pennsylvania nor the names of its
  *       contributors may be used to endorse or promote products derived from
  *       this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -56,9 +56,9 @@ EnvironmentNAVXYTHETALATTICE::EnvironmentNAVXYTHETALATTICE()
 {
     EnvNAVXYTHETALATCfg.obsthresh = ENVNAVXYTHETALAT_DEFAULTOBSTHRESH;
     //the value that pretty much makes it disabled
-    EnvNAVXYTHETALATCfg.cost_inscribed_thresh = EnvNAVXYTHETALATCfg.obsthresh; 
+    EnvNAVXYTHETALATCfg.cost_inscribed_thresh = EnvNAVXYTHETALATCfg.obsthresh;
     //the value that pretty much makes it disabled
-    EnvNAVXYTHETALATCfg.cost_possibly_circumscribed_thresh = -1; 
+    EnvNAVXYTHETALATCfg.cost_possibly_circumscribed_thresh = -1;
 
     grid2Dsearchfromstart = NULL;
     grid2Dsearchfromgoal = NULL;
@@ -249,7 +249,7 @@ void EnvironmentNAVXYTHETALATTICE::ReadConfiguration(FILE* fCfg)
         }
         EnvNAVXYTHETALATCfg.NumThetaDirs = atoi(sTemp);
 
-        //obsthresh: 
+        //obsthresh:
         if (fscanf(fCfg, "%s", sTemp) != 1) {
             SBPL_ERROR("ERROR: ran out of env file early (obsthresh)\n");
             throw new SBPL_Exception();
@@ -271,7 +271,7 @@ void EnvironmentNAVXYTHETALATTICE::ReadConfiguration(FILE* fCfg)
     EnvNAVXYTHETALATCfg.obsthresh = atoi(sTemp);
     SBPL_PRINTF("obsthresh = %d\n", EnvNAVXYTHETALATCfg.obsthresh);
 
-    //cost_inscribed_thresh: 
+    //cost_inscribed_thresh:
     if (fscanf(fCfg, "%s", sTemp) != 1) {
         SBPL_ERROR("ERROR: ran out of env file early\n");
         throw new SBPL_Exception();
@@ -290,7 +290,7 @@ void EnvironmentNAVXYTHETALATTICE::ReadConfiguration(FILE* fCfg)
     EnvNAVXYTHETALATCfg.cost_inscribed_thresh = atoi(sTemp);
     SBPL_PRINTF("cost_inscribed_thresh = %d\n", EnvNAVXYTHETALATCfg.cost_inscribed_thresh);
 
-    //cost_possibly_circumscribed_thresh: 
+    //cost_possibly_circumscribed_thresh:
     if (fscanf(fCfg, "%s", sTemp) != 1) {
         SBPL_ERROR("ERROR: ran out of env file early\n");
         throw new SBPL_Exception();
@@ -725,7 +725,7 @@ void EnvironmentNAVXYTHETALATTICE::ComputeReplanningData()
     for (int tind = 0; tind < EnvNAVXYTHETALATCfg.NumThetaDirs; tind++) {
         //actions
         for (int aind = 0; aind < EnvNAVXYTHETALATCfg.actionwidth; aind++) {
-            //compute replanning data for this action 
+            //compute replanning data for this action
             ComputeReplanningDataforAction(&EnvNAVXYTHETALATCfg.ActionsV[tind][aind]);
         }
     }
@@ -752,7 +752,7 @@ void EnvironmentNAVXYTHETALATTICE::PrecomputeActionswithBaseMotionPrimitive(
         sourcepose.theta = DiscTheta2Cont(tind, EnvNAVXYTHETALATCfg.NumThetaDirs);
 
         //iterate over motion primitives
-        for (size_t aind = 0; aind < motionprimitiveV->size(); aind++) {
+        for (StateID aind = 0; aind < motionprimitiveV->size(); aind++) {
             EnvNAVXYTHETALATCfg.ActionsV[tind][aind].aind = aind;
             EnvNAVXYTHETALATCfg.ActionsV[tind][aind].starttheta = tind;
             double mp_endx_m = motionprimitiveV->at(aind).intermptV[motionprimitiveV->at(aind).intermptV.size() - 1].x;
@@ -982,7 +982,7 @@ void EnvironmentNAVXYTHETALATTICE::PrecomputeActionswithCompleteMotionPrimitive(
     }
 
     //at this point we don't allow nonuniform number of actions
-    if (motionprimitiveV->size() != (size_t)(EnvNAVXYTHETALATCfg.NumThetaDirs * maxnumofactions)) {
+    if (motionprimitiveV->size() != (StateID) (EnvNAVXYTHETALATCfg.NumThetaDirs * maxnumofactions)) {
         SBPL_ERROR("ERROR: nonuniform number of actions is not supported "
                    "(maxnumofactions=%d while motprims=%d thetas=%d\n",
                    maxnumofactions, (unsigned int)motionprimitiveV->size(), EnvNAVXYTHETALATCfg.NumThetaDirs);
@@ -1021,7 +1021,7 @@ void EnvironmentNAVXYTHETALATTICE::DeprecatedPrecomputeActions()
             EnvNAVXYTHETALATCfg.ActionsV[tind][aind].aind = aind;
             EnvNAVXYTHETALATCfg.ActionsV[tind][aind].starttheta = tind;
             //-1,0,1
-            EnvNAVXYTHETALATCfg.ActionsV[tind][aind].endtheta = (tind + aind - 1) % EnvNAVXYTHETALATCfg.NumThetaDirs; 
+            EnvNAVXYTHETALATCfg.ActionsV[tind][aind].endtheta = (tind + aind - 1) % EnvNAVXYTHETALATCfg.NumThetaDirs;
             double angle = DiscTheta2Cont(EnvNAVXYTHETALATCfg.ActionsV[tind][aind].endtheta,
                                           EnvNAVXYTHETALATCfg.NumThetaDirs);
             EnvNAVXYTHETALATCfg.ActionsV[tind][aind].dX = (int)(cos(angle) + 0.5 * (cos(angle) > 0 ? 1 : -1));
@@ -1239,7 +1239,7 @@ int EnvironmentNAVXYTHETALATTICE::GetActionCost(int SourceX, int SourceY, int So
     if (!IsValidCell(SourceX + action->dX, SourceY + action->dY)) return INFINITECOST;
 
     if (EnvNAVXYTHETALATCfg.Grid2D[SourceX + action->dX][SourceY + action->dY] >=
-        EnvNAVXYTHETALATCfg.cost_inscribed_thresh) 
+        EnvNAVXYTHETALATCfg.cost_inscribed_thresh)
     {
         return INFINITECOST;
     }
@@ -1418,14 +1418,14 @@ void EnvironmentNAVXYTHETALATTICE::CalculateFootprintForPose(sbpl_xy_theta_pt_t 
 }
 
 //calculates a set of cells that correspond to the footprint of the base
-//adds points to it (does not clear it beforehand) 
+//adds points to it (does not clear it beforehand)
 void EnvironmentNAVXYTHETALATTICE::CalculateFootprintForPose(sbpl_xy_theta_pt_t pose, vector<sbpl_2Dcell_t>* footprint)
 {
     CalculateFootprintForPose(pose, footprint, EnvNAVXYTHETALATCfg.FootprintPolygon);
 }
 
 //removes a set of cells that correspond to the specified footprint at the sourcepose
-//adds points to it (does not clear it beforehand) 
+//adds points to it (does not clear it beforehand)
 void EnvironmentNAVXYTHETALATTICE::RemoveSourceFootprint(sbpl_xy_theta_pt_t sourcepose,
                                                          vector<sbpl_2Dcell_t>* footprint,
                                                          const vector<sbpl_2Dpt_t>& FootprintPolygon)
@@ -1448,7 +1448,7 @@ void EnvironmentNAVXYTHETALATTICE::RemoveSourceFootprint(sbpl_xy_theta_pt_t sour
 }
 
 //removes a set of cells that correspond to the footprint of the base at the sourcepose
-//adds points to it (does not clear it beforehand) 
+//adds points to it (does not clear it beforehand)
 void EnvironmentNAVXYTHETALATTICE::RemoveSourceFootprint(sbpl_xy_theta_pt_t sourcepose,
                                                          vector<sbpl_2Dcell_t>* footprint)
 {
@@ -1711,17 +1711,17 @@ void EnvironmentNAVXYTHETALATTICE::SetAllPreds(CMDPSTATE* state)
     throw new SBPL_Exception();
 }
 
-void EnvironmentNAVXYTHETALATTICE::GetSuccs(stateID SourceStateID, vector<stateID>* SuccIDV, vector<int>* CostV)
+void EnvironmentNAVXYTHETALATTICE::GetSuccs(StateID SourceStateID, Path* SuccIDV, vector<int>* CostV)
 {
     GetSuccs(SourceStateID, SuccIDV, CostV, NULL);
 }
-void EnvironmentNAVXYTHETALATTICE::GetLazySuccs(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost){
+void EnvironmentNAVXYTHETALATTICE::GetLazySuccs(StateID SourceStateID, Path *SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost){
     GetLazySuccs(SourceStateID, SuccIDV, CostV, isTrueCost, NULL);
 }
-void EnvironmentNAVXYTHETALATTICE::GetSuccsWithUniqueIds(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV){
+void EnvironmentNAVXYTHETALATTICE::GetSuccsWithUniqueIds(StateID SourceStateID, Path *SuccIDV, std::vector<int>* CostV){
     GetSuccsWithUniqueIds(SourceStateID, SuccIDV, CostV, NULL);
 }
-void EnvironmentNAVXYTHETALATTICE::GetLazySuccsWithUniqueIds(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost){
+void EnvironmentNAVXYTHETALATTICE::GetLazySuccsWithUniqueIds(StateID SourceStateID, Path *SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost){
     GetLazySuccsWithUniqueIds(SourceStateID, SuccIDV, CostV, isTrueCost, NULL);
 }
 
@@ -1927,7 +1927,7 @@ EnvironmentNAVXYTHETALAT::~EnvironmentNAVXYTHETALAT()
     }
 }
 
-void EnvironmentNAVXYTHETALAT::GetCoordFromState(stateID stateID, int& x, int& y, int& theta) const
+void EnvironmentNAVXYTHETALAT::GetCoordFromState(StateID stateID, int& x, int& y, int& theta) const
 {
     EnvNAVXYTHETALATHashEntry_t* HashEntry = StateID2CoordTable[stateID];
     x = HashEntry->X;
@@ -1942,15 +1942,15 @@ int EnvironmentNAVXYTHETALAT::GetStateFromCoord(int x, int y, int theta)
         //have to create a new entry
         OutHashEntry = (this->*CreateNewHashEntry)(x, y, theta);
     }
-    return OutHashEntry->stateID;
+    return OutHashEntry->id;
 }
 
-void EnvironmentNAVXYTHETALAT::ConvertStateIDPathintoXYThetaPath(vector<stateID>* stateIDPath,
+void EnvironmentNAVXYTHETALAT::ConvertStateIDPathintoXYThetaPath(Path* stateIDPath,
                                                                  vector<sbpl_xy_theta_pt_t>* xythetaPath)
 {
     vector<EnvNAVXYTHETALATAction_t*> actionV;
     vector<int> CostV;
-    vector<stateID> SuccIDV;
+    Path SuccIDV;
     int targetx_c, targety_c, targettheta_c;
     int sourcex_c, sourcey_c, sourcetheta_c;
 
@@ -1963,8 +1963,8 @@ void EnvironmentNAVXYTHETALAT::ConvertStateIDPathintoXYThetaPath(vector<stateID>
 #endif
 
     for (int pind = 0; pind < (int)(stateIDPath->size()) - 1; pind++) {
-        int sourceID = stateIDPath->at(pind);
-        int targetID = stateIDPath->at(pind + 1);
+        StateID sourceID = stateIDPath->at(pind);
+        StateID targetID = stateIDPath->at(pind + 1);
 
 #if DEBUG
         GetCoordFromState(sourceID, sourcex_c, sourcey_c, sourcetheta_c);
@@ -1986,7 +1986,7 @@ void EnvironmentNAVXYTHETALAT::ConvertStateIDPathintoXYThetaPath(vector<stateID>
                      targetx_c, targety_c, targettheta_c, (int)SuccIDV.size());
 #endif
 
-        for (int sind = 0; sind < (int)SuccIDV.size(); sind++) {
+        for (StateID sind = 0; sind < SuccIDV.size(); sind++) {
 #if DEBUG
             int x_c, y_c, theta_c;
             GetCoordFromState(SuccIDV[sind], x_c, y_c, theta_c);
@@ -2062,12 +2062,12 @@ int EnvironmentNAVXYTHETALAT::SetGoal(double x_m, double y_m, double theta_rad)
     }
 
     //need to recompute start heuristics?
-    if (EnvNAVXYTHETALAT.goalstateid != OutHashEntry->stateID) {
+    if (EnvNAVXYTHETALAT.goalstateid != OutHashEntry->id) {
         bNeedtoRecomputeStartHeuristics = true; //because termination condition may not plan all the way to the new goal
         bNeedtoRecomputeGoalHeuristics = true; //because goal heuristics change
     }
 
-    EnvNAVXYTHETALAT.goalstateid = OutHashEntry->stateID;
+    EnvNAVXYTHETALAT.goalstateid = OutHashEntry->id;
 
     EnvNAVXYTHETALATCfg.EndX_c = x;
     EnvNAVXYTHETALATCfg.EndY_c = y;
@@ -2101,14 +2101,14 @@ int EnvironmentNAVXYTHETALAT::SetStart(double x_m, double y_m, double theta_rad)
     }
 
     //need to recompute start heuristics?
-    if (EnvNAVXYTHETALAT.startstateid != OutHashEntry->stateID) {
+    if (EnvNAVXYTHETALAT.startstateid != OutHashEntry->id) {
         bNeedtoRecomputeStartHeuristics = true;
         //because termination condition can be not all states TODO - make it dependent on term. condition
-        bNeedtoRecomputeGoalHeuristics = true; 
+        bNeedtoRecomputeGoalHeuristics = true;
     }
 
     //set start
-    EnvNAVXYTHETALAT.startstateid = OutHashEntry->stateID;
+    EnvNAVXYTHETALAT.startstateid = OutHashEntry->id;
     EnvNAVXYTHETALATCfg.StartX_c = x;
     EnvNAVXYTHETALATCfg.StartY_c = y;
     EnvNAVXYTHETALATCfg.StartTheta = theta;
@@ -2116,10 +2116,10 @@ int EnvironmentNAVXYTHETALAT::SetStart(double x_m, double y_m, double theta_rad)
     return EnvNAVXYTHETALAT.startstateid;
 }
 
-void EnvironmentNAVXYTHETALAT::PrintState(stateID stateID, bool bVerbose, FILE* fOut /*=NULL*/)
+void EnvironmentNAVXYTHETALAT::PrintState(StateID id, bool bVerbose, FILE* fOut /*=NULL*/)
 {
 #if DEBUG
-    if(stateID >= (int)StateID2CoordTable.size())
+    if(id >= StateID2CoordTable.size())
     {
         SBPL_ERROR("ERROR in EnvNAVXYTHETALAT... function: stateID illegal (2)\n");
         throw new SBPL_Exception();
@@ -2128,9 +2128,9 @@ void EnvironmentNAVXYTHETALAT::PrintState(stateID stateID, bool bVerbose, FILE* 
 
     if (fOut == NULL) fOut = stdout;
 
-    EnvNAVXYTHETALATHashEntry_t* HashEntry = StateID2CoordTable[stateID];
+    EnvNAVXYTHETALATHashEntry_t* HashEntry = StateID2CoordTable[id];
 
-    if (stateID == EnvNAVXYTHETALAT.goalstateid && bVerbose) {
+    if (id == EnvNAVXYTHETALAT.goalstateid && bVerbose) {
         SBPL_FPRINTF(fOut, "the state is a goal state\n");
     }
 
@@ -2180,7 +2180,7 @@ EnvNAVXYTHETALATHashEntry_t* EnvironmentNAVXYTHETALAT::GetHashEntry_hash(int X, 
         }
     }
 
-#if TIME_DEBUG	
+#if TIME_DEBUG
     time_gethash += clock()-currenttime;
 #endif
 
@@ -2191,7 +2191,7 @@ EnvNAVXYTHETALATHashEntry_t* EnvironmentNAVXYTHETALAT::CreateNewHashEntry_lookup
 {
     int i;
 
-#if TIME_DEBUG	
+#if TIME_DEBUG
     clock_t currenttime = clock();
 #endif
 
@@ -2202,7 +2202,7 @@ EnvNAVXYTHETALATHashEntry_t* EnvironmentNAVXYTHETALAT::CreateNewHashEntry_lookup
     HashEntry->Theta = Theta;
     HashEntry->iteration = 0;
 
-    HashEntry->stateID = StateID2CoordTable.size();
+    HashEntry->id = StateID2CoordTable.size();
 
     //insert into the tables
     StateID2CoordTable.push_back(HashEntry);
@@ -2223,10 +2223,10 @@ EnvNAVXYTHETALATHashEntry_t* EnvironmentNAVXYTHETALAT::CreateNewHashEntry_lookup
     int* entry = new int[NUMOFINDICES_STATEID2IND];
     StateID2IndexMapping.push_back(entry);
     for (i = 0; i < NUMOFINDICES_STATEID2IND; i++) {
-        StateID2IndexMapping[HashEntry->stateID][i] = -1;
+        StateID2IndexMapping[HashEntry->id][i] = -1;
     }
 
-    if (HashEntry->stateID != (int)StateID2IndexMapping.size() - 1) {
+    if (HashEntry->id != StateID2IndexMapping.size() - 1) {
         SBPL_ERROR("ERROR in Env... function: last state has incorrect stateID\n");
         throw new SBPL_Exception();
     }
@@ -2242,7 +2242,7 @@ EnvNAVXYTHETALATHashEntry_t* EnvironmentNAVXYTHETALAT::CreateNewHashEntry_hash(i
 {
     int i;
 
-#if TIME_DEBUG	
+#if TIME_DEBUG
     clock_t currenttime = clock();
 #endif
 
@@ -2253,7 +2253,7 @@ EnvNAVXYTHETALATHashEntry_t* EnvironmentNAVXYTHETALAT::CreateNewHashEntry_hash(i
     HashEntry->Theta = Theta;
     HashEntry->iteration = 0;
 
-    HashEntry->stateID = StateID2CoordTable.size();
+    HashEntry->id = StateID2CoordTable.size();
 
     //insert into the tables
     StateID2CoordTable.push_back(HashEntry);
@@ -2268,10 +2268,10 @@ EnvNAVXYTHETALATHashEntry_t* EnvironmentNAVXYTHETALAT::CreateNewHashEntry_hash(i
     int* entry = new int[NUMOFINDICES_STATEID2IND];
     StateID2IndexMapping.push_back(entry);
     for (i = 0; i < NUMOFINDICES_STATEID2IND; i++) {
-        StateID2IndexMapping[HashEntry->stateID][i] = -1;
+        StateID2IndexMapping[HashEntry->id][i] = -1;
     }
 
-    if (HashEntry->stateID != (int)StateID2IndexMapping.size() - 1) {
+    if (HashEntry->id != StateID2IndexMapping.size() - 1) {
         SBPL_ERROR("ERROR in Env... function: last state has incorrect stateID\n");
         throw new SBPL_Exception();
     }
@@ -2283,7 +2283,7 @@ EnvNAVXYTHETALATHashEntry_t* EnvironmentNAVXYTHETALAT::CreateNewHashEntry_hash(i
     return HashEntry;
 }
 
-void EnvironmentNAVXYTHETALAT::GetSuccs(stateID SourceStateID, vector<stateID>* SuccIDV, vector<int>* CostV, vector<
+void EnvironmentNAVXYTHETALAT::GetSuccs(StateID SourceStateID, Path* SuccIDV, vector<int>* CostV, vector<
     EnvNAVXYTHETALATAction_t*>* actionV /*=NULL*/)
 {
     int aind;
@@ -2328,7 +2328,7 @@ void EnvironmentNAVXYTHETALAT::GetSuccs(stateID SourceStateID, vector<stateID>* 
             OutHashEntry = (this->*CreateNewHashEntry)(newX, newY, newTheta);
         }
 
-        SuccIDV->push_back(OutHashEntry->stateID);
+        SuccIDV->push_back(OutHashEntry->id);
         CostV->push_back(cost);
         if (actionV != NULL) actionV->push_back(nav3daction);
     }
@@ -2338,7 +2338,7 @@ void EnvironmentNAVXYTHETALAT::GetSuccs(stateID SourceStateID, vector<stateID>* 
 #endif
 }
 
-void EnvironmentNAVXYTHETALAT::GetPreds(stateID TargetStateID, vector<stateID>* PredIDV, vector<int>* CostV)
+void EnvironmentNAVXYTHETALAT::GetPreds(StateID TargetStateID, Path* PredIDV, vector<int>* CostV)
 {
     //TODO- to support tolerance, need:
     // a) generate preds for goal state based on all possible goal state variable settings,
@@ -2383,7 +2383,7 @@ void EnvironmentNAVXYTHETALAT::GetPreds(stateID TargetStateID, vector<stateID>* 
             OutHashEntry = (this->*CreateNewHashEntry)(predX, predY, predTheta);
         }
 
-        PredIDV->push_back(OutHashEntry->stateID);
+        PredIDV->push_back(OutHashEntry->id);
         CostV->push_back(cost);
     }
 
@@ -2397,7 +2397,7 @@ void EnvironmentNAVXYTHETALAT::SetAllActionsandAllOutcomes(CMDPSTATE* state)
     int cost;
 
 #if DEBUG
-    if(state->StateID >= (int)StateID2CoordTable.size())
+    if(state->id >= StateID2CoordTable.size())
     {
         SBPL_ERROR("ERROR in Env... function: stateID illegal\n");
         throw new SBPL_Exception();
@@ -2411,10 +2411,10 @@ void EnvironmentNAVXYTHETALAT::SetAllActionsandAllOutcomes(CMDPSTATE* state)
 #endif
 
     //goal state should be absorbing
-    if (state->StateID == EnvNAVXYTHETALAT.goalstateid) return;
+    if (state->id == EnvNAVXYTHETALAT.goalstateid) return;
 
     //get X, Y for the state
-    EnvNAVXYTHETALATHashEntry_t* HashEntry = StateID2CoordTable[state->StateID];
+    EnvNAVXYTHETALATHashEntry_t* HashEntry = StateID2CoordTable[state->id];
 
     //iterate through actions
     for (int aind = 0; aind < EnvNAVXYTHETALATCfg.actionwidth; aind++) {
@@ -2442,7 +2442,7 @@ void EnvironmentNAVXYTHETALAT::SetAllActionsandAllOutcomes(CMDPSTATE* state)
             //have to create a new entry
             OutHashEntry = (this->*CreateNewHashEntry)(newX, newY, newTheta);
         }
-        action->AddOutcome(OutHashEntry->stateID, cost, 1.0);
+        action->AddOutcome(OutHashEntry->id, cost, 1.0);
 
 #if TIME_DEBUG
         time3_addallout += clock()-currenttime;
@@ -2451,7 +2451,7 @@ void EnvironmentNAVXYTHETALAT::SetAllActionsandAllOutcomes(CMDPSTATE* state)
 }
 
 void EnvironmentNAVXYTHETALAT::GetPredsofChangedEdges(vector<nav2dcell_t> const * changedcellsV,
-                                                      vector<stateID> *preds_of_changededgesIDV)
+                                                      Path *preds_of_changededgesIDV)
 {
     nav2dcell_t cell;
     sbpl_xy_theta_cell_t affectedcell;
@@ -2474,7 +2474,7 @@ void EnvironmentNAVXYTHETALAT::GetPredsofChangedEdges(vector<nav2dcell_t> const 
             //insert only if it was actually generated
             affectedHashEntry = (this->*GetHashEntry)(affectedcell.x, affectedcell.y, affectedcell.theta);
             if (affectedHashEntry != NULL && affectedHashEntry->iteration < iteration) {
-                preds_of_changededgesIDV->push_back(affectedHashEntry->stateID);
+                preds_of_changededgesIDV->push_back(affectedHashEntry->id);
                 affectedHashEntry->iteration = iteration; //mark as already inserted
             }
         }
@@ -2482,7 +2482,7 @@ void EnvironmentNAVXYTHETALAT::GetPredsofChangedEdges(vector<nav2dcell_t> const 
 }
 
 void EnvironmentNAVXYTHETALAT::GetSuccsofChangedEdges(vector<nav2dcell_t> const * changedcellsV,
-                                                      vector<stateID> *succs_of_changededgesIDV)
+                                                      Path *succs_of_changededgesIDV)
 {
     nav2dcell_t cell;
     sbpl_xy_theta_cell_t affectedcell;
@@ -2509,7 +2509,7 @@ void EnvironmentNAVXYTHETALAT::GetSuccsofChangedEdges(vector<nav2dcell_t> const 
             //insert only if it was actually generated
             affectedHashEntry = (this->*GetHashEntry)(affectedcell.x, affectedcell.y, affectedcell.theta);
             if (affectedHashEntry != NULL && affectedHashEntry->iteration < iteration) {
-                succs_of_changededgesIDV->push_back(affectedHashEntry->stateID);
+                succs_of_changededgesIDV->push_back(affectedHashEntry->id);
                 affectedHashEntry->iteration = iteration; //mark as already inserted
             }
         }
@@ -2558,7 +2558,7 @@ void EnvironmentNAVXYTHETALAT::InitializeEnvironment()
         HashEntry = (this->*CreateNewHashEntry)(EnvNAVXYTHETALATCfg.StartX_c, EnvNAVXYTHETALATCfg.StartY_c,
                                                 EnvNAVXYTHETALATCfg.StartTheta);
     }
-    EnvNAVXYTHETALAT.startstateid = HashEntry->stateID;
+    EnvNAVXYTHETALAT.startstateid = HashEntry->id;
 
     //create goal state
     if ((HashEntry = (this->*GetHashEntry)(EnvNAVXYTHETALATCfg.EndX_c, EnvNAVXYTHETALATCfg.EndY_c,
@@ -2567,14 +2567,14 @@ void EnvironmentNAVXYTHETALAT::InitializeEnvironment()
         HashEntry = (this->*CreateNewHashEntry)(EnvNAVXYTHETALATCfg.EndX_c, EnvNAVXYTHETALATCfg.EndY_c,
                                                 EnvNAVXYTHETALATCfg.EndTheta);
     }
-    EnvNAVXYTHETALAT.goalstateid = HashEntry->stateID;
+    EnvNAVXYTHETALAT.goalstateid = HashEntry->id;
 
     //initialized
     EnvNAVXYTHETALAT.bInitialized = true;
 }
 
 //examples of hash functions: map state coordinates onto a hash value
-//#define GETHASHBIN(X, Y) (Y*WIDTH_Y+X) 
+//#define GETHASHBIN(X, Y) (Y*WIDTH_Y+X)
 //here we have state coord: <X1, X2, X3, X4>
 unsigned int EnvironmentNAVXYTHETALAT::GETHASHBIN(unsigned int X1, unsigned int X2, unsigned int Theta)
 {
@@ -2605,15 +2605,15 @@ void EnvironmentNAVXYTHETALAT::PrintHashTableHist(FILE* fOut)
                  s100, s200, s300, slarge);
 }
 
-int EnvironmentNAVXYTHETALAT::GetFromToHeuristic(stateID FromStateID, stateID ToStateID)
+int EnvironmentNAVXYTHETALAT::GetFromToHeuristic(StateID FromStateID, StateID ToStateID)
 {
 #if USE_HEUR==0
     return 0;
 #endif
 
 #if DEBUG
-    if(FromStateID >= (int)StateID2CoordTable.size()
-        || ToStateID >= (int)StateID2CoordTable.size())
+    if(FromStateID >= StateID2CoordTable.size()
+        || ToStateID >= StateID2CoordTable.size())
     {
         SBPL_ERROR("ERROR in EnvNAVXYTHETALAT... function: stateID illegal\n");
         throw new SBPL_Exception();
@@ -2632,22 +2632,22 @@ int EnvironmentNAVXYTHETALAT::GetFromToHeuristic(stateID FromStateID, stateID To
 
 }
 
-int EnvironmentNAVXYTHETALAT::GetGoalHeuristic(stateID stateID)
+int EnvironmentNAVXYTHETALAT::GetGoalHeuristic(StateID id)
 {
 #if USE_HEUR==0
     return 0;
 #endif
 
 #if DEBUG
-    if (stateID >= (int)StateID2CoordTable.size()) {
+    if (id >= StateID2CoordTable.size()) {
         SBPL_ERROR("ERROR in EnvNAVXYTHETALAT... function: stateID illegal\n");
         throw new SBPL_Exception();
     }
 #endif
 
-    EnvNAVXYTHETALATHashEntry_t* HashEntry = StateID2CoordTable[stateID];
+    EnvNAVXYTHETALATHashEntry_t* HashEntry = StateID2CoordTable[id];
     //computes distances from start state that is grid2D, so it is EndX_c EndY_c
-    int h2D = grid2Dsearchfromgoal->getlowerboundoncostfromstart_inmm(HashEntry->X, HashEntry->Y); 
+    int h2D = grid2Dsearchfromgoal->getlowerboundoncostfromstart_inmm(HashEntry->X, HashEntry->Y);
     int hEuclid = (int)(NAVXYTHETALAT_COSTMULT_MTOMM * EuclideanDistance_m(HashEntry->X, HashEntry->Y,
                                                                            EnvNAVXYTHETALATCfg.EndX_c,
                                                                            EnvNAVXYTHETALATCfg.EndY_c));
@@ -2656,20 +2656,20 @@ int EnvironmentNAVXYTHETALAT::GetGoalHeuristic(stateID stateID)
     return (int)(((double)__max(h2D, hEuclid)) / EnvNAVXYTHETALATCfg.nominalvel_mpersecs);
 }
 
-int EnvironmentNAVXYTHETALAT::GetStartHeuristic(stateID stateID)
+int EnvironmentNAVXYTHETALAT::GetStartHeuristic(StateID id)
 {
 #if USE_HEUR==0
     return 0;
 #endif
 
 #if DEBUG
-    if (stateID >= (int)StateID2CoordTable.size()) {
+    if (id >= StateID2CoordTable.size()) {
         SBPL_ERROR("ERROR in EnvNAVXYTHETALAT... function: stateID illegal\n");
         throw new SBPL_Exception();
     }
 #endif
 
-    EnvNAVXYTHETALATHashEntry_t* HashEntry = StateID2CoordTable[stateID];
+    EnvNAVXYTHETALATHashEntry_t* HashEntry = StateID2CoordTable[id];
     int h2D = grid2Dsearchfromstart->getlowerboundoncostfromstart_inmm(HashEntry->X, HashEntry->Y);
     int hEuclid = (int)(NAVXYTHETALAT_COSTMULT_MTOMM * EuclideanDistance_m(EnvNAVXYTHETALATCfg.StartX_c,
                                                                            EnvNAVXYTHETALATCfg.StartY_c, HashEntry->X,
@@ -2687,7 +2687,7 @@ int EnvironmentNAVXYTHETALAT::SizeofCreatedEnv()
 //------------------------------------------------------------------------------
 
 
-void EnvironmentNAVXYTHETALAT::GetLazySuccs(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost,
+void EnvironmentNAVXYTHETALAT::GetLazySuccs(StateID SourceStateID, Path *SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost,
                                         std::vector<EnvNAVXYTHETALATAction_t*>* actionV /*=NULL*/)
 {
     int aind;
@@ -2727,7 +2727,7 @@ void EnvironmentNAVXYTHETALAT::GetLazySuccs(stateID SourceStateID, std::vector<s
           EnvNAVXYTHETALATHashEntry_t* OutHashEntry;
           if((OutHashEntry = (this->*GetHashEntry)(newX, newY, newTheta)) == NULL)
             OutHashEntry = (this->*CreateNewHashEntry)(newX, newY, newTheta);
-          SuccIDV->push_back(OutHashEntry->stateID);
+          SuccIDV->push_back(OutHashEntry->id);
           CostV->push_back(nav3daction->cost);
           isTrueCost->push_back(false);
           continue;
@@ -2743,7 +2743,7 @@ void EnvironmentNAVXYTHETALAT::GetLazySuccs(stateID SourceStateID, std::vector<s
             OutHashEntry = (this->*CreateNewHashEntry)(newX, newY, newTheta);
         }
 
-        SuccIDV->push_back(OutHashEntry->stateID);
+        SuccIDV->push_back(OutHashEntry->id);
         CostV->push_back(cost);
         isTrueCost->push_back(true);
         if (actionV != NULL) actionV->push_back(nav3daction);
@@ -2754,7 +2754,7 @@ void EnvironmentNAVXYTHETALAT::GetLazySuccs(stateID SourceStateID, std::vector<s
 #endif
 }
 
-int EnvironmentNAVXYTHETALAT::GetTrueCost(stateID parentID, stateID childID){
+int EnvironmentNAVXYTHETALAT::GetTrueCost(StateID parentID, StateID childID){
   EnvNAVXYTHETALATHashEntry_t* fromHash = StateID2CoordTable[parentID];
   EnvNAVXYTHETALATHashEntry_t* toHash = StateID2CoordTable[childID];
 
@@ -2771,7 +2771,7 @@ int EnvironmentNAVXYTHETALAT::GetTrueCost(stateID parentID, stateID childID){
     EnvNAVXYTHETALATHashEntry_t* hash;
     if((hash = (this->*GetHashEntry)(newX, newY, newTheta)) == NULL)
       continue;
-    if(hash->stateID != toHash->stateID)
+    if(hash->id != toHash->id)
       continue;
 
     //get cost
@@ -2786,21 +2786,21 @@ int EnvironmentNAVXYTHETALAT::GetTrueCost(stateID parentID, stateID childID){
   return -1;
 }
 
-void EnvironmentNAVXYTHETALAT::GetSuccsWithUniqueIds(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV,
+void EnvironmentNAVXYTHETALAT::GetSuccsWithUniqueIds(StateID SourceStateID, Path *SuccIDV, std::vector<int>* CostV,
                                                      std::vector<EnvNAVXYTHETALATAction_t*>* actionV /*=NULL*/){
   GetSuccs(SourceStateID, SuccIDV, CostV, actionV);
 }
 
-void EnvironmentNAVXYTHETALAT::GetLazySuccsWithUniqueIds(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost,
+void EnvironmentNAVXYTHETALAT::GetLazySuccsWithUniqueIds(StateID SourceStateID, Path *SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost,
                                                      std::vector<EnvNAVXYTHETALATAction_t*>* actionV /*=NULL*/){
   GetLazySuccs(SourceStateID, SuccIDV, CostV, isTrueCost, actionV);
 }
 
-bool EnvironmentNAVXYTHETALAT::isGoal(int id){
+bool EnvironmentNAVXYTHETALAT::isGoal(StateID id){
   return EnvNAVXYTHETALAT.goalstateid == id;
 }
 
-//void EnvironmentNAVXYTHETALAT::GetPreds(stateID TargetStateID, std::vector<stateID>* PredIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost);
-//void EnvironmentNAVXYTHETALAT::GetPredsWithUniqueIds(stateID TargetStateID, std::vector<stateID>* PredIDV, std::vector<int>* CostV);
-//void EnvironmentNAVXYTHETALAT::GetPredsWithUniqueIds(stateID TargetStateID, std::vector<stateID>* PredIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost);
+//void EnvironmentNAVXYTHETALAT::GetPreds(StateID TargetStateID, Path * PredIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost);
+//void EnvironmentNAVXYTHETALAT::GetPredsWithUniqueIds(StateID TargetStateID, Path * PredIDV, std::vector<int>* CostV);
+//void EnvironmentNAVXYTHETALAT::GetPredsWithUniqueIds(StateID TargetStateID, Path * PredIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost);
 

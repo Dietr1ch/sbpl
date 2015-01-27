@@ -469,13 +469,13 @@ EnvNAV2DHashEntry_t* EnvironmentNAV2D::CreateNewHashEntry(int X, int Y)
     HashEntry->X = X;
     HashEntry->Y = Y;
 
-    HashEntry->stateID = EnvNAV2D.StateID2CoordTable.size();
+    HashEntry->id = EnvNAV2D.StateID2CoordTable.size();
 #if DEBUG
-    if(HashEntry->stateID==INVALID_STATE_ID)
-        QUIT("HashEntry maps (x:%d, y:%d) to %d)",
+    if(HashEntry->id==INVALID_STATE_ID)
+        QUIT("HashEntry maps (x:%d, y:%d) to %zu)",
             HashEntry->X,
             HashEntry->Y,
-            HashEntry->stateID
+            HashEntry->id
         );
 #endif
 
@@ -493,9 +493,9 @@ EnvNAV2DHashEntry_t* EnvironmentNAV2D::CreateNewHashEntry(int X, int Y)
     int* entry = new int[NUMOFINDICES_STATEID2IND];
     StateID2IndexMapping.push_back(entry);
     for (i = 0; i < NUMOFINDICES_STATEID2IND; i++)
-        StateID2IndexMapping[HashEntry->stateID][i] = -1;
+        StateID2IndexMapping[HashEntry->id][i] = -1;
 
-    if (HashEntry->stateID != (int)StateID2IndexMapping.size() - 1) {
+    if (HashEntry->id != StateID2IndexMapping.size() - 1) {
         SBPL_ERROR("ERROR in Env... function: last state has incorrect stateID\n");
         throw new SBPL_Exception();
     }
@@ -554,13 +554,13 @@ void EnvironmentNAV2D::InitializeEnvironment()
     if ((HashEntry = GetHashEntry(EnvNAV2DCfg.StartX_c, EnvNAV2DCfg.StartY_c)) == NULL) {
         HashEntry = CreateNewHashEntry(EnvNAV2DCfg.StartX_c, EnvNAV2DCfg.StartY_c);
     }
-    EnvNAV2D.startstateid = HashEntry->stateID;
+    EnvNAV2D.startstateid = HashEntry->id;
 
     //create goal state 
     if ((HashEntry = GetHashEntry(EnvNAV2DCfg.EndX_c, EnvNAV2DCfg.EndY_c)) == NULL) {
         HashEntry = CreateNewHashEntry(EnvNAV2DCfg.EndX_c, EnvNAV2DCfg.EndY_c);
     }
-    EnvNAV2D.goalstateid = HashEntry->stateID;
+    EnvNAV2D.goalstateid = HashEntry->id;
 
     EnvNAV2D.bInitialized = true;
 }
@@ -575,7 +575,7 @@ static int EuclideanDistance(int X1, int Y1, int X2, int Y2)
 //generates nNumofNeighs random neighbors of cell <X,Y> at distance nDist_c (measured in cells)
 //it will also generate goal if within this distance as an additional neighbor
 //bSuccs is set to true if we are computing successor states, otherwise it is Preds
-void EnvironmentNAV2D::GetRandomNeighs(stateID id, std::vector<stateID> *NeighIDV, std::vector<int>* CLowV,
+void EnvironmentNAV2D::GetRandomNeighs(StateID id, Path *NeighIDV, std::vector<int>* CLowV,
                                        int nNumofNeighs, int nDist_c, bool bSuccs)
 {
     //clear the successor array
@@ -636,12 +636,12 @@ void EnvironmentNAV2D::GetRandomNeighs(stateID id, std::vector<stateID> *NeighID
         //compute clow
         int clow;
         if (bSuccs)
-            clow = GetFromToHeuristic(id, OutHashEntry->stateID);
+            clow = GetFromToHeuristic(id, OutHashEntry->id);
         else
-            clow = GetFromToHeuristic(OutHashEntry->stateID, id);
+            clow = GetFromToHeuristic(OutHashEntry->id, id);
 
         //insert it into the list
-        NeighIDV->push_back(OutHashEntry->stateID);
+        NeighIDV->push_back(OutHashEntry->id);
         CLowV->push_back(clow);
     }
 
@@ -739,15 +739,15 @@ bool EnvironmentNAV2D::InitializeMDPCfg(MDPConfig *MDPCfg)
     return true;
 }
 
-int EnvironmentNAV2D::GetFromToHeuristic(stateID FromStateID, stateID ToStateID)
+int EnvironmentNAV2D::GetFromToHeuristic(StateID FromStateID, StateID ToStateID)
 {
 #if USE_HEUR==0
     return 0;
 #endif
 
 #if DEBUG
-    if (FromStateID >= (int)EnvNAV2D.StateID2CoordTable.size() ||
-        ToStateID >= (int)EnvNAV2D.StateID2CoordTable.size())
+    if (FromStateID >= EnvNAV2D.StateID2CoordTable.size() ||
+        ToStateID >= EnvNAV2D.StateID2CoordTable.size())
     {
         SBPL_ERROR("ERROR in EnvNAV2D... function: stateID illegal\n");
         throw new SBPL_Exception();
@@ -761,38 +761,38 @@ int EnvironmentNAV2D::GetFromToHeuristic(stateID FromStateID, stateID ToStateID)
     return EuclideanDistance(FromHashEntry->X, FromHashEntry->Y, ToHashEntry->X, ToHashEntry->Y);
 }
 
-int EnvironmentNAV2D::GetGoalHeuristic(stateID stateID)
+int EnvironmentNAV2D::GetGoalHeuristic(StateID id)
 {
 #if USE_HEUR==0
     return 0;
 #endif
 
 #if DEBUG
-    if (stateID >= (int)EnvNAV2D.StateID2CoordTable.size()) {
+    if (id >= EnvNAV2D.StateID2CoordTable.size()) {
         SBPL_ERROR("ERROR in EnvNAV2D... function: stateID illegal\n");
         throw new SBPL_Exception();
     }
 #endif
 
     //define this function if it used in the planner (heuristic forward search would use it)
-    return GetFromToHeuristic(stateID, EnvNAV2D.goalstateid);
+    return GetFromToHeuristic(id, EnvNAV2D.goalstateid);
 }
 
-int EnvironmentNAV2D::GetStartHeuristic(stateID stateID)
+int EnvironmentNAV2D::GetStartHeuristic(StateID id)
 {
 #if USE_HEUR==0
     return 0;
 #endif
 
 #if DEBUG
-    if (stateID >= (int)EnvNAV2D.StateID2CoordTable.size()) {
+    if (id >= EnvNAV2D.StateID2CoordTable.size()) {
         SBPL_ERROR("ERROR in EnvNAV2D... function: stateID illegal\n");
         throw new SBPL_Exception();
     }
 #endif
 
     //define this function if it used in the planner (heuristic backward search would use it)
-    return GetFromToHeuristic(EnvNAV2D.startstateid, stateID);
+    return GetFromToHeuristic(EnvNAV2D.startstateid, id);
 }
 
 void EnvironmentNAV2D::SetAllActionsandAllOutcomes(CMDPSTATE* state)
@@ -800,7 +800,7 @@ void EnvironmentNAV2D::SetAllActionsandAllOutcomes(CMDPSTATE* state)
     int cost;
 
 #if DEBUG
-    if (state->StateID >= (int)EnvNAV2D.StateID2CoordTable.size()) {
+    if (state->id >= EnvNAV2D.StateID2CoordTable.size()) {
         SBPL_ERROR("ERROR in Env... function: stateID illegal\n");
         throw new SBPL_Exception();
     }
@@ -812,10 +812,10 @@ void EnvironmentNAV2D::SetAllActionsandAllOutcomes(CMDPSTATE* state)
 #endif
 
     //goal state should be absorbing
-    if (state->StateID == EnvNAV2D.goalstateid) return;
+    if (state->id == EnvNAV2D.goalstateid) return;
 
     //get X, Y for the state
-    EnvNAV2DHashEntry_t* HashEntry = EnvNAV2D.StateID2CoordTable[state->StateID];
+    EnvNAV2DHashEntry_t* HashEntry = EnvNAV2D.StateID2CoordTable[state->id];
 
     //iterate through actions
     bool bTestBounds = false;
@@ -869,7 +869,7 @@ void EnvironmentNAV2D::SetAllActionsandAllOutcomes(CMDPSTATE* state)
             //have to create a new entry
             OutHashEntry = CreateNewHashEntry(newX, newY);
         }
-        action->AddOutcome(OutHashEntry->stateID, cost, 1.0);
+        action->AddOutcome(OutHashEntry->id, cost, 1.0);
 
 #if TIME_DEBUG
         time3_addallout += clock()-currenttime;
@@ -885,7 +885,7 @@ void EnvironmentNAV2D::SetAllPreds(CMDPSTATE* state)
     throw new SBPL_Exception();
 }
 
-void EnvironmentNAV2D::GetSuccs(stateID SourceStateID, vector<stateID>* SuccIDV, vector<int>* CostV)
+void EnvironmentNAV2D::GetSuccs(StateID SourceStateID, Path* SuccIDV, vector<int>* CostV)
 {
     int aind;
 
@@ -951,7 +951,7 @@ void EnvironmentNAV2D::GetSuccs(stateID SourceStateID, vector<stateID>* SuccIDV,
         if (!OutHashEntry)
             OutHashEntry = CreateNewHashEntry(newX, newY);
 
-        SuccIDV->push_back(OutHashEntry->stateID);
+        SuccIDV->push_back(OutHashEntry->id);
         CostV->push_back(cost);
     }
 
@@ -960,7 +960,7 @@ void EnvironmentNAV2D::GetSuccs(stateID SourceStateID, vector<stateID>* SuccIDV,
 #endif
 }
 
-void EnvironmentNAV2D::GetPreds(stateID TargetStateID, vector<stateID>* PredIDV, vector<int>* CostV)
+void EnvironmentNAV2D::GetPreds(StateID TargetStateID, Path *PredIDV, vector<int>* CostV)
 {
     int aind;
 
@@ -1033,7 +1033,7 @@ void EnvironmentNAV2D::GetPreds(stateID TargetStateID, vector<stateID>* PredIDV,
             OutHashEntry = CreateNewHashEntry(predX, predY);
         }
 
-        PredIDV->push_back(OutHashEntry->stateID);
+        PredIDV->push_back(OutHashEntry->id);
         CostV->push_back(cost);
     }
 
@@ -1047,10 +1047,10 @@ int EnvironmentNAV2D::SizeofCreatedEnv()
     return (int)EnvNAV2D.StateID2CoordTable.size();
 }
 
-void EnvironmentNAV2D::PrintState(stateID stateID, bool bVerbose, FILE* fOut /*=NULL*/)
+void EnvironmentNAV2D::PrintState(StateID id, bool bVerbose, FILE* fOut /*=NULL*/)
 {
 #if DEBUG
-    if (stateID >= (int)EnvNAV2D.StateID2CoordTable.size()) {
+    if (id >= EnvNAV2D.StateID2CoordTable.size()) {
         SBPL_ERROR("ERROR in EnvNAV2D... function: stateID illegal (2)\n");
         throw new SBPL_Exception();
     }
@@ -1058,9 +1058,9 @@ void EnvironmentNAV2D::PrintState(stateID stateID, bool bVerbose, FILE* fOut /*=
 
     if (fOut == NULL) fOut = stdout;
 
-    EnvNAV2DHashEntry_t* HashEntry = EnvNAV2D.StateID2CoordTable[stateID];
+    EnvNAV2DHashEntry_t* HashEntry = EnvNAV2D.StateID2CoordTable[id];
 
-    if (stateID == EnvNAV2D.goalstateid && bVerbose) {
+    if (id == EnvNAV2D.goalstateid && bVerbose) {
         SBPL_FPRINTF(fOut, "the state is a goal state\n");
     }
 
@@ -1070,7 +1070,7 @@ void EnvironmentNAV2D::PrintState(stateID stateID, bool bVerbose, FILE* fOut /*=
         SBPL_FPRINTF(fOut, "%d %d\n", HashEntry->X, HashEntry->Y);
 }
 
-void EnvironmentNAV2D::GetCoordFromState(stateID stateID, int& x, int& y) const
+void EnvironmentNAV2D::GetCoordFromState(StateID stateID, int& x, int& y) const
 {
     EnvNAV2DHashEntry_t* HashEntry = EnvNAV2D.StateID2CoordTable[stateID];
     x = HashEntry->X;
@@ -1084,7 +1084,7 @@ int EnvironmentNAV2D::GetStateFromCoord(int x, int y)
         //have to create a new entry
         OutHashEntry = CreateNewHashEntry(x, y);
     }
-    return OutHashEntry->stateID;
+    return OutHashEntry->id;
 }
 
 const EnvNAV2DConfig_t* EnvironmentNAV2D::GetEnvNavConfig()
@@ -1109,7 +1109,7 @@ int EnvironmentNAV2D::SetGoal(int x, int y)
         //have to create a new entry
         OutHashEntry = CreateNewHashEntry(x, y);
     }
-    EnvNAV2D.goalstateid = OutHashEntry->stateID;
+    EnvNAV2D.goalstateid = OutHashEntry->id;
     EnvNAV2DCfg.EndX_c = x;
     EnvNAV2DCfg.EndY_c = y;
 
@@ -1138,7 +1138,7 @@ int EnvironmentNAV2D::SetStart(int x, int y)
         //have to create a new entry
         OutHashEntry = CreateNewHashEntry(x, y);
     }
-    EnvNAV2D.startstateid = OutHashEntry->stateID;
+    EnvNAV2D.startstateid = OutHashEntry->id;
     EnvNAV2DCfg.StartX_c = x;
     EnvNAV2DCfg.StartY_c = y;
 
@@ -1171,7 +1171,7 @@ void EnvironmentNAV2D::PrintTimeStat(FILE* fOut)
 }
 
 void EnvironmentNAV2D::GetPredsofChangedEdges(vector<nav2dcell_t> const * changedcellsV,
-                                              vector<stateID> *preds_of_changededgesIDV)
+                                              Path *preds_of_changededgesIDV)
 {
     nav2dcell_t cell;
     int aind;
@@ -1193,7 +1193,7 @@ void EnvironmentNAV2D::GetPredsofChangedEdges(vector<nav2dcell_t> const * change
 // identical to GetPredsofChangedEdges except for changing "preds"
 // into "succs"... can probably have just one method.
 void EnvironmentNAV2D::GetSuccsofChangedEdges(vector<nav2dcell_t> const * changedcellsV,
-                                              vector<stateID> *succs_of_changededgesIDV)
+                                              Path *succs_of_changededgesIDV)
 {
     nav2dcell_t cell;
     int aind;
@@ -1258,10 +1258,10 @@ bool EnvironmentNAV2D::SetEnvParameter(const char* parameter, int value)
 }
 
 //returns true if two states meet the same condition - see environment.h for more info
-bool EnvironmentNAV2D::AreEquivalent(stateID StateID1, stateID StateID2)
+bool EnvironmentNAV2D::AreEquivalent(StateID StateID1, StateID StateID2)
 {
 #if DEBUG
-    if (StateID1 >= (int)EnvNAV2D.StateID2CoordTable.size() || StateID2 >= (int)EnvNAV2D.StateID2CoordTable.size()) {
+    if (StateID1 >= EnvNAV2D.StateID2CoordTable.size() || StateID2 >= EnvNAV2D.StateID2CoordTable.size()) {
         SBPL_ERROR("ERROR in EnvNAV2D... function: stateID illegal (2)\n");
         throw new SBPL_Exception();
     }
@@ -1277,7 +1277,7 @@ bool EnvironmentNAV2D::AreEquivalent(stateID StateID1, stateID StateID2)
 }
 
 //generate succs at some domain-dependent distance - see environment.h for more info
-void EnvironmentNAV2D::GetRandomSuccsatDistance(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CLowV)
+void EnvironmentNAV2D::GetRandomSuccsatDistance(StateID SourceStateID, Path *SuccIDV, std::vector<int>* CLowV)
 {
     //number of random neighbors
     int nNumofNeighs = 10;
@@ -1285,7 +1285,7 @@ void EnvironmentNAV2D::GetRandomSuccsatDistance(stateID SourceStateID, std::vect
     int nDist_c = 100;
 
 #if DEBUG
-    if (SourceStateID >= (int)EnvNAV2D.StateID2CoordTable.size()) {
+    if (SourceStateID >= EnvNAV2D.StateID2CoordTable.size()) {
         SBPL_ERROR("ERROR in EnvNAV2DGetRandSuccs... function: stateID illegal\n");
         throw new SBPL_Exception();
     }
@@ -1300,7 +1300,7 @@ void EnvironmentNAV2D::GetRandomSuccsatDistance(stateID SourceStateID, std::vect
 }
 
 //generate preds at some domain-dependent distance - see environment.h for more info
-void EnvironmentNAV2D::GetRandomPredsatDistance(stateID TargetStateID, std::vector<stateID>* PredIDV, std::vector<int>* CLowV)
+void EnvironmentNAV2D::GetRandomPredsatDistance(StateID TargetStateID, Path *PredIDV, std::vector<int>* CLowV)
 {
     //number of random neighbors
     int nNumofNeighs = 10;
@@ -1308,7 +1308,7 @@ void EnvironmentNAV2D::GetRandomPredsatDistance(stateID TargetStateID, std::vect
     int nDist_c = 5; //TODO-was100;
 
 #if DEBUG
-    if (TargetStateID >= (int)EnvNAV2D.StateID2CoordTable.size()) {
+    if (TargetStateID >= EnvNAV2D.StateID2CoordTable.size()) {
         SBPL_ERROR("ERROR in EnvNAV2DGetRandSuccs... function: stateID illegal\n");
         throw new SBPL_Exception();
     }
@@ -1419,11 +1419,11 @@ bool EnvironmentNAV2D::generateRandomProblem(MDPConfig *cfg, int seed, int maxTr
         EnvNAV2DCfg.EndX_c = gx;
         EnvNAV2DCfg.EndY_c = gy;
 
-        stateID startID = safeGetHashEntry(sx, sy)->stateID;
+        StateID startID = safeGetHashEntry(sx, sy)->id;
         EnvNAV2D.startstateid = startID;
         cfg->startstateid     = startID;
 
-        stateID goalID  = safeGetHashEntry(gx, gy)->stateID;
+        StateID goalID  = safeGetHashEntry(gx, gy)->id;
         EnvNAV2D.goalstateid  = goalID;
         cfg->goalstateid      = goalID;
 
@@ -1459,7 +1459,7 @@ bool EnvironmentNAV2D::generateRandomStart(MDPConfig* cfg, int seed, int maxTrie
         EnvNAV2DCfg.StartX_c = sx;
         EnvNAV2DCfg.StartY_c = sy;
 
-        stateID id =  safeGetHashEntry(sx, sy)->stateID;
+        StateID id =  safeGetHashEntry(sx, sy)->id;
         EnvNAV2D.startstateid = id;
         cfg->startstateid     = id;
 
@@ -1492,7 +1492,7 @@ bool EnvironmentNAV2D::generateRandomGoal(MDPConfig* cfg, int seed, int maxTries
         EnvNAV2DCfg.EndX_c = gx;
         EnvNAV2DCfg.EndY_c = gy;
 
-        stateID id = safeGetHashEntry(gx, gy)->stateID;
+        StateID id = safeGetHashEntry(gx, gy)->id;
         EnvNAV2D.goalstateid = id;
         cfg->goalstateid     = id;
 
@@ -1510,12 +1510,12 @@ bool EnvironmentNAV2D::generateRandomGoal(MDPConfig* cfg, int seed, int maxTries
 
 
 char lastString[100];
-char* EnvironmentNAV2D::toString(stateID id) {
+char* EnvironmentNAV2D::toString(StateID id) {
     EnvNAV2DHashEntry_t* entry = EnvNAV2D.StateID2CoordTable[id];
-    sprintf(lastString, "(%3d, %3d)->[%5d]",
+    sprintf(lastString, "(%3d, %3d)->[%5zu]",
             entry->X,
             entry->Y,
-            entry->stateID
+            entry->id
     );
 
     return lastString;

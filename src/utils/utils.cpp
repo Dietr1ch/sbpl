@@ -151,7 +151,7 @@ bool PathExists(CMDP* pMarkovChain, CMDPSTATE* sourcestate, CMDPSTATE* targetsta
         for (int sind = 0; (int)state->Actions.size() != 0 && sind < (int)state->Actions[0]->SuccsID.size(); sind++) {
             //get a successor
             for (i = 0; i < (int)pMarkovChain->StateArray.size(); i++) {
-                if (pMarkovChain->StateArray[i]->StateID == state->Actions[0]->SuccsID[sind]) break;
+                if (pMarkovChain->StateArray[i]->id == state->Actions[0]->SuccsID[sind]) break;
             }
             if (i == (int)pMarkovChain->StateArray.size()) {
                 SBPL_ERROR("ERROR in PathExists: successor is not found\n");
@@ -188,7 +188,7 @@ int ComputeNumofStochasticActions(CMDP* pMDP)
     return nNumofStochActions;
 }
 
-void EvaluatePolicy(CMDP* PolicyMDP, int StartStateID, int GoalStateID, double* PolValue, bool *bFullPolicy,
+void EvaluatePolicy(CMDP* PolicyMDP, StateID StartStateID, StateID GoalStateID, double* PolValue, bool *bFullPolicy,
                     double* Pcgoal, int *nMerges, bool* bCycles)
 {
     int i, j, startind = -1;
@@ -208,7 +208,7 @@ void EvaluatePolicy(CMDP* PolicyMDP, int StartStateID, int GoalStateID, double* 
         Pcvals[i] = 0;
 
         //remember the start index
-        if (PolicyMDP->StateArray[i]->StateID == StartStateID) {
+        if (PolicyMDP->StateArray[i]->id == StartStateID) {
             startind = i;
             Pcvals[i] = 1;
         }
@@ -224,7 +224,7 @@ void EvaluatePolicy(CMDP* PolicyMDP, int StartStateID, int GoalStateID, double* 
             CMDPSTATE* state = PolicyMDP->StateArray[i];
 
             //do the backup for values
-            if (state->StateID == GoalStateID) {
+            if (state->id == GoalStateID) {
                 vals[i] = 0;
             }
             else if ((int)state->Actions.size() == 0) {
@@ -242,7 +242,7 @@ void EvaluatePolicy(CMDP* PolicyMDP, int StartStateID, int GoalStateID, double* 
                 for (int oind = 0; oind < (int)action->SuccsID.size(); oind++) {
                     //get the state
                     for (j = 0; j < (int)PolicyMDP->StateArray.size(); j++) {
-                        if (PolicyMDP->StateArray[j]->StateID == action->SuccsID[oind]) break;
+                        if (PolicyMDP->StateArray[j]->id == action->SuccsID[oind]) break;
                     }
                     if (j == (int)PolicyMDP->StateArray.size()) {
                         SBPL_ERROR("ERROR in EvaluatePolicy: incorrect successor %d\n", action->SuccsID[oind]);
@@ -271,7 +271,7 @@ void EvaluatePolicy(CMDP* PolicyMDP, int StartStateID, int GoalStateID, double* 
                 for (int oind = 0; (int)PolicyMDP->StateArray[j]->Actions.size() > 0 &&
                                    oind < (int)PolicyMDP->StateArray[j]->Actions[0]->SuccsID.size(); oind++)
                 {
-                    if (PolicyMDP->StateArray[j]->Actions[0]->SuccsID[oind] == state->StateID) {
+                    if (PolicyMDP->StateArray[j]->Actions[0]->SuccsID[oind] == state->id) {
                         //process the predecessor
                         double PredPc = Pcvals[j];
                         double OutProb = PolicyMDP->StateArray[j]->Actions[0]->SuccsProb[oind];
@@ -287,12 +287,12 @@ void EvaluatePolicy(CMDP* PolicyMDP, int StartStateID, int GoalStateID, double* 
                     }
                 }
             }
-            if (bFirstIter && state->StateID != GoalStateID && nMerge > 0) *nMerges += (nMerge - 1);
+            if (bFirstIter && state->id != GoalStateID && nMerge > 0) *nMerges += (nMerge - 1);
 
             //assign Pc
-            if (state->StateID != StartStateID) Pcvals[i] = Pc;
+            if (state->id != StartStateID) Pcvals[i] = Pc;
 
-            if (state->StateID == GoalStateID) *Pcgoal = Pcvals[i];
+            if (state->id == GoalStateID) *Pcgoal = Pcvals[i];
         } //over  states
         bFirstIter = false;
     } //until delta small

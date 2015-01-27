@@ -100,26 +100,26 @@ void ADPlanner::Initialize_searchinfo(CMDPSTATE* state, ADSearchStateSpace_t* pS
     InitializeSearchStateInfo(searchstateinfo, pSearchStateSpace);
 }
 
-CMDPSTATE* ADPlanner::CreateState(int stateID, ADSearchStateSpace_t* pSearchStateSpace)
+CMDPSTATE* ADPlanner::CreateState(StateID id, ADSearchStateSpace_t* pSearchStateSpace)
 {
     CMDPSTATE* state = NULL;
 
 #if DEBUG
-    if (environment_->StateID2IndexMapping[stateID][ADMDP_STATEID2IND] != -1) {
+    if (environment_->StateID2IndexMapping[id][ADMDP_STATEID2IND] != -1) {
         SBPL_ERROR("ERROR in CreateState: state already created\n");
         throw new SBPL_Exception();
     }
 #endif
 
     //adds to the tail a state
-    state = pSearchStateSpace->searchMDP.AddState(stateID);
+    state = pSearchStateSpace->searchMDP.AddState(id);
 
     //remember the index of the state
-    environment_->StateID2IndexMapping[stateID][ADMDP_STATEID2IND] = pSearchStateSpace->searchMDP.StateArray.size() - 1;
+    environment_->StateID2IndexMapping[id][ADMDP_STATEID2IND] = pSearchStateSpace->searchMDP.StateArray.size() - 1;
 
 #if DEBUG
     if (state !=
-        pSearchStateSpace->searchMDP.StateArray[environment_->StateID2IndexMapping[stateID][ADMDP_STATEID2IND]])
+        pSearchStateSpace->searchMDP.StateArray[environment_->StateID2IndexMapping[id][ADMDP_STATEID2IND]])
     {
         SBPL_ERROR("ERROR in CreateState: invalid state index\n");
         throw new SBPL_Exception();
@@ -134,17 +134,17 @@ CMDPSTATE* ADPlanner::CreateState(int stateID, ADSearchStateSpace_t* pSearchStat
     return state;
 }
 
-CMDPSTATE* ADPlanner::GetState(int stateID, ADSearchStateSpace_t* pSearchStateSpace)
+CMDPSTATE* ADPlanner::GetState(StateID id, ADSearchStateSpace_t* pSearchStateSpace)
 {
-    if (stateID >= (int)environment_->StateID2IndexMapping.size()) {
+    if (id >= (StateID) environment_->StateID2IndexMapping.size()) {
         SBPL_ERROR("ERROR int GetState: stateID is invalid\n");
         throw new SBPL_Exception();
     }
 
-    if (environment_->StateID2IndexMapping[stateID][ADMDP_STATEID2IND] == -1)
-        return CreateState(stateID, pSearchStateSpace);
+    if (environment_->StateID2IndexMapping[id][ADMDP_STATEID2IND] == -1)
+        return CreateState(id, pSearchStateSpace);
     else
-        return pSearchStateSpace->searchMDP.StateArray[environment_->StateID2IndexMapping[stateID][ADMDP_STATEID2IND]];
+        return pSearchStateSpace->searchMDP.StateArray[environment_->StateID2IndexMapping[id][ADMDP_STATEID2IND]];
 }
 
 //-----------------------------------------------------------------------------------------------------
@@ -174,7 +174,7 @@ int ADPlanner::ComputeHeuristic(CMDPSTATE* MDPstate, ADSearchStateSpace_t* pSear
 #endif
 
         //forward search: heur = distance from state to searchgoal which is Goal ADState
-        int retv = environment_->GetGoalHeuristic(MDPstate->StateID);
+        int retv = environment_->GetGoalHeuristic(MDPstate->id);
 
 #if MEM_CHECK == 1
         //if (WasEn)
@@ -185,7 +185,7 @@ int ADPlanner::ComputeHeuristic(CMDPSTATE* MDPstate, ADSearchStateSpace_t* pSear
     }
     else {
         //backward search: heur = distance from searchgoal to state
-        return environment_->GetStartHeuristic(MDPstate->StateID);
+        return environment_->GetStartHeuristic(MDPstate->id);
     }
 }
 
@@ -286,15 +286,15 @@ void ADPlanner::UpdateSetMembership(ADState* state)
 
 void ADPlanner::Recomputegval(ADState* state)
 {
-    vector<stateID> searchpredsIDV; //these are predecessors if search is done forward and successors otherwise
+    Path searchpredsIDV; //these are predecessors if search is done forward and successors otherwise
     vector<int> costV;
     CKey key;
     ADState *searchpredstate;
 
     if (bforwardsearch)
-        environment_->GetPreds(state->MDPstate->StateID, &searchpredsIDV, &costV);
+        environment_->GetPreds(state->MDPstate->id, &searchpredsIDV, &costV);
     else
-        environment_->GetSuccs(state->MDPstate->StateID, &searchpredsIDV, &costV);
+        environment_->GetSuccs(state->MDPstate->id, &searchpredsIDV, &costV);
 
     //iterate through predecessors of s and pick the best
     state->g = INFINITECOST;
@@ -325,12 +325,12 @@ void ADPlanner::Recomputegval(ADState* state)
 //used for backward search
 void ADPlanner::UpdatePredsofOverconsState(ADState* state, ADSearchStateSpace_t* pSearchStateSpace)
 {
-    vector<stateID> PredIDV;
+    Path PredIDV;
     vector<int> CostV;
     CKey key;
     ADState *predstate;
 
-    environment_->GetPreds(state->MDPstate->StateID, &PredIDV, &CostV);
+    environment_->GetPreds(state->MDPstate->id, &PredIDV, &CostV);
 
     //iterate through predecessors of s
     for (int pind = 0; pind < (int)PredIDV.size(); pind++) {
@@ -343,8 +343,8 @@ void ADPlanner::UpdatePredsofOverconsState(ADState* state, ADSearchStateSpace_t*
         //see if we can improve the value of predstate
         if (predstate->g > state->v + CostV[pind]) {
 #if DEBUG
-            if (predstate->MDPstate->StateID == 679256) {
-                SBPL_FPRINTF(fDeb, "updating pred %d of overcons exp\n", predstate->MDPstate->StateID);
+            if (predstate->MDPstate->id == 679256) {
+                SBPL_FPRINTF(fDeb, "updating pred %d of overcons exp\n", predstate->MDPstate->id);
                 PrintSearchState(predstate, fDeb);
                 SBPL_FPRINTF(fDeb, "\n");
             }
@@ -358,8 +358,8 @@ void ADPlanner::UpdatePredsofOverconsState(ADState* state, ADSearchStateSpace_t*
             UpdateSetMembership(predstate);
 
 #if DEBUG
-            if (predstate->MDPstate->StateID == 679256) {
-                SBPL_FPRINTF(fDeb, "updated pred %d of overcons exp\n", predstate->MDPstate->StateID);
+            if (predstate->MDPstate->id == 679256) {
+                SBPL_FPRINTF(fDeb, "updated pred %d of overcons exp\n", predstate->MDPstate->id);
                 PrintSearchState(predstate, fDeb);
                 SBPL_FPRINTF(fDeb, "\n");
             }
@@ -371,12 +371,12 @@ void ADPlanner::UpdatePredsofOverconsState(ADState* state, ADSearchStateSpace_t*
 //used for forward search
 void ADPlanner::UpdateSuccsofOverconsState(ADState* state, ADSearchStateSpace_t* pSearchStateSpace)
 {
-    vector<stateID> SuccIDV;
+    Path SuccIDV;
     vector<int> CostV;
     CKey key;
     ADState *succstate;
 
-    environment_->GetSuccs(state->MDPstate->StateID, &SuccIDV, &CostV);
+    environment_->GetSuccs(state->MDPstate->id, &SuccIDV, &CostV);
 
     //iterate through predecessors of s
     for (int sind = 0; sind < (int)SuccIDV.size(); sind++) {
@@ -403,12 +403,12 @@ void ADPlanner::UpdateSuccsofOverconsState(ADState* state, ADSearchStateSpace_t*
 //used for backward search
 void ADPlanner::UpdatePredsofUnderconsState(ADState* state, ADSearchStateSpace_t* pSearchStateSpace)
 {
-    vector<stateID> PredIDV;
+    Path PredIDV;
     vector<int> CostV;
     CKey key;
     ADState *predstate;
 
-    environment_->GetPreds(state->MDPstate->StateID, &PredIDV, &CostV);
+    environment_->GetPreds(state->MDPstate->id, &PredIDV, &CostV);
 
     //iterate through predecessors of s
     for (int pind = 0; pind < (int)PredIDV.size(); pind++) {
@@ -424,9 +424,9 @@ void ADPlanner::UpdatePredsofUnderconsState(ADState* state, ADSearchStateSpace_t
             UpdateSetMembership(predstate);
 
 #if DEBUG
-            if(predstate->MDPstate->StateID == 679256)
+            if(predstate->MDPstate->id == 679256)
             {
-                SBPL_FPRINTF(fDeb, "updated pred %d of undercons exp\n", predstate->MDPstate->StateID);
+                SBPL_FPRINTF(fDeb, "updated pred %d of undercons exp\n", predstate->MDPstate->id);
                 PrintSearchState(predstate, fDeb);
                 SBPL_FPRINTF(fDeb, "\n");
             }
@@ -438,12 +438,12 @@ void ADPlanner::UpdatePredsofUnderconsState(ADState* state, ADSearchStateSpace_t
 //used for forward search
 void ADPlanner::UpdateSuccsofUnderconsState(ADState* state, ADSearchStateSpace_t* pSearchStateSpace)
 {
-    vector<stateID> SuccIDV;
+    Path SuccIDV;
     vector<int> CostV;
     CKey key;
     ADState *succstate;
 
-    environment_->GetSuccs(state->MDPstate->StateID, &SuccIDV, &CostV);
+    environment_->GetSuccs(state->MDPstate->id, &SuccIDV, &CostV);
 
     //iterate through predecessors of s
     for (int sind = 0; sind < (int)SuccIDV.size(); sind++) {
@@ -507,13 +507,13 @@ int ADPlanner::ComputePath(ADSearchStateSpace_t* pSearchStateSpace, double MaxNu
 #if DEBUG
         CKey debkey = ComputeKey(state);
         //SBPL_FPRINTF(fDeb, "expanding state(%d): g=%u v=%u h=%d key=[%d %d] iterc=%d callnuma=%d expands=%d (g(goal)=%u)\n",
-        //	state->MDPstate->StateID, state->g, state->v, state->h, (int)debkey[0], (int)debkey[1],
+        //	state->MDPstate->id, state->g, state->v, state->h, (int)debkey[0], (int)debkey[1],
         //	state->iterationclosed, state->callnumberaccessed, state->numofexpands, searchgoalstate->g);
-        if (state->MDPstate->StateID == 679256) {
+        if (state->MDPstate->id == 679256) {
             SBPL_FPRINTF(fDeb, "expanding state %d with key=[%d %d]:\n",
-                         state->MDPstate->StateID, (int)debkey[0], (int)debkey[1]);
+                         state->MDPstate->id, (int)debkey[0], (int)debkey[1]);
             PrintSearchState(state, fDeb);
-            environment_->PrintState(state->MDPstate->StateID, true, fDeb);
+            environment_->PrintState(state->MDPstate->id, true, fDeb);
         }
         //SBPL_FFLUSH(fDeb);
         if (state->listelem[AD_INCONS_LIST_ID] != NULL) {
@@ -801,10 +801,10 @@ int ADPlanner::InitializeSearchStateSpace(ADSearchStateSpace_t* pSearchStateSpac
     return 1;
 }
 
-int ADPlanner::SetSearchGoalState(int SearchGoalStateID, ADSearchStateSpace_t* pSearchStateSpace)
+int ADPlanner::SetSearchGoalState(StateID SearchGoalStateID, ADSearchStateSpace_t* pSearchStateSpace)
 {
     if (pSearchStateSpace->searchgoalstate == NULL ||
-        pSearchStateSpace->searchgoalstate->StateID != SearchGoalStateID)
+        pSearchStateSpace->searchgoalstate->id != SearchGoalStateID)
     {
         pSearchStateSpace->searchgoalstate = GetState(SearchGoalStateID, pSearchStateSpace);
 
@@ -826,7 +826,7 @@ int ADPlanner::SetSearchGoalState(int SearchGoalStateID, ADSearchStateSpace_t* p
     return 1;
 }
 
-int ADPlanner::SetSearchStartState(int SearchStartStateID, ADSearchStateSpace_t* pSearchStateSpace)
+int ADPlanner::SetSearchStartState(StateID SearchStartStateID, ADSearchStateSpace_t* pSearchStateSpace)
 {
     CMDPSTATE* MDPstate = GetState(SearchStartStateID, pSearchStateSpace);
 
@@ -919,19 +919,19 @@ void ADPlanner::PrintSearchPath(ADSearchStateSpace_t* pSearchStateSpace, FILE* f
 
     int PathCost = ((ADState*)pSearchStateSpace->searchgoalstate->PlannerSpecificData)->g;
 
-    SBPL_FPRINTF(fOut, "Printing a path from state %d to the search start state %d\n", state->StateID,
-                 pSearchStateSpace->searchstartstate->StateID);
+    SBPL_FPRINTF(fOut, "Printing a path from state %d to the search start state %d\n", state->id,
+                 pSearchStateSpace->searchstartstate->id);
     SBPL_FPRINTF(fOut, "Path cost = %d:\n", PathCost);
 
-    environment_->PrintState(state->StateID, true, fOut);
+    environment_->PrintState(state->id, true, fOut);
 
     int costFromStart = 0;
     int steps = 0;
     const int max_steps = 100000;
-    while (state->StateID != pSearchStateSpace->searchstartstate->StateID && steps < max_steps) {
+    while (state->id != pSearchStateSpace->searchstartstate->id && steps < max_steps) {
         steps++;
 
-        SBPL_FPRINTF(fOut, "state %d ", state->StateID);
+        SBPL_FPRINTF(fOut, "state %d ", state->id);
 
         if (state->PlannerSpecificData == NULL) {
             SBPL_FPRINTF(fOut, "path does not exist since search data does not exist\n");
@@ -962,7 +962,7 @@ void ADPlanner::PrintSearchPath(ADSearchStateSpace_t* pSearchStateSpace, FILE* f
 
 #if DEBUG
         if (searchstateinfo->g > searchstateinfo->v) {
-            SBPL_FPRINTF(fOut, "ERROR: underconsistent state %d is encountered\n", state->StateID);
+            SBPL_FPRINTF(fOut, "ERROR: underconsistent state %d is encountered\n", state->id);
             throw new SBPL_Exception();
         }
 
@@ -976,31 +976,31 @@ void ADPlanner::PrintSearchPath(ADSearchStateSpace_t* pSearchStateSpace, FILE* f
 #endif
 
         //PrintSearchState(searchstateinfo, fOut);
-        SBPL_FPRINTF(fOut, "-->state %d ctg = %d  ", nextstate->StateID, costToGoal);
+        SBPL_FPRINTF(fOut, "-->state %d ctg = %d  ", nextstate->id, costToGoal);
 
         state = nextstate;
 
-        environment_->PrintState(state->StateID, true, fOut);
+        environment_->PrintState(state->id, true, fOut);
     }
 
-    if (state->StateID != pSearchStateSpace->searchstartstate->StateID) {
+    if (state->id != pSearchStateSpace->searchstartstate->id) {
         SBPL_ERROR("ERROR: Failed to printsearchpath, max_steps reached\n");
         return;
     }
 }
 
-int ADPlanner::getHeurValue(ADSearchStateSpace_t* pSearchStateSpace, stateID StateID)
+int ADPlanner::getHeurValue(ADSearchStateSpace_t* pSearchStateSpace, StateID StateID)
 {
     CMDPSTATE* MDPstate = GetState(StateID, pSearchStateSpace);
     ADState* searchstateinfo = (ADState*)MDPstate->PlannerSpecificData;
     return searchstateinfo->h;
 }
 
-vector<stateID> ADPlanner::GetSearchPath(ADSearchStateSpace_t* pSearchStateSpace, int& solcost)
+Path ADPlanner::GetSearchPath(ADSearchStateSpace_t* pSearchStateSpace, int& solcost)
 {
-    vector<stateID> SuccIDV;
+    Path SuccIDV;
     vector<int> CostV;
-    vector<stateID> wholePathIds;
+    Path wholePathIds;
     ADState* searchstateinfo;
     CMDPSTATE* state = NULL;
     CMDPSTATE* goalstate = NULL;
@@ -1027,7 +1027,7 @@ vector<stateID> ADPlanner::GetSearchPath(ADSearchStateSpace_t* pSearchStateSpace
 
     state = startstate;
 
-    wholePathIds.push_back(state->StateID);
+    wholePathIds.push_back(state->id);
     solcost = 0;
 
     FILE* fOut = stdout;
@@ -1037,7 +1037,7 @@ vector<stateID> ADPlanner::GetSearchPath(ADSearchStateSpace_t* pSearchStateSpace
     }
     int steps = 0;
     const int max_steps = 100000;
-    while (state->StateID != goalstate->StateID && steps < max_steps) {
+    while (state->id != goalstate->id && steps < max_steps) {
         steps++;
 
         if (state->PlannerSpecificData == NULL) {
@@ -1056,10 +1056,10 @@ vector<stateID> ADPlanner::GetSearchPath(ADSearchStateSpace_t* pSearchStateSpace
             break;
         }
 
-        environment_->GetSuccs(state->StateID, &SuccIDV, &CostV);
+        environment_->GetSuccs(state->id, &SuccIDV, &CostV);
         int actioncost = INFINITECOST;
         for (int i = 0; i < (int)SuccIDV.size(); i++) {
-            if (SuccIDV.at(i) == searchstateinfo->bestnextstate->StateID && CostV.at(i) < actioncost) actioncost
+            if (SuccIDV.at(i) == searchstateinfo->bestnextstate->id && CostV.at(i) < actioncost) actioncost
                 = CostV.at(i);
 
         }
@@ -1080,10 +1080,10 @@ vector<stateID> ADPlanner::GetSearchPath(ADSearchStateSpace_t* pSearchStateSpace
 
         state = searchstateinfo->bestnextstate;
 
-        wholePathIds.push_back(state->StateID);
+        wholePathIds.push_back(state->id);
     }
 
-    if (state->StateID != goalstate->StateID) {
+    if (state->id != goalstate->id) {
         SBPL_ERROR("ERROR: Failed to getsearchpath, steps processed=%d\n", steps);
         wholePathIds.clear();
         solcost = INFINITECOST;
@@ -1095,7 +1095,7 @@ vector<stateID> ADPlanner::GetSearchPath(ADSearchStateSpace_t* pSearchStateSpace
     return wholePathIds;
 }
 
-bool ADPlanner::Search(ADSearchStateSpace_t* pSearchStateSpace, vector<stateID>& pathIds, int & PathCost,
+bool ADPlanner::Search(ADSearchStateSpace_t* pSearchStateSpace, Path& pathIds, int & PathCost,
                        bool bFirstSolution, bool bOptimalSolution, double MaxNumofSecs)
 {
     CKey key;
@@ -1232,7 +1232,7 @@ bool ADPlanner::Search(ADSearchStateSpace_t* pSearchStateSpace, vector<stateID>&
 
 }
 
-void ADPlanner::Update_SearchSuccs_of_ChangedEdges(vector<stateID> const * statesIDV)
+void ADPlanner::Update_SearchSuccs_of_ChangedEdges(Path const * statesIDV)
 {
     SBPL_PRINTF("updating %d affected states\n", (unsigned int)statesIDV->size());
 
@@ -1252,21 +1252,21 @@ void ADPlanner::Update_SearchSuccs_of_ChangedEdges(vector<stateID> const * state
 
     int numofstatesaffected = 0;
     for (int pind = 0; pind < (int)statesIDV->size(); pind++) {
-        int stateID = statesIDV->at(pind);
+        StateID id = statesIDV->at(pind);
 
         //first check that the state exists (to avoid creation of additional states)
-        if (environment_->StateID2IndexMapping[stateID][ADMDP_STATEID2IND] == -1) continue;
+        if (environment_->StateID2IndexMapping[id][ADMDP_STATEID2IND] == -1) continue;
 
         //now get the state
-        CMDPSTATE* state = GetState(stateID, pSearchStateSpace_);
+        CMDPSTATE* state = GetState(id, pSearchStateSpace_);
         ADState* searchstateinfo = (ADState*)state->PlannerSpecificData;
 
         //now check that the state is not start state and was created after last search reset
-        if (stateID != pSearchStateSpace_->searchstartstate->StateID &&
+        if (id != pSearchStateSpace_->searchstartstate->id &&
             searchstateinfo->callnumberaccessed == pSearchStateSpace_->callnumber)
         {
 #if DEBUG
-            SBPL_FPRINTF(fDeb, "updating affected state %d:\n", stateID);
+            SBPL_FPRINTF(fDeb, "updating affected state %d:\n", id);
             PrintSearchState(searchstateinfo, fDeb);
             SBPL_FPRINTF(fDeb, "\n");
 #endif
@@ -1277,7 +1277,7 @@ void ADPlanner::Update_SearchSuccs_of_ChangedEdges(vector<stateID> const * state
             numofstatesaffected++;
 
 #if DEBUG
-            SBPL_FPRINTF(fDeb, "the state %d after update\n", stateID);
+            SBPL_FPRINTF(fDeb, "the state %d after update\n", id);
             PrintSearchState(searchstateinfo, fDeb);
             SBPL_FPRINTF(fDeb, "\n");
 #endif
@@ -1302,13 +1302,13 @@ void ADPlanner::Update_SearchSuccs_of_ChangedEdges(vector<stateID> const * state
 
 //-----------------------------Interface function-----------------------------------------------------
 
-int ADPlanner::replan(vector<stateID> *solution_stateIDs_V, ReplanParams params)
+int ADPlanner::replan(Path *solution_stateIDs_V, ReplanParams params)
 {
     int solcost;
     return replan(solution_stateIDs_V, params, &solcost);
 }
 
-int ADPlanner::replan(vector<stateID> *solution_stateIDs_V, ReplanParams params, int* solcost)
+int ADPlanner::replan(Path *solution_stateIDs_V, ReplanParams params, int* solcost)
 {
     finitial_eps = params.initial_eps;
     final_epsilon = params.final_eps;
@@ -1320,7 +1320,7 @@ int ADPlanner::replan(vector<stateID> *solution_stateIDs_V, ReplanParams params,
 }
 
 //returns 1 if found a solution, and 0 otherwise
-int ADPlanner::replan(double allocated_time_secs, vector<stateID>* solution_stateIDs_V)
+int ADPlanner::replan(double allocated_time_secs, Path* solution_stateIDs_V)
 {
     int solcost;
 
@@ -1328,9 +1328,9 @@ int ADPlanner::replan(double allocated_time_secs, vector<stateID>* solution_stat
 }
 
 //returns 1 if found a solution, and 0 otherwise
-int ADPlanner::replan(double allocated_time_secs, vector<stateID>* solution_stateIDs_V, int* psolcost)
+int ADPlanner::replan(double allocated_time_secs, Path* solution_stateIDs_V, int* psolcost)
 {
-    vector<stateID> pathIds;
+    Path pathIds;
     int PathCost = 0;
     bool bFound = false;
     *psolcost = 0;
@@ -1351,7 +1351,7 @@ int ADPlanner::replan(double allocated_time_secs, vector<stateID>* solution_stat
     return (int)bFound;
 }
 
-int ADPlanner::set_goal(stateID goal_stateID)
+int ADPlanner::set_goal(StateID goal_stateID)
 {
     SBPL_PRINTF("planner: setting goal to %d\n", goal_stateID);
     environment_->PrintState(goal_stateID, true, stdout);
@@ -1372,7 +1372,7 @@ int ADPlanner::set_goal(stateID goal_stateID)
     return 1;
 }
 
-int ADPlanner::set_start(stateID start_stateID)
+int ADPlanner::set_start(StateID start_stateID)
 {
     SBPL_PRINTF("planner: setting start to %d\n", start_stateID);
     environment_->PrintState(start_stateID, true, stdout);
@@ -1393,14 +1393,14 @@ int ADPlanner::set_start(stateID start_stateID)
     return 1;
 }
 
-void ADPlanner::update_succs_of_changededges(vector<stateID>* succstatesIDV)
+void ADPlanner::update_succs_of_changededges(Path* succstatesIDV)
 {
     SBPL_PRINTF("UpdateSuccs called on %d succs\n", (unsigned int)succstatesIDV->size());
 
     Update_SearchSuccs_of_ChangedEdges(succstatesIDV);
 }
 
-void ADPlanner::update_preds_of_changededges(vector<stateID>* predstatesIDV)
+void ADPlanner::update_preds_of_changededges(Path* predstatesIDV)
 {
     SBPL_PRINTF("UpdatePreds called on %d preds\n", (unsigned int)predstatesIDV->size());
 
@@ -1421,8 +1421,8 @@ int ADPlanner::force_planning_from_scratch_and_free_memory()
     SBPL_PRINTF("planner: forceplanfromscratch set\n");
     int start_id = -1;
     int goal_id = -1;
-    if (pSearchStateSpace_->searchstartstate) start_id = pSearchStateSpace_->searchstartstate->StateID;
-    if (pSearchStateSpace_->searchgoalstate) goal_id = pSearchStateSpace_->searchgoalstate->StateID;
+    if (pSearchStateSpace_->searchstartstate) start_id = pSearchStateSpace_->searchstartstate->id;
+    if (pSearchStateSpace_->searchgoalstate) goal_id = pSearchStateSpace_->searchgoalstate->id;
 
     if (!bforwardsearch) {
         int temp = start_id;

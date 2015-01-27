@@ -59,14 +59,16 @@ public:
 #endif
 
 //TODO: use uints for stateID and leave 0 for invalid IDs
-#define INVALID_STATE_ID (-1)
+#define INVALID_STATE_ID ((std::size_t)(-1))
 #define VALID_STATE(x) assert((x)!= INVALID_STATE_ID)
 
+#include <vector>
 #if STRONG_TYPES
 class state_t;
-typedef ID_t<state_t> stateID;
+typedef ID_t<state_t> StateID;
 #else
-typedef std::size_t stateID;
+typedef std::size_t StateID;
+typedef std::vector<StateID> Path;
 typedef uint searchID;
 #endif
 

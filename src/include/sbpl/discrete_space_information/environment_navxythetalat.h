@@ -72,7 +72,7 @@ typedef struct
 
 typedef struct
 {
-    int stateID;
+    StateID id;
     int X;
     int Y;
     char Theta;
@@ -93,8 +93,8 @@ typedef struct
 //variables that dynamically change (e.g., array of states, ...)
 typedef struct
 {
-    int startstateid;
-    int goalstateid;
+    StateID startstateid;
+    StateID goalstateid;
 
     bool bInitialized;
 
@@ -219,17 +219,17 @@ public:
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual int GetFromToHeuristic(stateID FromStateID, stateID ToStateID) = 0;
+    virtual int GetFromToHeuristic(StateID FromStateID, StateID ToStateID) = 0;
 
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual int GetGoalHeuristic(stateID id) = 0;
+    virtual int GetGoalHeuristic(StateID id) = 0;
 
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual int GetStartHeuristic(stateID id) = 0;
+    virtual int GetStartHeuristic(StateID id) = 0;
 
     /**
      * \brief see comments on the same function in the parent class
@@ -244,15 +244,15 @@ public:
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual void GetSuccs(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV);
-    virtual void GetLazySuccs(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost);
-    virtual void GetSuccsWithUniqueIds(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV);
-    virtual void GetLazySuccsWithUniqueIds(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost);
+    virtual void GetSuccs(StateID SourceStateID, Path *SuccIDV, std::vector<int>* CostV);
+    virtual void GetLazySuccs(StateID SourceStateID, Path *SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost);
+    virtual void GetSuccsWithUniqueIds(StateID SourceStateID, Path *SuccIDV, std::vector<int>* CostV);
+    virtual void GetLazySuccsWithUniqueIds(StateID SourceStateID, Path *SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost);
 
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual void GetPreds(stateID TargetStateID, std::vector<stateID>* PredIDV, std::vector<int>* CostV) = 0;
+    virtual void GetPreds(StateID TargetStateID, Path * PredIDV, std::vector<int>* CostV) = 0;
 
     /**
      * \brief see comments on the same function in the parent class
@@ -323,13 +323,13 @@ public:
      *        cells
      */
     virtual void GetPredsofChangedEdges(std::vector<nav2dcell_t> const * changedcellsV,
-                                        std::vector<stateID> *preds_of_changededgesIDV) = 0;
+                                        Path *preds_of_changededgesIDV) = 0;
     /**
      * \brief same as GetPredsofChangedEdges, but returns successor states.
      *        Both functions need to be present for incremental search
      */
     virtual void GetSuccsofChangedEdges(std::vector<nav2dcell_t> const * changedcellsV,
-                                        std::vector<stateID> *succs_of_changededgesIDV) = 0;
+                                        Path *succs_of_changededgesIDV) = 0;
 
     /**
      * returns true if cell is untraversable
@@ -460,13 +460,13 @@ protected:
     virtual void RemoveSourceFootprint(sbpl_xy_theta_pt_t sourcepose, std::vector<sbpl_2Dcell_t>* footprint,
                                        const std::vector<sbpl_2Dpt_t>& FootprintPolygon);
 
-    virtual void GetSuccs(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV,
+    virtual void GetSuccs(StateID SourceStateID, Path * SuccIDV, std::vector<int>* CostV,
                           std::vector<EnvNAVXYTHETALATAction_t*>* actionindV = NULL) = 0;
-    virtual void GetLazySuccs(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost, std::vector<EnvNAVXYTHETALATAction_t*>* actionindV = NULL) = 0;
-    virtual void GetSuccsWithUniqueIds(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV, std::vector<EnvNAVXYTHETALATAction_t*>* actionindV = NULL) = 0;
-    virtual void GetLazySuccsWithUniqueIds(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost, std::vector<EnvNAVXYTHETALATAction_t*>* actionindV = NULL) = 0;
-    virtual int GetTrueCost(stateID parentID, stateID childID) = 0;
-    virtual bool isGoal(int id) = 0;
+    virtual void GetLazySuccs(StateID SourceStateID, Path * SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost, std::vector<EnvNAVXYTHETALATAction_t*>* actionindV = NULL) = 0;
+    virtual void GetSuccsWithUniqueIds(StateID SourceStateID, Path * SuccIDV, std::vector<int>* CostV, std::vector<EnvNAVXYTHETALATAction_t*>* actionindV = NULL) = 0;
+    virtual void GetLazySuccsWithUniqueIds(StateID SourceStateID, Path * SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost, std::vector<EnvNAVXYTHETALATAction_t*>* actionindV = NULL) = 0;
+    virtual int GetTrueCost(StateID parentID, StateID childID) = 0;
+    virtual bool isGoal(StateID id) = 0;
 
     virtual double EuclideanDistance_m(int X1, int Y1, int X2, int Y2);
 
@@ -511,7 +511,7 @@ public:
     /**
      * \brief returns state coordinates of state with ID=stateID
      */
-    virtual void GetCoordFromState(stateID stateID, int& x, int& y, int& theta) const;
+    virtual void GetCoordFromState(StateID stateID, int& x, int& y, int& theta) const;
 
     /**
      * \brief returns stateID for a state with coords x,y,theta
@@ -525,18 +525,18 @@ public:
      *         number of points in the input path. The returned coordinates are in
      *         meters,meters,radians
      */
-    virtual void ConvertStateIDPathintoXYThetaPath(std::vector<stateID>* stateIDPath,
+    virtual void ConvertStateIDPathintoXYThetaPath(Path *stateIDPath,
                                                    std::vector<sbpl_xy_theta_pt_t>* xythetaPath);
 
     /**
      * \brief prints state info (coordinates) into file
      */
-    virtual void PrintState(stateID stateID, bool bVerbose, FILE* fOut = NULL);
+    virtual void PrintState(StateID stateID, bool bVerbose, FILE* fOut = NULL);
 
     /**
      * \brief returns all predecessors states and corresponding costs of actions
      */
-    virtual void GetPreds(stateID TargetStateID, std::vector<stateID>* PredIDV, std::vector<int>* CostV);
+    virtual void GetPreds(StateID TargetStateID, Path *PredIDV, std::vector<int>* CostV);
 
     /**
      * \brief returns all successors states, costs of corresponding actions
@@ -544,17 +544,17 @@ public:
      *        primitive
      *        if actionindV is NULL, then pointers to actions are not returned
      */
-    virtual void GetSuccs(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV,
+    virtual void GetSuccs(StateID SourceStateID, Path *SuccIDV, std::vector<int>* CostV,
                           std::vector<EnvNAVXYTHETALATAction_t*>* actionindV = NULL);
 
-    virtual void GetLazySuccs(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost, std::vector<EnvNAVXYTHETALATAction_t*>* actionindV = NULL);
-    virtual void GetSuccsWithUniqueIds(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV, std::vector<EnvNAVXYTHETALATAction_t*>* actionindV = NULL);
-    virtual void GetLazySuccsWithUniqueIds(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost, std::vector<EnvNAVXYTHETALATAction_t*>* actionindV = NULL);
-    virtual int GetTrueCost(stateID parentID, stateID childID);
-    virtual bool isGoal(int id);
-    //virtual void GetPreds(stateID TargetStateID, std::vector<stateID>* PredIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost);
-    //virtual void GetPredsWithUniqueIds(stateID TargetStateID, std::vector<stateID>* PredIDV, std::vector<int>* CostV);
-    //virtual void GetPredsWithUniqueIds(stateID TargetStateID, std::vector<stateID>* PredIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost);
+    virtual void GetLazySuccs(StateID SourceStateID, Path *SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost, std::vector<EnvNAVXYTHETALATAction_t*>* actionindV = NULL);
+    virtual void GetSuccsWithUniqueIds(StateID SourceStateID, Path *SuccIDV, std::vector<int>* CostV, std::vector<EnvNAVXYTHETALATAction_t*>* actionindV = NULL);
+    virtual void GetLazySuccsWithUniqueIds(StateID SourceStateID, Path *SuccIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost, std::vector<EnvNAVXYTHETALATAction_t*>* actionindV = NULL);
+    virtual int GetTrueCost(StateID parentID, StateID childID);
+    virtual bool isGoal(StateID id);
+    //virtual void GetPreds(StateID TargetStateID, Path * PredIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost);
+    //virtual void GetPredsWithUniqueIds(StateID TargetStateID, Path * PredIDV, std::vector<int>* CostV);
+    //virtual void GetPredsWithUniqueIds(StateID TargetStateID, Path * PredIDV, std::vector<int>* CostV, std::vector<bool>* isTrueCost);
 
 
     /** \brief this function fill in Predecessor/Successor states of edges
@@ -564,14 +564,14 @@ public:
      *         outgoing edges that go through the changed cells
      */
     virtual void GetPredsofChangedEdges(std::vector<nav2dcell_t> const * changedcellsV,
-                                        std::vector<stateID> *preds_of_changededgesIDV);
+                                        Path *preds_of_changededgesIDV);
 
     /**
      * \brief same as GetPredsofChangedEdges, but returns successor states.
      *        Both functions need to be present for incremental search
      */
     virtual void GetSuccsofChangedEdges(std::vector<nav2dcell_t> const * changedcellsV,
-                                        std::vector<stateID> *succs_of_changededgesIDV);
+                                        Path *succs_of_changededgesIDV);
 
     /**
      * \brief see comments on the same function in the parent class
@@ -581,17 +581,17 @@ public:
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual int GetFromToHeuristic(stateID FromStateID, stateID ToStateID);
+    virtual int GetFromToHeuristic(StateID FromStateID, StateID ToStateID);
 
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual int GetGoalHeuristic(stateID stateID);
+    virtual int GetGoalHeuristic(StateID stateID);
 
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual int GetStartHeuristic(stateID stateID);
+    virtual int GetStartHeuristic(StateID stateID);
 
     /**
      * \brief see comments on the same function in the parent class

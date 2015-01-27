@@ -76,15 +76,15 @@ public:
     // Inherited DiscreteSpaceInformation ops
     bool InitializeEnv(const char* sEnvFile);
     bool InitializeMDPCfg(MDPConfig *MDPCfg);
-    int GetFromToHeuristic(stateID FromStateID, stateID ToStateID);
-    int GetGoalHeuristic(stateID id);
-    int GetStartHeuristic(stateID id);
+    int GetFromToHeuristic(StateID FromStateID, StateID ToStateID);
+    int GetGoalHeuristic(StateID id);
+    int GetStartHeuristic(StateID id);
     void SetAllActionsandAllOutcomes(CMDPSTATE* state);
     void SetAllPreds(CMDPSTATE* state);
-    void GetSuccs(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV);
-    void GetPreds(stateID TargetStateID, std::vector<stateID>* PredIDV, std::vector<int>* CostV);
+    void GetSuccs(StateID SourceStateID, Path * SuccIDV, std::vector<int>* CostV);
+    void GetPreds(StateID TargetStateID, Path * PredIDV, std::vector<int>* CostV);
     int SizeofCreatedEnv();
-    void PrintState(stateID id, bool bVerbose, FILE* fOut = NULL);
+    void PrintState(StateID id, bool bVerbose, FILE* fOut = NULL);
     void PrintEnv_Config(FILE* fOut);
 
 private:
@@ -94,8 +94,8 @@ private:
     std::vector<Coords> points_;
     std::map<Coords, int> pointIds_;
     std::vector<Adjacencies> adjacency_vector_;
-    int startStateId_;
-    int goalStateId_;
+    StateID startStateId_;
+    StateID goalStateId_;
 };
 
 template<class Coords>
@@ -246,25 +246,25 @@ bool AdjacencyListSBPLEnv<Coords>::InitializeMDPCfg(MDPConfig *MDPCfg)
 }
 
 template<class Coords>
-int AdjacencyListSBPLEnv<Coords>::GetFromToHeuristic(stateID FromStateID, stateID ToStateID)
+int AdjacencyListSBPLEnv<Coords>::GetFromToHeuristic(StateID FromStateID, StateID ToStateID)
 {
     return points_[FromStateID].heuristicDistanceTo(points_[ToStateID]);
 }
 
 template<class Coords>
-int AdjacencyListSBPLEnv<Coords>::GetGoalHeuristic(stateID id)
+int AdjacencyListSBPLEnv<Coords>::GetGoalHeuristic(StateID id)
 {
     return GetFromToHeuristic(id, goalStateId_);
 }
 
 template<class Coords>
-int AdjacencyListSBPLEnv<Coords>::GetStartHeuristic(stateID id)
+int AdjacencyListSBPLEnv<Coords>::GetStartHeuristic(StateID id)
 {
     return GetFromToHeuristic(startStateId_, id);
 }
 
 template<class Coords>
-void AdjacencyListSBPLEnv<Coords>::PrintState(stateID id, bool bVerbose, FILE* fOut)
+void AdjacencyListSBPLEnv<Coords>::PrintState(StateID id, bool bVerbose, FILE* fOut)
 {
     // Note we're ignoring the fOut argument
     std::cout << points_[id] << endl;
@@ -294,11 +294,11 @@ template<class Coords>
 void AdjacencyListSBPLEnv<Coords>::SetAllActionsandAllOutcomes(CMDPSTATE* state)
 {
     // goal state is absorbing
-    if (state->StateID == goalStateId_) {
+    if (state->id == goalStateId_) {
         return;
     }
 
-    Adjacencies& v = adjacency_vector_[state->StateID];
+    Adjacencies& v = adjacency_vector_[state->id];
     int actionIndex = 0;
 
     for (AdjListIterator i = v.begin(); i != v.end(); i++) {
@@ -316,7 +316,7 @@ void AdjacencyListSBPLEnv<Coords>::SetAllPreds(CMDPSTATE* state)
 }
 
 template<class Coords>
-void AdjacencyListSBPLEnv<Coords>::GetSuccs(stateID SourceStateID, std::vector<stateID>* SuccIDV, std::vector<int>* CostV)
+void AdjacencyListSBPLEnv<Coords>::GetSuccs(StateID SourceStateID, Path * SuccIDV, std::vector<int>* CostV)
 {
     SuccIDV->clear();
     CostV->clear();
@@ -333,7 +333,7 @@ void AdjacencyListSBPLEnv<Coords>::GetSuccs(stateID SourceStateID, std::vector<s
 }
 
 template<class Coords>
-void AdjacencyListSBPLEnv<Coords>::GetPreds(stateID TargetStateID, std::vector<stateID>* PredIDV, std::vector<int>* CostV)
+void AdjacencyListSBPLEnv<Coords>::GetPreds(StateID TargetStateID, Path * PredIDV, std::vector<int>* CostV)
 {
     std::cout << "Error: GetPreds not currently implemented for adjacency list";
     throw new SBPL_Exception();
@@ -347,7 +347,7 @@ std::vector<Coords> AdjacencyListSBPLEnv<Coords>::findOptimalPath(int* solution_
     p.set_start(startStateId_);
     p.set_goal(goalStateId_);
     p.set_initialsolution_eps(1.0);
-    std::vector<stateID> solution;
+    Path solution;
     p.replan(1.0, &solution, solution_cost);
 
     std::vector<Coords> solutionPoints;

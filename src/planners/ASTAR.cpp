@@ -12,21 +12,21 @@
 
 // A* State
 // ========
-ASTARNode::ASTARNode(stateID id, ASTARSpace *space) : ASTARNode(id, space, 0) {
+ASTARNode::ASTARNode(StateID id, ASTARSpace *space) : ASTARNode(id, space, 0) {
     h = space->computeHeuristic(*MDPstate);
     lastUpdated = space->iteration;
 }
-ASTARNode::ASTARNode(stateID id, ASTARSpace *space, int initialH) {
+ASTARNode::ASTARNode(StateID id, ASTARSpace *space, int initialH) {
     MDPstate = space->MDP.AddState(id);
     assert(MDPstate);
-    VALID_STATE(MDPstate->StateID);
+    VALID_STATE(MDPstate->id);
 
     // Link state and node data
     MDPstate->PlannerSpecificData = this;
 
     // Register state
     int statesCount = space->MDP.StateArray.size();
-    stateID newStateID = statesCount - 1;
+    StateID newStateID = statesCount - 1;
     space->problem->StateID2IndexMapping[id][ASTARMDP_STATEID2IND] = newStateID;
 
     // Setup
@@ -47,15 +47,15 @@ ASTARNode::~ASTARNode(){
 
 // Shortcuts
 inline
-stateID
+StateID
 ASTARNode::id() const {
 #ifdef DEBUG
     if(!MDPstate)
         QUIT("Node @ %p is corrupted", (void*)this);
 #endif
 
-    VALID_STATE(MDPstate->StateID);
-    return MDPstate->StateID;
+    VALID_STATE(MDPstate->id);
+    return MDPstate->id;
 }
 inline
 uint
@@ -141,14 +141,14 @@ ASTARSpace::computeHeuristic(const CMDPSTATE &origin){
     auto target = backwardSearch ? startState
                                  : goalState;
     assert(target);
-    return problem->GetFromToHeuristic(origin.StateID, target->StateID);
+    return problem->GetFromToHeuristic(origin.id, target->id);
 }
 
 // Configuration
 // -------------
 inline
 void
-ASTARSpace::setStart(stateID startID) {
+ASTARSpace::setStart(StateID startID) {
     // Getting the A* node is an overhead (here), but will be generated later.
     auto newStartNode  = getNode0(startID);
     auto newStartState = newStartNode->MDPstate;
@@ -166,7 +166,7 @@ ASTARSpace::setStart(stateID startID) {
 }
 inline
 void
-ASTARSpace::setGoal(stateID goalID) {
+ASTARSpace::setGoal(StateID goalID) {
     // Getting the A* node is an overhead (here), but will be generated later.
     auto newGoalNode  = getNode0(goalID);
     auto newGoalState = newGoalNode->MDPstate;
@@ -246,11 +246,11 @@ ASTARSpace::openEmpty(){
 // ----------------
 inline
 ASTARNode*
-ASTARSpace::getNode(stateID id) {
+ASTARSpace::getNode(StateID id) {
     VALID_STATE(id);
 
-    if((size_t)id >= problem->StateID2IndexMapping.size())
-        QUIT("State %d is invalid\n", id);
+    if(id >= problem->StateID2IndexMapping.size())
+        QUIT("State %zu is invalid\n", id);
     if(problem->StateID2IndexMapping[id][ASTARMDP_STATEID2IND] == -1)
         return new ASTARNode(id, this);
 
@@ -258,11 +258,11 @@ ASTARSpace::getNode(stateID id) {
 }
 inline
 ASTARNode*
-ASTARSpace::getNode0(stateID id) {
+ASTARSpace::getNode0(StateID id) {
     VALID_STATE(id);
 
-    if((size_t)id >= problem->StateID2IndexMapping.size())
-        QUIT("State %d is invalid\n", id);
+    if(id >= (StateID) problem->StateID2IndexMapping.size())
+        QUIT("State %zu is invalid\n", id);
     if(problem->StateID2IndexMapping[id][ASTARMDP_STATEID2IND] == -1)
         return new ASTARNode(id, this, 0);
 
@@ -270,7 +270,7 @@ ASTARSpace::getNode0(stateID id) {
 }
 inline
 ASTARNode*
-ASTARSpace::getNode_(stateID id) {
+ASTARSpace::getNode_(StateID id) {
     VALID_STATE(id);
 
     auto index = problem->StateID2IndexMapping[id][ASTARMDP_STATEID2IND];
@@ -288,19 +288,19 @@ inline
 ASTARNode*
 ASTARSpace::getNode(CMDPSTATE* mdpState) {
     assert(mdpState);
-    assert(mdpState->StateID);
+    assert(mdpState->id);
     auto node = (ASTARNode*) mdpState->PlannerSpecificData;
     assert(node);
 
 #ifdef DEBUG
-    auto nodeFromID = getNode(mdpState->StateID);
+    auto nodeFromID = getNode(mdpState->id);
     if(node!=nodeFromID)
         QUIT("\nCDMPState[%p] data unconsistent data:\n"
-               "  state[%d]\n"
+               "  state[%zu]\n"
                "  cmdp planner data: A*Node[%p]\n"
                "  space id target:   A*Node[%p]",
               (void*)mdpState,
-              mdpState->StateID,
+              mdpState->id,
               (void*)node,
               (void*)nodeFromID);
 #endif
@@ -384,7 +384,7 @@ ASTARPlanner::~ASTARPlanner(){
 // Search
 // ------
 bool
-ASTARPlanner::Search(vector<stateID> *pathIDs,
+ASTARPlanner::Search(Path *pathIDs,
                      int *cost,
                      bool bFirstSolution,
                      bool bOptimalSolution,
@@ -464,7 +464,7 @@ ASTARPlanner::updateSuccessors(ASTARNode &node) {
     assert(space);
     assert(space->problem);
 
-    stateID id = node.id();
+    StateID id = node.id();
 
     // Get successors from environment
     if(!node.successors)
@@ -505,7 +505,7 @@ ASTARPlanner::updatePredecessors(ASTARNode &node) {
     assert(space);
     assert(space->problem);
 
-    stateID id = node.id();
+    StateID id = node.id();
 
     // Get predecessors from environment
     if(!node.predecessors)
@@ -534,14 +534,14 @@ ASTARPlanner::reachPredecessor(const ASTARNode &node, const nodeStub &nS) {
 // -----------------
 inline
 int
-ASTARPlanner::replan(double givenSeconds, vector<stateID> *pathIDs) {
+ASTARPlanner::replan(double givenSeconds, Path *pathIDs) {
     assert(space);
     assert(space->problem);
     int cost;  // Drop the cost value
     return replan(givenSeconds, pathIDs, &cost);
 }
 int
-ASTARPlanner::replan(double givenSeconds, vector<stateID> *pathIDs, int *cost) {
+ASTARPlanner::replan(double givenSeconds, Path *pathIDs, int *cost) {
 
     // Response pointers should be ready
     assert(cost);
@@ -566,7 +566,7 @@ ASTARPlanner::replan(double givenSeconds, vector<stateID> *pathIDs, int *cost) {
     return SBPL_OK;
 }
 int
-ASTARPlanner::replan(vector<stateID> *pathIDs, ReplanParams params, int *cost) {
+ASTARPlanner::replan(Path *pathIDs, ReplanParams params, int *cost) {
     // TODO: replan with parameters (givenTime, repairTime, epsilon)
     return SBPL_OK;
 }
@@ -576,13 +576,13 @@ ASTARPlanner::replan(vector<stateID> *pathIDs, ReplanParams params, int *cost) {
 // ----------------------
 inline
 int
-ASTARPlanner::set_start(stateID startID) {
+ASTARPlanner::set_start(StateID startID) {
     space->setStart(startID);
     return SBPL_OK;
 }
 inline
 int
-ASTARPlanner::set_goal(stateID goalID) {
+ASTARPlanner::set_goal(StateID goalID) {
     space->setGoal(goalID);
     return SBPL_OK;
 }

@@ -31,8 +31,8 @@
 #include <cstdio>
 #include <iostream>
 #include <string>
-#include <stdio.h>
 #include <getopt.h>
+#include <random>
 
 
 
@@ -75,6 +75,7 @@ using namespace std;
 #define PLANNER_STR_ANASTAR "ANA*"
 #define PLANNER_STR_AASTAR "adaptiveA*"
 #define PLANNER_STR_ASTAR "A*"
+#define PLANNER_STR_D "D"
 
 #define PLANNER_STR_INVALID "invalid"
 
@@ -90,6 +91,7 @@ enum PlannerType {
     PLANNER_TYPE_ANASTAR,
     PLANNER_TYPE_AASTAR,
     PLANNER_TYPE_ASTAR,
+    PLANNER_TYPE_D,
 
     NUM_PLANNER_TYPES
 };
@@ -115,6 +117,8 @@ PlannerTypeToStr(PlannerType plannerType) {
             return string(PLANNER_STR_AASTAR);
         case PLANNER_TYPE_ASTAR:
             return string(PLANNER_STR_ASTAR);
+        case PLANNER_TYPE_D:
+            return string(PLANNER_STR_D);
 
         default:
             return string(PLANNER_STR_INVALID);
@@ -140,6 +144,8 @@ StrToPlannerType(const char* str) {
         return PLANNER_TYPE_AASTAR;
     if (!strcmp(str, PLANNER_STR_ASTAR))
         return PLANNER_TYPE_ASTAR;
+    if (!strcmp(str, PLANNER_STR_D))
+        return PLANNER_TYPE_D;
 
     return INVALID_PLANNER_TYPE;
 }
@@ -266,7 +272,7 @@ MainResultType {
 // Planner
 char *planner_type     = nullptr;
 char *planner_settings = nullptr;
-PlannerType selectedPlanner = PLANNER_TYPE_ASTAR;
+PlannerType selectedPlanner = PLANNER_TYPE_D;
 SBPLPlanner *planner = nullptr;
 
 // Random environments (defaults to no random environments)
@@ -1805,9 +1811,10 @@ getPlanner(PlannerType plannerType) {
             return new anaPlanner(environment, bforwardsearch);
         case PLANNER_TYPE_AASTAR:
             return new AAPlanner(environment, bforwardsearch);
-        case PLANNER_TYPE_ASTAR:{
+        case PLANNER_TYPE_ASTAR:
             return new ASTARPlanner(environment, backwardSearch);
-        }
+        case PLANNER_TYPE_D:
+            return new DPlanner(environment, bforwardsearch);
 
         //TODO add new planners
         case PLANNER_TYPE_PPCP:
@@ -1855,7 +1862,8 @@ setStartGoal(MDPConfig &instancePair) {
 }
 
 
-void loadEnvironment(DiscreteSpaceInformation *space, char* path){
+void
+loadEnvironment(DiscreteSpaceInformation *space, char* path){
 
     if (!space->InitializeEnv(path)) {
         printf("ERROR: InitializeEnv failed\n");
@@ -1869,7 +1877,8 @@ void loadEnvironment(DiscreteSpaceInformation *space, char* path){
  * Generates a randomized seed based on run and iteration numbers
  * \note The generation of random numbers is too important to be left to chance
  */
-Seed runItseed(){
+Seed
+runItseed(){
     Seed n;
     n = (Seed) env_id;
 
@@ -1912,10 +1921,8 @@ testEnvironment() {
         // Plan (1st time)
         Path path;
         planner->replan(givenTime, &path);
-//         int retCode = planner->replan(givenTime, &pathIDs);
-//         printf("plan status code=%d\n", retCode);
 
-        for(it_id=it_start; it_id<=it_end; it_id++){
+        for(it_id=it_start+1; it_id<=it_end; it_id++){
             // Replanning
             // ----------
             seed = runItseed();
@@ -1928,8 +1935,6 @@ testEnvironment() {
                 environment->modifyEnvironment(seed, 0.1);
                 // Replan
                 planner->replan(givenTime, &path);
-//                 retCode = planner->replan(givenTime, &pathIDs);
-//                 printf("replan status code=%d\n", retCode);
             }
             else{
                 // Stop at this iteration
@@ -1955,19 +1960,19 @@ testEnvironment() {
 
 // Main
 // ====
-#include <random>
-// TODO: these options should be set on _parseInput_
-int main(int argc, char *argv[]) {
+int
+main(int argc, char *argv[]) {
 
     if(parseInput(argc, argv))
         exit(1);
 
-    cout << "Options parsed:" << endl;
+    cout << "Options:" << endl;
 
     cout << "  Environment:         " << EnvironmentTypeToStr(selectedEnvironment) << endl;
     cout << "  Planner:             " << PlannerTypeToStr(selectedPlanner) << endl;
     cout << "  Random environments: " << "[" << env_random_start << ", " << env_random_end << ")" << endl;
     cout << "  Runs:                " << "[" << run_start << ", " << run_end << ")" << endl;
+    cout << "  Iteration:           " << "[" << it_start << ", " << it_end << "]" << endl;
 
 
     // Benchmark

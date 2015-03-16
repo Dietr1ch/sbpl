@@ -26,6 +26,10 @@ class ASTARSpace;
 class ASTARPlanner;
 
 
+// Configuration
+// -------------
+// Nodes consult their neighborhood once (+StateChangeQuery should give a boost)
+#define ASTAR_SAVE_NEIGHBOURS 1
 
 
 
@@ -41,6 +45,8 @@ class ASTARNode : public AbstractSearchState {
 
 // Data
 // ====
+
+private:
 public:
     // MDP State
     // ---------
@@ -49,8 +55,10 @@ public:
 
     // A* data
     // -------
-    uint g;
-    uint h;
+    uint _g;
+    uint _h;
+    uint g() const;
+    uint h() const;
     /** g+h (Non-cached!!)*/
     uint f() const;
 
@@ -70,10 +78,12 @@ public:
 
     // Neighbourhood
     // -------------
+#if ASTAR_SAVE_NEIGHBOURS
     union{
         vector<nodeStub> *successors;
         vector<nodeStub> *predecessors;
     };
+#endif
 
 
     // Statistics
@@ -81,7 +91,7 @@ public:
 #if STATISTICS || 1
     struct {
         uint expansions = 0;
-        union{
+        union {
             int successors;
             int predecessors;
         } generated;
@@ -301,8 +311,6 @@ protected:
     // ========
 
 public:
-    /** Replan and drop the solution cost */
-    int replan(double givenTime, Path* pathIDs);
     /** Replan */
     int replan(double givenTime, Path* pathIDs, int* cost);
     /** Replan (unimplemented) */

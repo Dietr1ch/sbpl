@@ -197,12 +197,15 @@ public:
      *        forced to replan from scratch) takes in the time available for planner
      *        and returns a sequence of stateIDs that corresponds to the solution
      */
-    virtual int replan(double allocated_time_sec, Path *solution_stateIDs_V) = 0;
+    virtual int replan(double givenSeconds, Path *path) {
+        int cost;  // Drop the cost value
+        return replan(givenSeconds, path, &cost);
+    }
 
     /**
      * \brief works same as replan function with two parameters, but also returns the cost of the solution
      */
-    virtual int replan(double allocated_time_sec, Path *solution_stateIDs_V, int* solcost) = 0;
+    virtual int replan(double givenSeconds, Path *path, int* cost) = 0;
 
     /**
      * \brief works same as replan function with time and solution states, but

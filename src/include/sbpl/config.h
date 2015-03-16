@@ -48,10 +48,10 @@ typedef unsigned long ulong;
 
 template<typename T>
 class ID_t {
-    int id;
+    std::size_t id;
 public:
-    ID_t():              id{0}  {};
-    ID_t(int const& ID): id{ID} {};
+    ID_t():                      id{0}  {};
+    ID_t(std::size_t const& ID): id{ID} {};
     friend bool operator==(ID_t<T> const& i_lhs, ID_t<T> const& i_rhs );
     operator bool() const { return id!=0; }
 };

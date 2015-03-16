@@ -27,8 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __ENVIRONMENT_H_
-#define __ENVIRONMENT_H_
+#pragma once
 
 #include <cstdio>
 #include <vector>
@@ -48,7 +47,7 @@ using std::string;
 
 struct nodeStub {
     StateID id;
-    int     cost;
+    uint    cost;
 };
 
 
@@ -412,6 +411,8 @@ public:
     /**
      * \brief Generates a random (start, goal) pair cheking for feasibility.
      * Used to benchmark algorithms
+     *
+     * \return whether the goal state is reachable from the start
      */
     virtual bool generateRandomProblem(MDPConfig *cfg, Seed seed, int maxTries) {
         SBPL_ERROR("ERROR: generateRandomProblem is not implemented for this environment!\n");
@@ -421,14 +422,18 @@ public:
     /**
      * \brief Generates a random (start, goal) pair cheking for feasibility.
      * Used to benchmark algorithms
+     *
+     * \return whether the goal state is reachable from the start
      */
     virtual bool generateRandomStart(MDPConfig *cfg, Seed seed, int maxTries) {
         SBPL_ERROR("ERROR: generateRandomProblem is not implemented for this environment!\n");
         throw new SBPL_Exception();
     };
     /**
-     * \brief Generates a random (start, goal) pair cheking for feasibility.
+     * \brief Generates a random goal cheking for feasibility.
      * Used to benchmark algorithms
+     *
+     * \return whether the goal state is reachable from the start
      */
     virtual bool generateRandomGoal(MDPConfig *cfg, Seed seed, int maxTries) {
         SBPL_ERROR("ERROR: generateRandomProblem is not implemented for this environment!\n");
@@ -436,11 +441,7 @@ public:
     };
 
     // TODO: Expose Sensor updates
-
     virtual char* toString(StateID id){
         return nullptr;
     };
 };
-
-#endif
-

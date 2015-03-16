@@ -11,7 +11,7 @@ set(SBPL_VERSION ${SBPL_MAJOR_VERSION}.${SBPL_MINOR_VERSION}.${SBPL_PATCH_VERSIO
 set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type")
 
 # TODO: some day use more strict flags
-# set(CMAKE_CXX_FLAGS "--pedantic-errors -Wall -Wextra -Werror -ftabstop=4 -march=native -std=gnu++11 -fshow-column -ftabstop=4 -frounding-math -pipe ${FABIO_CXX_FLAGS}")
+# set(CMAKE_CXX_FLAGS "--pedantic-errors -Wall -Wextra -Werror -ftabstop=4 -march=native -std=gnu++14 -fshow-column -ftabstop=4 -frounding-math -pipe ${FABIO_CXX_FLAGS}")
 set(CMAKE_CXX_FLAGS "--pedantic-errors -Wall -ftabstop=4 -march=native -std=gnu++14 -fshow-column -ftabstop=4 -frounding-math -pipe ${FABIO_CXX_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-ggdb3 -DDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
@@ -27,6 +27,7 @@ add_library(sbpl SHARED
   src/discrete_space_information/environment_XXX.cpp
   src/discrete_space_information/environment_robarm.cpp
   src/planners/ASTAR.cpp
+  src/planners/dplanner.cpp
   src/planners/adaptiveASTAR.cpp
   src/planners/araplanner.cpp
   src/planners/adplanner.cpp

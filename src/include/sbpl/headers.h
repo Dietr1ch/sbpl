@@ -50,8 +50,11 @@
 #include <sbpl/discrete_space_information/environment_navxythetamlevlat.h>
 #include <sbpl/discrete_space_information/environment_robarm.h>
 #include <sbpl/discrete_space_information/environment_XXX.h>
+
 #include <sbpl/planners/adaptiveASTAR.h>
 #include <sbpl/planners/ASTAR.h>
+#include <sbpl/planners/dplanner.h>
+
 #include <sbpl/planners/adplanner.h>
 #include <sbpl/planners/ANAplanner.h>
 #include <sbpl/planners/araplanner.h>
@@ -60,12 +63,15 @@
 #include <sbpl/planners/rstarplanner.h>
 #include <sbpl/planners/viplanner.h>
 #include <sbpl/planners/lazyARA.h>
+
 #include <sbpl/utils/2Dgridsearch.h>
 #include <sbpl/utils/heap.h>
 #include <sbpl/utils/list.h>
 #include <sbpl/utils/key.h>
+
 #include <sbpl/utils/mdp.h>
 #include <sbpl/utils/mdpconfig.h>
+
 #include <sbpl/utils/sbpl_fifo.h>
 #include <sbpl/utils/sbpl_bfs_2d.h>
 #include <sbpl/utils/sbpl_bfs_3d.h>

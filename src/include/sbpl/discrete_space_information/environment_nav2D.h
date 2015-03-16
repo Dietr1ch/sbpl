@@ -396,6 +396,9 @@ protected:
 public:
     virtual bool isObstacle(int x, int y);
     virtual void generateRandomEnvironment(Seed seed);
+    /**
+     * Moves 'changes' Percentage of the amount of obstacles.
+     */
     virtual void modifyEnvironment(Seed seed, Percentage changes);
     virtual bool generateRandomProblem(MDPConfig *cfg, Seed seed, int maxTries);
     virtual bool generateRandomStart(MDPConfig *cfg, Seed seed, int maxTries);

@@ -471,7 +471,7 @@ EnvNAV2DHashEntry_t* EnvironmentNAV2D::CreateNewHashEntry(int X, int Y)
 
     HashEntry->id = EnvNAV2D.StateID2CoordTable.size();
 #if DEBUG
-    if(HashEntry->id==INVALID_STATE_ID)
+    if(HashEntry->id== (StateID) INVALID_STATE_ID)
         QUIT("HashEntry maps (x:%d, y:%d) to %zu)",
             HashEntry->X,
             HashEntry->Y,
@@ -812,15 +812,15 @@ void EnvironmentNAV2D::SetAllActionsandAllOutcomes(CMDPSTATE* state)
 #endif
 
     //goal state should be absorbing
-    if (state->id == EnvNAV2D.goalstateid) return;
+//     if (state->id == EnvNAV2D.goalstateid) return;
 
     //get X, Y for the state
     EnvNAV2DHashEntry_t* HashEntry = EnvNAV2D.StateID2CoordTable[state->id];
 
     //iterate through actions
     bool bTestBounds = false;
-    if (HashEntry->X <= 1 || HashEntry->X >= EnvNAV2DCfg.EnvWidth_c - 2 || HashEntry->Y <= 1 ||
-        HashEntry->Y >= EnvNAV2DCfg.EnvHeight_c - 2)
+    if (HashEntry->X <= 1 || HashEntry->X >= EnvNAV2DCfg.EnvWidth_c  - 2 ||
+        HashEntry->Y <= 1 || HashEntry->Y >= EnvNAV2DCfg.EnvHeight_c - 2)
     {
         bTestBounds = true;
     }
@@ -1401,15 +1401,15 @@ EnvironmentNAV2D::modifyEnvironment(Seed seed, Percentage changes){
     g.seed(seed);
 
     // Define distributions to use
-    std::uniform_int_distribution<int> X(0, EnvNAV2DCfg.EnvWidth_c-1);
-    std::uniform_int_distribution<int> Y(0, EnvNAV2DCfg.EnvHeight_c-1);
+    std::uniform_int_distribution<uint> X(0, EnvNAV2DCfg.EnvWidth_c-1);
+    std::uniform_int_distribution<uint> Y(0, EnvNAV2DCfg.EnvHeight_c-1);
 
 
     uint totalBlocksToMove = EnvNAV2DCfg.random.obstacles * changes;
-    uint blocksToMove = totalBlocksToMove;
+    uint pendingBlocks = totalBlocksToMove;
 
-    int maxIterations = 10*blocksToMove;
-    for(int i; i<maxIterations && blocksToMove; i++) {
+    int maxIterations = 10*pendingBlocks;
+    for(int i=0; i<maxIterations && pendingBlocks; i++) {
         uint x1 = X(g);
         uint y1 = Y(g);
 
@@ -1421,16 +1421,18 @@ EnvironmentNAV2D::modifyEnvironment(Seed seed, Percentage changes){
 
             EnvNAV2DCfg.Grid2D[x1][y1] = c2;
             EnvNAV2DCfg.Grid2D[x2][y2] = c1;
-            blocksToMove--;
+            pendingBlocks--;
         }
     }
-    if(blocksToMove)
-        SBPL_WARN("Not enough blocks were moved, %u/%u",
-            blocksToMove,
+    if(pendingBlocks>0) {
+        SBPL_WARN("Not enough blocks were moved, pending %u out of %u",
+            pendingBlocks,
             totalBlocksToMove
         );
-    else
+    }
+    else {
         SBPL_DEBUG("%u blocks were moved", totalBlocksToMove);
+    }
 }
 
 inline
